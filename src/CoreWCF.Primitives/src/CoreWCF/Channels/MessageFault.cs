@@ -19,7 +19,7 @@ namespace CoreWCF.Channels
             return CreateFault(code, reason, null, null, "", "");
         }
 
-        internal static MessageFault CreateFault(FaultCode code, FaultReason reason, object detail)
+        public static MessageFault CreateFault(FaultCode code, FaultReason reason, object detail)
         {
             return CreateFault(code, reason, detail, DataContractSerializerDefaults.CreateSerializer(
                 (detail == null ? typeof(object) : detail.GetType()), int.MaxValue/*maxItems*/), "", "");

@@ -45,7 +45,7 @@ namespace CoreWCF.Dispatcher
             get { return action; }
         }
 
-        internal SynchronizedCollection<ICallContextInitializer> CallContextInitializers { get; }
+        public SynchronizedCollection<ICallContextInitializer> CallContextInitializers { get; }
 
         internal SynchronizedCollection<FaultContractInfo> FaultContractInfos
         {
@@ -188,7 +188,7 @@ namespace CoreWCF.Dispatcher
             get { return name; }
         }
 
-        internal SynchronizedCollection<IParameterInspector> ParameterInspectors { get; }
+        public SynchronizedCollection<IParameterInspector> ParameterInspectors { get; }
 
         public DispatchRuntime Parent { get; }
 

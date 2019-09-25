@@ -5,6 +5,7 @@ using CoreWCF.Channels;
 using CoreWCF.Dispatcher;
 using System.Security.Claims;
 using System.Security.Principal;
+using CoreWCF.Security;
 
 namespace CoreWCF
 {
@@ -238,6 +239,26 @@ namespace CoreWCF
         {
             get { return requestContext; }
             set { requestContext = value; }
+        }
+
+        public ServiceSecurityContext ServiceSecurityContext
+        {
+            get
+            {
+                ServiceSecurityContext result = null;
+
+                var properties = IncomingMessageProperties;
+                if (properties != null)
+                {
+                    var security = properties.Security;
+                    if (security != null)
+                    {
+                        result = security.ServiceSecurityContext;
+                    }
+                }
+
+                return result;
+            }
         }
 
         internal IPrincipal ThreadPrincipal

@@ -157,7 +157,7 @@ namespace CoreWCF.Description
 
         internal bool IsValidateRpcWrapperName { get { return _validateRpcWrapperName; } }
 
-        public KeyedCollection<Type, IOperationBehavior> OperationBehaviors
+        public KeyedByTypeCollection<IOperationBehavior> OperationBehaviors
         {
             get { return _behaviors; }
         }

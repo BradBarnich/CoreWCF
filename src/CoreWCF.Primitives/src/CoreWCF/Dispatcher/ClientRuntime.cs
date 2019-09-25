@@ -296,7 +296,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        internal ICollection<IClientMessageInspector> ClientMessageInspectors
+        public ICollection<IClientMessageInspector> ClientMessageInspectors
         {
             get { return MessageInspectors; }
         }

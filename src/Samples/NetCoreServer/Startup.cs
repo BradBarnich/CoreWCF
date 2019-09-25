@@ -13,7 +13,7 @@ namespace NetCoreServer
             services.AddServiceModelServices();
         }
 
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             app.UseServiceModel(builder =>
             {

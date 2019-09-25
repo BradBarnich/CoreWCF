@@ -7,7 +7,7 @@ using CoreWCF.Dispatcher;
 
 namespace CoreWCF.Description
 {
-    internal class DataContractSerializerOperationBehavior : IOperationBehavior //, IWsdlExportExtension
+    public class DataContractSerializerOperationBehavior : IOperationBehavior //, IWsdlExportExtension
     {
         readonly bool builtInOperationBehavior;
 

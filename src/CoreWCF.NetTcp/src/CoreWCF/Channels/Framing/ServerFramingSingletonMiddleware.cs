@@ -240,7 +240,7 @@ namespace CoreWCF.Channels.Framing
 
         public static async Task UpgradeConnectionAsync(FramingConnection connection)
         {
-            Stream stream = new Microsoft.AspNetCore.Server.Kestrel.Core.Adapter.Internal.RawStream(connection.Input, connection.Output);
+            Stream stream = new RawStream(connection.Input, connection.Output);
             var upgradeAcceptor = connection.StreamUpgradeAcceptor;
             stream = await upgradeAcceptor.AcceptUpgradeAsync(stream);
             CreatePipelineFromStream(connection, stream);

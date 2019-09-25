@@ -13,7 +13,7 @@ using System.Text;
 
 namespace CoreWCF.IdentityModel.Claims
 {
-    internal class X509CertificateClaimSet : ClaimSet, IIdentityInfo, IDisposable
+    public class X509CertificateClaimSet : ClaimSet, IIdentityInfo, IDisposable
     {
         X509Certificate2 certificate;
         DateTime expirationTime = SecurityUtils.MinUtcDateTime;
