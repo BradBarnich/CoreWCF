@@ -75,7 +75,9 @@ namespace CoreWCF.Channels.Framing
                                 catch (Exception exception)
                                 {
                                     if (Fx.IsFatal(exception))
+                                    {
                                         throw;
+                                    }
 
                                     // Audit Authentication Failure
                                     //WriteAuditFailure(upgradeAcceptor as StreamSecurityUpgradeAcceptor, exception);

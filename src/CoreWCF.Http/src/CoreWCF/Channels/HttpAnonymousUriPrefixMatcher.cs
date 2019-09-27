@@ -5,9 +5,9 @@ using System.Text;
 
 namespace CoreWCF.Channels
 {
-    class HttpAnonymousUriPrefixMatcher : IAnonymousUriPrefixMatcher
+    internal class HttpAnonymousUriPrefixMatcher : IAnonymousUriPrefixMatcher
     {
-        UriPrefixTable<Uri> anonymousUriPrefixes;
+        private UriPrefixTable<Uri> anonymousUriPrefixes;
 
         internal HttpAnonymousUriPrefixMatcher()
         {

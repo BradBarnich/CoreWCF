@@ -10,10 +10,10 @@ namespace CoreWCF.Dispatcher
 
     internal class EndpointAddressMessageFilter : MessageFilter
     {
-        EndpointAddress address;
-        bool includeHostNameInComparison;
-        EndpointAddressMessageFilterHelper helper;
-        UriComparer comparer;
+        private EndpointAddress address;
+        private bool includeHostNameInComparison;
+        private EndpointAddressMessageFilterHelper helper;
+        private UriComparer comparer;
 
         public EndpointAddressMessageFilter(EndpointAddress address)
             : this(address, false)
@@ -139,7 +139,7 @@ namespace CoreWCF.Dispatcher
         {
             internal static readonly UriComparer Value = new HostUriComparer();
 
-            HostUriComparer()
+            private HostUriComparer()
             {
             }
 
@@ -156,7 +156,7 @@ namespace CoreWCF.Dispatcher
         {
             internal static readonly UriComparer Value = new NoHostUriComparer();
 
-            NoHostUriComparer()
+            private NoHostUriComparer()
             {
             }
 
@@ -172,13 +172,13 @@ namespace CoreWCF.Dispatcher
 
     internal class EndpointAddressMessageFilterHelper
     {
-        EndpointAddress address;
-        WeakReference processorPool;
+        private EndpointAddress address;
+        private WeakReference processorPool;
 
-        int size;
-        byte[] mask;
-        Dictionary<QName, int> qnameLookup;
-        Dictionary<string, HeaderBit[]> headerLookup;
+        private int size;
+        private byte[] mask;
+        private Dictionary<QName, int> qnameLookup;
+        private Dictionary<string, HeaderBit[]> headerLookup;
 
         internal EndpointAddressMessageFilterHelper(EndpointAddress address)
         {
@@ -198,7 +198,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        void CreateMask()
+        private void CreateMask()
         {
             int nextBit = 0;
             string key;
@@ -211,9 +211,13 @@ namespace CoreWCF.Dispatcher
             for (int i = 0; i < address.Headers.Count; ++i)
             {
                 if (builder == null)
+                {
                     builder = new StringBuilder();
+                }
                 else
+                {
                     builder.Remove(0, builder.Length);
+                }
 
 
                 key = address.Headers[i].GetComparableForm(builder);
@@ -268,12 +272,15 @@ namespace CoreWCF.Dispatcher
             get
             {
                 if (headerLookup == null)
+                {
                     headerLookup = new Dictionary<string, HeaderBit[]>();
+                }
+
                 return headerLookup;
             }
         }
 
-        EndpointAddressProcessor CreateProcessor(int length)
+        private EndpointAddressProcessor CreateProcessor(int length)
         {
             if (processorPool.Target != null)
             {
@@ -308,7 +315,7 @@ namespace CoreWCF.Dispatcher
             return result;
         }
 
-        void ReleaseProcessor(EndpointAddressProcessor context)
+        private void ReleaseProcessor(EndpointAddressProcessor context)
         {
             lock (processorPool)
             {

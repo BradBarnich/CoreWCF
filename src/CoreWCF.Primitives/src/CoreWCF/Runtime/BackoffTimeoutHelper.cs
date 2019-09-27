@@ -7,19 +7,19 @@ namespace CoreWCF.Runtime
 {
     internal sealed class BackoffTimeoutHelper
     {
-        readonly static int maxSkewMilliseconds = 15;
-        readonly static long maxDriftTicks = maxSkewMilliseconds * 2 * TimeSpan.TicksPerMillisecond;
-        readonly static TimeSpan defaultInitialWaitTime = TimeSpan.FromMilliseconds(1);
-        readonly static TimeSpan defaultMaxWaitTime = TimeSpan.FromMinutes(1);
+        private readonly static int maxSkewMilliseconds = 15;
+        private readonly static long maxDriftTicks = maxSkewMilliseconds * 2 * TimeSpan.TicksPerMillisecond;
+        private readonly static TimeSpan defaultInitialWaitTime = TimeSpan.FromMilliseconds(1);
+        private readonly static TimeSpan defaultMaxWaitTime = TimeSpan.FromMinutes(1);
 
-        DateTime deadline;
-        TimeSpan maxWaitTime;
-        TimeSpan waitTime;
-        IOThreadTimer backoffTimer;
-        Action<object> backoffCallback;
-        object backoffState;
-        Random random;
-        TimeSpan originalTimeout;
+        private DateTime deadline;
+        private TimeSpan maxWaitTime;
+        private TimeSpan waitTime;
+        private IOThreadTimer backoffTimer;
+        private Action<object> backoffCallback;
+        private object backoffState;
+        private Random random;
+        private TimeSpan originalTimeout;
 
         internal BackoffTimeoutHelper(TimeSpan timeout)
             : this(timeout, BackoffTimeoutHelper.defaultMaxWaitTime)
@@ -47,7 +47,7 @@ namespace CoreWCF.Runtime
             }
         }
 
-        void Reset(TimeSpan timeout, TimeSpan initialWaitTime)
+        private void Reset(TimeSpan timeout, TimeSpan initialWaitTime)
         {
             if (timeout == TimeSpan.MaxValue)
             {
@@ -97,7 +97,7 @@ namespace CoreWCF.Runtime
             Backoff();
         }
 
-        TimeSpan WaitTimeWithDrift()
+        private TimeSpan WaitTimeWithDrift()
         {
             return Ticks.ToTimeSpan(Math.Max(
                 Ticks.FromTimeSpan(BackoffTimeoutHelper.defaultInitialWaitTime),
@@ -105,7 +105,7 @@ namespace CoreWCF.Runtime
                     (long)(uint)random.Next() % (2 * BackoffTimeoutHelper.maxDriftTicks + 1) - BackoffTimeoutHelper.maxDriftTicks)));
         }
 
-        void Backoff()
+        private void Backoff()
         {
             if (waitTime.Ticks >= (maxWaitTime.Ticks / 2))
             {

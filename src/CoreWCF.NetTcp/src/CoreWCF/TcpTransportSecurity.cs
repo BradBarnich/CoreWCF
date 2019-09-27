@@ -16,7 +16,7 @@ namespace CoreWCF
         private TcpClientCredentialType clientCredentialType;
         private ProtectionLevel protectionLevel;
         private ExtendedProtectionPolicy extendedProtectionPolicy;
-        SslProtocols sslProtocols;
+        private SslProtocols sslProtocols;
 
         public TcpTransportSecurity()
         {
@@ -88,7 +88,7 @@ namespace CoreWCF
             }
         }
 
-        SslStreamSecurityBindingElement CreateSslBindingElement(bool requireClientCertificate)
+        private SslStreamSecurityBindingElement CreateSslBindingElement(bool requireClientCertificate)
         {
             if (protectionLevel != ProtectionLevel.EncryptAndSign)
             {

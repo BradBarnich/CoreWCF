@@ -7,7 +7,7 @@
         Any,
     }
 
-    static class AddressFilterModeHelper
+    internal static class AddressFilterModeHelper
     {
         static public bool IsDefined(AddressFilterMode x)
         {

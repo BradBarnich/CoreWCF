@@ -9,8 +9,8 @@ namespace CoreWCF.Security
     /// </summary>
     public class ImpersonateOnSerializingReplyMessageProperty : IMessageProperty
     {
-        const string PropertyName = "ImpersonateOnSerializingReplyMessageProperty";
-        MessageRpc _rpc;
+        private const string PropertyName = "ImpersonateOnSerializingReplyMessageProperty";
+        private MessageRpc _rpc;
 
         internal ImpersonateOnSerializingReplyMessageProperty(MessageRpc rpc)
         {

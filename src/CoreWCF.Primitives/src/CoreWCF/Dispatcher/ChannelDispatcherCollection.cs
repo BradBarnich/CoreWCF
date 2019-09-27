@@ -6,7 +6,7 @@ namespace CoreWCF.Dispatcher
 {
     public class ChannelDispatcherCollection : SynchronizedCollection<ChannelDispatcherBase>
     {
-        ServiceHostBase service;
+        private ServiceHostBase service;
 
         internal ChannelDispatcherCollection(ServiceHostBase service, object syncRoot)
             : base(syncRoot)
@@ -24,7 +24,9 @@ namespace CoreWCF.Dispatcher
             if (service != null)
             {
                 if (service.State == CommunicationState.Closed)
+                {
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ObjectDisposedException(service.GetType().ToString()));
+                }
             }
 
             base.InsertItem(index, item);
@@ -41,7 +43,9 @@ namespace CoreWCF.Dispatcher
             if (service != null)
             {
                 if (service.State == CommunicationState.Closed)
+                {
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ObjectDisposedException(service.GetType().ToString()));
+                }
             }
 
             ChannelDispatcherBase old;

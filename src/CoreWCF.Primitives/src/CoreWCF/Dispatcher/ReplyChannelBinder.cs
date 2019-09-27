@@ -9,9 +9,9 @@ namespace CoreWCF.Dispatcher
 {
     internal class ReplyChannelBinder : IChannelBinder
     {
-        IReplyChannel channel;
-        Uri listenUri;
-        bool initialized = false;
+        private IReplyChannel channel;
+        private Uri listenUri;
+        private bool initialized = false;
 
         public ReplyChannelBinder() { }
 

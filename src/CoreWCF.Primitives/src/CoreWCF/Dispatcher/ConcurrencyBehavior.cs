@@ -8,8 +8,8 @@ namespace CoreWCF.Dispatcher
 {
     internal class ConcurrencyBehavior
     {
-        ConcurrencyMode concurrencyMode;
-        bool enforceOrderedReceive;
+        private ConcurrencyMode concurrencyMode;
+        private bool enforceOrderedReceive;
 
         internal ConcurrencyBehavior(DispatchRuntime runtime)
         {
@@ -130,7 +130,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        static void UnlockInstance(InstanceContext instanceContext)
+        private static void UnlockInstance(InstanceContext instanceContext)
         {
             ConcurrencyInstanceContextFacet resource = instanceContext.Concurrency;
 
@@ -182,9 +182,9 @@ namespace CoreWCF.Dispatcher
             void Signal();
         }
 
-        class MessageRpcWaiter : IWaiter
+        private class MessageRpcWaiter : IWaiter
         {
-            IResumeMessageRpc resume;
+            private IResumeMessageRpc resume;
 
             internal MessageRpcWaiter(IResumeMessageRpc resume)
             {
@@ -214,9 +214,9 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        class ThreadWaiter : IWaiter
+        private class ThreadWaiter : IWaiter
         {
-            ManualResetEvent wait = new ManualResetEvent(false);
+            private ManualResetEvent wait = new ManualResetEvent(false);
 
             void IWaiter.Signal()
             {
@@ -234,8 +234,8 @@ namespace CoreWCF.Dispatcher
     internal class ConcurrencyInstanceContextFacet
     {
         internal bool Locked;
-        Queue<TaskCompletionSource<object>> calloutMessageQueue;
-        Queue<TaskCompletionSource<object>> newMessageQueue;
+        private Queue<TaskCompletionSource<object>> calloutMessageQueue;
+        private Queue<TaskCompletionSource<object>> newMessageQueue;
 
         internal bool HasWaiters
         {
@@ -246,7 +246,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        TaskCompletionSource<object> DequeueFrom(Queue<TaskCompletionSource<object>> queue)
+        private TaskCompletionSource<object> DequeueFrom(Queue<TaskCompletionSource<object>> queue)
         {
             TaskCompletionSource<object> waiter = queue.Dequeue();
 
@@ -276,7 +276,10 @@ namespace CoreWCF.Dispatcher
         internal Task EnqueueNewMessage()
         {
             if (newMessageQueue == null)
+            {
                 newMessageQueue = new Queue<TaskCompletionSource<object>>();
+            }
+
             // Prevent release of waiter from running the waiter on the releasing thread by using RunContinuationsAsynchronously
             var waiter = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
             newMessageQueue.Enqueue(waiter);
@@ -286,7 +289,10 @@ namespace CoreWCF.Dispatcher
         internal Task EnqueueCalloutMessage()
         {
             if (calloutMessageQueue == null)
+            {
                 calloutMessageQueue = new Queue<TaskCompletionSource<object>>();
+            }
+
             // Prevent release of waiter from running the waiter on the releasing thread by using RunContinuationsAsynchronously
             var waiter = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
             calloutMessageQueue.Enqueue(waiter);

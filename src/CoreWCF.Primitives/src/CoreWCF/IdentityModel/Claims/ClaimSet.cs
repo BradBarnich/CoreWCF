@@ -9,9 +9,9 @@ namespace CoreWCF.IdentityModel.Claims
     [DataContract(Namespace = XsiConstants.Namespace)]
     public abstract class ClaimSet : IEnumerable<Claim>
     {
-        static ClaimSet system;
-        static ClaimSet windows;
-        static ClaimSet anonymous;
+        private static ClaimSet system;
+        private static ClaimSet windows;
+        private static ClaimSet anonymous;
 
         public static ClaimSet System
         {
@@ -49,7 +49,9 @@ namespace CoreWCF.IdentityModel.Claims
             get
             {
                 if (anonymous == null)
+                {
                     anonymous = new DefaultClaimSet();
+                }
 
                 return anonymous;
             }
@@ -66,9 +68,14 @@ namespace CoreWCF.IdentityModel.Claims
         public virtual bool ContainsClaim(Claim claim, IEqualityComparer<Claim> comparer)
         {
             if (claim == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(claim));
+            }
+
             if (comparer == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(comparer));
+            }
 
             IEnumerable<Claim> claims = FindClaims(null, null);
             if (claims != null)
@@ -76,7 +83,9 @@ namespace CoreWCF.IdentityModel.Claims
                 foreach (Claim matchingClaim in claims)
                 {
                     if (comparer.Equals(claim, matchingClaim))
+                    {
                         return true;
+                    }
                 }
             }
             return false;
@@ -85,7 +94,9 @@ namespace CoreWCF.IdentityModel.Claims
         public virtual bool ContainsClaim(Claim claim)
         {
             if (claim == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(claim));
+            }
 
             IEnumerable<Claim> claims = FindClaims(claim.ClaimType, claim.Right);
             if (claims != null)
@@ -93,7 +104,9 @@ namespace CoreWCF.IdentityModel.Claims
                 foreach (Claim matchingClaim in claims)
                 {
                     if (claim.Equals(matchingClaim))
+                    {
                         return true;
+                    }
                 }
             }
             return false;

@@ -21,7 +21,7 @@ namespace CoreWCF
         private ConcurrencyInstanceContextFacet _concurrency;
         private ExtensionCollection<InstanceContext> _extensions;
         private readonly ServiceHostBase _host;
-        ServiceThrottle serviceThrottle;
+        private ServiceThrottle serviceThrottle;
         private int _instanceContextManagerIndex;
         //int instanceContextManagerIndex;
         private object _serviceInstanceLock = new object();
@@ -112,7 +112,9 @@ namespace CoreWCF
                     lock (ThisLock)
                     {
                         if (_concurrency == null)
+                        {
                             _concurrency = new ConcurrencyInstanceContextFacet();
+                        }
                     }
                 }
 
@@ -152,7 +154,10 @@ namespace CoreWCF
                 lock (ThisLock)
                 {
                     if (_extensions == null)
+                    {
                         _extensions = new ExtensionCollection<InstanceContext>(this, ThisLock);
+                    }
+
                     return _extensions;
                 }
             }
@@ -172,12 +177,15 @@ namespace CoreWCF
             get
             {
                 if (State == CommunicationState.Closed)
+                {
                     return false;
+                }
+
                 return _channels.IsBusy;
             }
         }
 
-        bool IsSingleton
+        private bool IsSingleton
         {
             get
             {
@@ -294,19 +302,27 @@ namespace CoreWCF
             }
 
             if (State != CommunicationState.Opened)
+            {
                 return;
+            }
 
             if (IsBusy)
+            {
                 return;
+            }
 
             if (_behavior.CanUnload(this) == false)
+            {
                 return;
+            }
 
             try
             {
                 // TODO: Make this call and it's chain async
                 if (State == CommunicationState.Opened)
+                {
                     CloseAsync().GetAwaiter().GetResult();
+                }
             }
             catch (ObjectDisposedException e)
             {
@@ -330,7 +346,7 @@ namespace CoreWCF
             }
         }
 
-        QuotaThrottle EnsureQuotaThrottle()
+        private QuotaThrottle EnsureQuotaThrottle()
         {
             lock (ThisLock)
             {
@@ -489,7 +505,7 @@ namespace CoreWCF
             }
         }
 
-        void Unload()
+        private void Unload()
         {
             SetUserObject(null);
 

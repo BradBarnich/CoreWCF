@@ -5,8 +5,8 @@ namespace CoreWCF
     [AttributeUsage(ServiceModelAttributeTargets.Parameter, Inherited = false)]
     internal sealed class MessageParameterAttribute : Attribute
     {
-        string name;
-        bool isNameSetExplicit;
+        private string name;
+        private bool isNameSetExplicit;
         internal const string NamePropertyName = "Name";
         public string Name
         {

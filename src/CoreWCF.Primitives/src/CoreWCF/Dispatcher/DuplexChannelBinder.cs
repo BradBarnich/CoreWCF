@@ -13,20 +13,20 @@ namespace CoreWCF.Dispatcher
 {
     internal class DuplexChannelBinder : IChannelBinder
     {
-        IDuplexChannel channel;
-        IRequestReplyCorrelator correlator;
-        TimeSpan defaultCloseTimeout;
-        TimeSpan defaultSendTimeout;
-        IdentityVerifier identityVerifier;
-        bool isSession;
-        Uri listenUri;
-        int pending;
-        bool syncPumpEnabled;
-        List<IDuplexRequest> requests;
-        List<ICorrelatorKey> timedOutRequests;
-        ChannelHandler channelHandler;
-        volatile bool requestAborted;
-        bool initialized = false;
+        private IDuplexChannel channel;
+        private IRequestReplyCorrelator correlator;
+        private TimeSpan defaultCloseTimeout;
+        private TimeSpan defaultSendTimeout;
+        private IdentityVerifier identityVerifier;
+        private bool isSession;
+        private Uri listenUri;
+        private int pending;
+        private bool syncPumpEnabled;
+        private List<IDuplexRequest> requests;
+        private List<ICorrelatorKey> timedOutRequests;
+        private ChannelHandler channelHandler;
+        private volatile bool requestAborted;
+        private bool initialized = false;
 
         public DuplexChannelBinder() { }
 
@@ -130,15 +130,19 @@ namespace CoreWCF.Dispatcher
             get { return channel.LocalAddress; }
         }
 
-        bool Pumping
+        private bool Pumping
         {
             get
             {
                 if (syncPumpEnabled)
+                {
                     return true;
+                }
 
                 if (ChannelHandler != null && ChannelHandler.HasRegisterBeenCalled)
+                {
                     return true;
+                }
 
                 return false;
             }
@@ -149,20 +153,23 @@ namespace CoreWCF.Dispatcher
             get { return channel.RemoteAddress; }
         }
 
-        List<IDuplexRequest> Requests
+        private List<IDuplexRequest> Requests
         {
             get
             {
                 lock (ThisLock)
                 {
                     if (requests == null)
+                    {
                         requests = new List<IDuplexRequest>();
+                    }
+
                     return requests;
                 }
             }
         }
 
-        List<ICorrelatorKey> TimedOutRequests
+        private List<ICorrelatorKey> TimedOutRequests
         {
             get
             {
@@ -177,12 +184,12 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        object ThisLock
+        private object ThisLock
         {
             get { return this; }
         }
 
-        void OnFaulted(object sender, EventArgs e)
+        private void OnFaulted(object sender, EventArgs e)
         {
             //Some unhandled exception happened on the channel. 
             //So close all pending requests so the callbacks (in case of async)
@@ -203,7 +210,7 @@ namespace CoreWCF.Dispatcher
             AbortRequests();
         }
 
-        void AbortRequests()
+        private void AbortRequests()
         {
             IDuplexRequest[] array = null;
             lock (ThisLock)
@@ -244,7 +251,7 @@ namespace CoreWCF.Dispatcher
             DeleteTimedoutRequestsFromCorrelator();
         }
 
-        TimeoutException GetReceiveTimeoutException(TimeSpan timeout)
+        private TimeoutException GetReceiveTimeoutException(TimeSpan timeout)
         {
             EndpointAddress address = channel.RemoteAddress ?? channel.LocalAddress;
             if (address != null)
@@ -359,7 +366,9 @@ namespace CoreWCF.Dispatcher
                 }
 
                 if (!optimized)
+                {
                     duplexRequest = new AsyncDuplexRequest(this);
+                }
 
                 RequestStarting(message, duplexRequest);
             }
@@ -421,7 +430,9 @@ namespace CoreWCF.Dispatcher
                         RequestCompleting(null);
                         syncPumpEnabled = false;
                         if (pending > 0)
+                        {
                             EnsurePumping();
+                        }
                     }
                 }
             }
@@ -434,7 +445,7 @@ namespace CoreWCF.Dispatcher
         }
 
         // ASSUMPTION: (mmaruch) caller holds lock (this.mutex)
-        void RequestStarting(Message message, IDuplexRequest request)
+        private void RequestStarting(Message message, IDuplexRequest request)
         {
             if (request != null)
             {
@@ -449,7 +460,7 @@ namespace CoreWCF.Dispatcher
         }
 
         // ASSUMPTION: (mmaruch) caller holds lock (this.mutex)
-        void RequestCompleting(IDuplexRequest request)
+        private void RequestCompleting(IDuplexRequest request)
         {
             pending--;
             if (pending == 0)
@@ -463,14 +474,14 @@ namespace CoreWCF.Dispatcher
         }
 
         // ASSUMPTION: caller holds ThisLock
-        void AddToTimedOutRequestList(ICorrelatorKey request)
+        private void AddToTimedOutRequestList(ICorrelatorKey request)
         {
             Fx.Assert(request != null, "request cannot be null");
             TimedOutRequests.Add(request);
         }
 
         // ASSUMPTION: caller holds  ThisLock
-        void RemoveFromTimedOutRequestList(ICorrelatorKey request)
+        private void RemoveFromTimedOutRequestList(ICorrelatorKey request)
         {
             Fx.Assert(request != null, "request cannot be null");
             if (timedOutRequests != null)
@@ -479,7 +490,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        void DeleteTimedoutRequestsFromCorrelator()
+        private void DeleteTimedoutRequestsFromCorrelator()
         {
             ICorrelatorKey[] array = null;
             if (timedOutRequests != null && timedOutRequests.Count > 0)
@@ -517,7 +528,7 @@ namespace CoreWCF.Dispatcher
         //    this.IdentityVerifier.EnsureIncomingIdentity(address, property.ServiceSecurityContext.AuthorizationContext);
         //}
 
-        void ThrowIfInvalidReplyIdentity(Message reply)
+        private void ThrowIfInvalidReplyIdentity(Message reply)
         {
             //if (!this.isSession)
             //{
@@ -537,10 +548,10 @@ namespace CoreWCF.Dispatcher
             return channel.WaitForMessageAsync(token);
         }
 
-        class DuplexRequestContext : RequestContextBase
+        private class DuplexRequestContext : RequestContextBase
         {
-            DuplexChannelBinder binder;
-            IDuplexChannel channel;
+            private DuplexChannelBinder binder;
+            private IDuplexChannel channel;
 
             internal DuplexRequestContext(IDuplexChannel channel, Message request, DuplexChannelBinder binder)
                 : base(request, binder.DefaultCloseTimeout, binder.DefaultSendTimeout)
@@ -569,19 +580,19 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        interface IDuplexRequest
+        private interface IDuplexRequest
         {
             void Abort();
             void GotReply(Message reply);
         }
 
-        class AsyncDuplexRequest : IDuplexRequest, ICorrelatorKey
+        private class AsyncDuplexRequest : IDuplexRequest, ICorrelatorKey
         {
-            Message reply;
-            DuplexChannelBinder parent;
-            AsyncManualResetEvent wait = new AsyncManualResetEvent();
-            int waitCount = 0;
-            RequestReplyCorrelator.Key requestCorrelatorKey;
+            private Message reply;
+            private DuplexChannelBinder parent;
+            private AsyncManualResetEvent wait = new AsyncManualResetEvent();
+            private int waitCount = 0;
+            private RequestReplyCorrelator.Key requestCorrelatorKey;
 
             internal AsyncDuplexRequest(DuplexChannelBinder parent)
             {
@@ -635,7 +646,7 @@ namespace CoreWCF.Dispatcher
                 CloseWaitHandle();
             }
 
-            void CloseWaitHandle()
+            private void CloseWaitHandle()
             {
                 if (Interlocked.Increment(ref waitCount) == 2)
                 {
@@ -645,12 +656,12 @@ namespace CoreWCF.Dispatcher
         }
 
         // used to read-ahead by a single message and auto-close the session when we read null
-        class AutoCloseDuplexSessionChannel : IDuplexSessionChannel
+        private class AutoCloseDuplexSessionChannel : IDuplexSessionChannel
         {
-            IDuplexSessionChannel innerChannel;
-            InputQueue<Message> pendingMessages;
-            Action messageDequeuedCallback;
-            CloseState closeState;
+            private IDuplexSessionChannel innerChannel;
+            private InputQueue<Message> pendingMessages;
+            private Action messageDequeuedCallback;
+            private CloseState closeState;
 
             public AutoCloseDuplexSessionChannel(IDuplexSessionChannel innerChannel)
             {
@@ -660,7 +671,7 @@ namespace CoreWCF.Dispatcher
                 closeState = new CloseState();
             }
 
-            object ThisLock
+            private object ThisLock
             {
                 get
                 {
@@ -723,7 +734,7 @@ namespace CoreWCF.Dispatcher
                 remove { innerChannel.Opening -= value; }
             }
 
-            TimeSpan DefaultCloseTimeout
+            private TimeSpan DefaultCloseTimeout
             {
                 get
                 {
@@ -740,7 +751,7 @@ namespace CoreWCF.Dispatcher
                 }
             }
 
-            TimeSpan DefaultReceiveTimeout
+            private TimeSpan DefaultReceiveTimeout
             {
                 get
                 {
@@ -758,7 +769,7 @@ namespace CoreWCF.Dispatcher
             }
 
             // kick off an async receive so that we notice when the server is trying to shutdown
-            async void StartBackgroundReceive()
+            private async void StartBackgroundReceive()
             {
                 Exception exceptionFromBeginReceive = null;
                 try
@@ -787,7 +798,7 @@ namespace CoreWCF.Dispatcher
                 }
             }
 
-            async Task CloseInnerChannelAsync()
+            private async Task CloseInnerChannelAsync()
             {
                 lock (ThisLock)
                 {
@@ -878,7 +889,7 @@ namespace CoreWCF.Dispatcher
             }
 
             // called from both Abort and Close paths
-            void Cleanup()
+            private void Cleanup()
             {
                 pendingMessages.Dispose();
             }
@@ -905,10 +916,10 @@ namespace CoreWCF.Dispatcher
                 return innerChannel.SendAsync(message, token);
             }
 
-            class CloseState
+            private class CloseState
             {
-                bool userClose;
-                InputQueue<object> backgroundCloseData;
+                private bool userClose;
+                private InputQueue<object> backgroundCloseData;
 
                 public CloseState()
                 {

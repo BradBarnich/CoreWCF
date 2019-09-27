@@ -20,20 +20,20 @@ using System.Threading.Tasks;
 
 namespace CoreWCF.Channels
 {
-    class SslStreamSecurityUpgradeProvider : StreamSecurityUpgradeProvider, IStreamUpgradeChannelBindingProvider
+    internal class SslStreamSecurityUpgradeProvider : StreamSecurityUpgradeProvider, IStreamUpgradeChannelBindingProvider
     {
-        SecurityTokenAuthenticator clientCertificateAuthenticator;
-        SecurityTokenProvider serverTokenProvider;
-        EndpointIdentity identity;
-        IdentityVerifier identityVerifier;
-        X509Certificate2 serverCertificate;
-        bool requireClientCertificate;
-        string scheme;
-        bool enableChannelBinding;
-        SslProtocols sslProtocols;
-        SecurityTokenManager clientSecurityTokenManager;
+        private SecurityTokenAuthenticator clientCertificateAuthenticator;
+        private SecurityTokenProvider serverTokenProvider;
+        private EndpointIdentity identity;
+        private IdentityVerifier identityVerifier;
+        private X509Certificate2 serverCertificate;
+        private bool requireClientCertificate;
+        private string scheme;
+        private bool enableChannelBinding;
+        private SslProtocols sslProtocols;
+        private SecurityTokenManager clientSecurityTokenManager;
 
-        SslStreamSecurityUpgradeProvider(IDefaultCommunicationTimeouts timeouts, SecurityTokenProvider serverTokenProvider, bool requireClientCertificate, SecurityTokenAuthenticator clientCertificateAuthenticator, string scheme, IdentityVerifier identityVerifier, SslProtocols sslProtocols)
+        private SslStreamSecurityUpgradeProvider(IDefaultCommunicationTimeouts timeouts, SecurityTokenProvider serverTokenProvider, bool requireClientCertificate, SecurityTokenAuthenticator clientCertificateAuthenticator, string scheme, IdentityVerifier identityVerifier, SslProtocols sslProtocols)
             : base(timeouts)
         {
             this.serverTokenProvider = serverTokenProvider;
@@ -217,7 +217,7 @@ namespace CoreWCF.Channels
             CleanupServerCertificate();
         }
 
-        void SetupServerCertificate(SecurityToken token)
+        private void SetupServerCertificate(SecurityToken token)
         {
             X509SecurityToken x509Token = token as X509SecurityToken;
             if (x509Token == null)
@@ -229,7 +229,7 @@ namespace CoreWCF.Channels
             serverCertificate = new X509Certificate2(x509Token.Certificate);
         }
 
-        void CleanupServerCertificate()
+        private void CleanupServerCertificate()
         {
             if (serverCertificate != null)
             {
@@ -254,13 +254,14 @@ namespace CoreWCF.Channels
         }
     }
 
-    class SslStreamSecurityUpgradeAcceptor : StreamSecurityUpgradeAcceptorBase
+    internal class SslStreamSecurityUpgradeAcceptor : StreamSecurityUpgradeAcceptorBase
     {
-        SslStreamSecurityUpgradeProvider parent;
-        SecurityMessageProperty clientSecurity;
+        private SslStreamSecurityUpgradeProvider parent;
+
+        private SecurityMessageProperty clientSecurity;
         // for audit
-        X509Certificate2 clientCertificate = null;
-        ChannelBinding channelBindingToken;
+        private X509Certificate2 clientCertificate = null;
+        private ChannelBinding channelBindingToken;
 
         public SslStreamSecurityUpgradeAcceptor(SslStreamSecurityUpgradeProvider parent)
             : base(FramingUpgradeString.SslOrTls)
@@ -317,7 +318,7 @@ namespace CoreWCF.Channels
         }
 
         // callback from schannel
-        bool ValidateRemoteCertificate(object sender, X509Certificate certificate, X509Chain chain,
+        private bool ValidateRemoteCertificate(object sender, X509Certificate certificate, X509Chain chain,
             SslPolicyErrors sslPolicyErrors)
         {
             if (parent.RequireClientCertificate)

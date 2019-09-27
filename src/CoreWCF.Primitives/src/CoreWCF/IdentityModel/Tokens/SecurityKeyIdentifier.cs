@@ -10,9 +10,9 @@ namespace CoreWCF.IdentityModel.Tokens
 {
     internal class SecurityKeyIdentifier : IEnumerable<SecurityKeyIdentifierClause>
     {
-        const int InitialSize = 2;
-        readonly List<SecurityKeyIdentifierClause> clauses;
-        bool isReadOnly;
+        private const int InitialSize = 2;
+        private readonly List<SecurityKeyIdentifierClause> clauses;
+        private bool isReadOnly;
 
         public SecurityKeyIdentifier()
         {

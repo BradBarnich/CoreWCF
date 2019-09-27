@@ -6,12 +6,12 @@ namespace CoreWCF.Channels
 {
     public abstract class Binding : IDefaultCommunicationTimeouts
     {
-        TimeSpan closeTimeout = ServiceDefaults.CloseTimeout;
-        string name;
-        string namespaceIdentifier;
-        TimeSpan openTimeout = ServiceDefaults.OpenTimeout;
-        TimeSpan receiveTimeout = ServiceDefaults.ReceiveTimeout;
-        TimeSpan sendTimeout = ServiceDefaults.SendTimeout;
+        private TimeSpan closeTimeout = ServiceDefaults.CloseTimeout;
+        private string name;
+        private string namespaceIdentifier;
+        private TimeSpan openTimeout = ServiceDefaults.OpenTimeout;
+        private TimeSpan receiveTimeout = ServiceDefaults.ReceiveTimeout;
+        private TimeSpan sendTimeout = ServiceDefaults.SendTimeout;
         internal const string DefaultNamespace = NamingHelper.DefaultNamespace;
 
         protected Binding()
@@ -63,14 +63,18 @@ namespace CoreWCF.Channels
             get
             {
                 if (name == null)
+                {
                     name = GetType().Name;
+                }
 
                 return name;
             }
             set
             {
                 if (string.IsNullOrEmpty(value))
+                {
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgument("value", SR.SFXBindingNameCannotBeNullOrEmpty);
+                }
 
                 name = value;
             }
@@ -158,7 +162,7 @@ namespace CoreWCF.Channels
             }
         }
 
-        void ValidateSecurityCapabilities(ISecurityCapabilities runtimeSecurityCapabilities, BindingParameterCollection parameters)
+        private void ValidateSecurityCapabilities(ISecurityCapabilities runtimeSecurityCapabilities, BindingParameterCollection parameters)
         {
             ISecurityCapabilities bindingSecurityCapabilities = GetProperty<ISecurityCapabilities>(parameters);
 
@@ -191,7 +195,7 @@ namespace CoreWCF.Channels
             return context.GetInnerProperty<T>();
         }
 
-        void EnsureInvariants()
+        private void EnsureInvariants()
         {
             EnsureInvariants(null);
         }
@@ -205,7 +209,9 @@ namespace CoreWCF.Channels
             {
                 transport = elements[index] as TransportBindingElement;
                 if (transport != null)
+                {
                     break;
+                }
             }
 
             if (transport == null)

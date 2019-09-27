@@ -34,7 +34,10 @@ namespace CoreWCF
             //}
             // add encoding
             if (MessageEncoding == WSMessageEncoding.Text)
+            {
                 bindingElements.Add(TextMessageEncodingBindingElement);
+            }
+
             // add transport (http or https)
             bindingElements.Add(GetTransport());
 

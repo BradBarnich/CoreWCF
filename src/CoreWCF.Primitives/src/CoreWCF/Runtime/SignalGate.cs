@@ -3,9 +3,9 @@ using System.Threading;
 
 namespace CoreWCF.Runtime
 {
-    class SignalGate
+    internal class SignalGate
     {
-        int state;
+        private int state;
 
         public SignalGate()
         {
@@ -75,12 +75,12 @@ namespace CoreWCF.Runtime
         }
 
         // This is factored out to allow Signal and Unlock to be inlined.
-        void ThrowInvalidSignalGateState()
+        private void ThrowInvalidSignalGateState()
         {
             throw Fx.Exception.AsError(new InvalidOperationException(SR.InvalidSemaphoreExit));
         }
 
-        static class GateState
+        private static class GateState
         {
             public const int Locked = 0;
             public const int SignalPending = 1;
@@ -89,9 +89,9 @@ namespace CoreWCF.Runtime
         }
     }
 
-    class SignalGate<T> : SignalGate
+    internal class SignalGate<T> : SignalGate
     {
-        T result;
+        private T result;
 
         public SignalGate()
             : base()

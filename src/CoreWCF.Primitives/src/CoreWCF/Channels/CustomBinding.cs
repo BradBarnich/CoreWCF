@@ -4,7 +4,7 @@ namespace CoreWCF.Channels
 {
     public class CustomBinding : Binding
     {
-        BindingElementCollection _bindingElements = new BindingElementCollection();
+        private BindingElementCollection _bindingElements = new BindingElementCollection();
 
         public CustomBinding()
         {
@@ -55,7 +55,7 @@ namespace CoreWCF.Channels
         {
         }
 
-        static BindingElementCollection SafeCreateBindingElements(Binding binding)
+        private static BindingElementCollection SafeCreateBindingElements(Binding binding)
         {
             if (binding == null)
             {

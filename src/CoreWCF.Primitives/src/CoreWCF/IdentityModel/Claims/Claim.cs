@@ -12,27 +12,35 @@ namespace CoreWCF.IdentityModel.Claims
 {
     public class Claim
     {
-        static Claim system;
+        private static Claim system;
 
-        [DataMember(Name = "ClaimType")]
-        string claimType;
-        [DataMember(Name = "Resource")]
-        object resource;
-        [DataMember(Name = "Right")]
-        string right;
+        [DataMember(Name = "ClaimType")] private string claimType;
+        [DataMember(Name = "Resource")] private object resource;
+        [DataMember(Name = "Right")] private string right;
 
-        IEqualityComparer<Claim> comparer;
+        private IEqualityComparer<Claim> comparer;
 
-        Claim(string claimType, object resource, string right, IEqualityComparer<Claim> comparer)
+        private Claim(string claimType, object resource, string right, IEqualityComparer<Claim> comparer)
         {
             if (claimType == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(claimType));
+            }
+
             if (claimType.Length <= 0)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgument("claimType", SR.ArgumentCannotBeEmptyString);
+            }
+
             if (right == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(right));
+            }
+
             if (right.Length <= 0)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgument("right", SR.ArgumentCannotBeEmptyString);
+            }
 
             // String interning is only supported in .Net standard 1.7. Api tool says this is slow?
             //this.claimType = StringUtil.OptimizeString(claimType);
@@ -60,7 +68,9 @@ namespace CoreWCF.IdentityModel.Claims
             get
             {
                 if (system == null)
+                {
                     system = new Claim(ClaimTypes.System, XsiConstants.System, Rights.Identity);
+                }
 
                 return system;
             }
@@ -85,7 +95,9 @@ namespace CoreWCF.IdentityModel.Claims
         public static Claim CreateDnsClaim(string dns)
         {
             if (dns == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(dns));
+            }
 
             return new Claim(ClaimTypes.Dns, dns, Rights.PossessProperty, ClaimComparer.Dns);
         }
@@ -109,7 +121,9 @@ namespace CoreWCF.IdentityModel.Claims
         public static Claim CreateMailAddressClaim(MailAddress mailAddress)
         {
             if (mailAddress == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(mailAddress));
+            }
 
             return new Claim(ClaimTypes.Email, mailAddress, Rights.PossessProperty);
         }
@@ -117,7 +131,9 @@ namespace CoreWCF.IdentityModel.Claims
         public static Claim CreateNameClaim(string name)
         {
             if (name == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(name));
+            }
 
             return new Claim(ClaimTypes.Name, name, Rights.PossessProperty);
         }
@@ -125,7 +141,9 @@ namespace CoreWCF.IdentityModel.Claims
         public static Claim CreateRsaClaim(RSA rsa)
         {
             if (rsa == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(rsa));
+            }
 
             return new Claim(ClaimTypes.Rsa, rsa, Rights.PossessProperty, ClaimComparer.Rsa);
         }
@@ -133,7 +151,9 @@ namespace CoreWCF.IdentityModel.Claims
         public static Claim CreateSpnClaim(string spn)
         {
             if (spn == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(spn));
+            }
 
             return new Claim(ClaimTypes.Spn, spn, Rights.PossessProperty);
         }
@@ -141,7 +161,9 @@ namespace CoreWCF.IdentityModel.Claims
         public static Claim CreateThumbprintClaim(byte[] thumbprint)
         {
             if (thumbprint == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(thumbprint));
+            }
 
             return new Claim(ClaimTypes.Thumbprint, SecurityUtils.CloneBuffer(thumbprint), Rights.PossessProperty, ClaimComparer.Thumbprint);
         }
@@ -149,7 +171,9 @@ namespace CoreWCF.IdentityModel.Claims
         public static Claim CreateUpnClaim(string upn)
         {
             if (upn == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(upn));
+            }
 
             return new Claim(ClaimTypes.Upn, upn, Rights.PossessProperty, ClaimComparer.Upn);
         }
@@ -157,7 +181,9 @@ namespace CoreWCF.IdentityModel.Claims
         public static Claim CreateUriClaim(Uri uri)
         {
             if (uri == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(uri));
+            }
 
             return new Claim(ClaimTypes.Uri, uri, Rights.PossessProperty);
         }
@@ -165,7 +191,9 @@ namespace CoreWCF.IdentityModel.Claims
         public static Claim CreateWindowsSidClaim(SecurityIdentifier sid)
         {
             if (sid == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(sid));
+            }
 
             return new Claim(ClaimTypes.Sid, sid, Rights.PossessProperty);
         }
@@ -173,7 +201,9 @@ namespace CoreWCF.IdentityModel.Claims
         public static Claim CreateX500DistinguishedNameClaim(X500DistinguishedName x500DistinguishedName)
         {
             if (x500DistinguishedName == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(x500DistinguishedName));
+            }
 
             return new Claim(ClaimTypes.X500DistinguishedName, x500DistinguishedName, Rights.PossessProperty, ClaimComparer.X500DistinguishedName);
         }
@@ -181,14 +211,20 @@ namespace CoreWCF.IdentityModel.Claims
         public override bool Equals(object obj)
         {
             if (comparer == null)
+            {
                 comparer = ClaimComparer.GetComparer(claimType);
+            }
+
             return comparer.Equals(this, obj as Claim);
         }
 
         public override int GetHashCode()
         {
             if (comparer == null)
+            {
                 comparer = ClaimComparer.GetComparer(claimType);
+            }
+
             return comparer.GetHashCode(this);
         }
 

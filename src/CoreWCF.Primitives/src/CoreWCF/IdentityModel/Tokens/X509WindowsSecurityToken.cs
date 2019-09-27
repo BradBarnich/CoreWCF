@@ -9,9 +9,9 @@ namespace CoreWCF.IdentityModel.Tokens
 {
     internal class X509WindowsSecurityToken : X509SecurityToken
     {
-        WindowsIdentity windowsIdentity;
-        bool disposed = false;
-        string authenticationType;
+        private WindowsIdentity windowsIdentity;
+        private bool disposed = false;
+        private string authenticationType;
 
         public X509WindowsSecurityToken(X509Certificate2 certificate, WindowsIdentity windowsIdentity)
             : this(certificate, windowsIdentity, null, true)
@@ -37,7 +37,9 @@ namespace CoreWCF.IdentityModel.Tokens
             : base(certificate, id, clone)
         {
             if (windowsIdentity == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(windowsIdentity));
+            }
 
             this.authenticationType = authenticationType;
             this.windowsIdentity = clone ? SecurityUtils.CloneWindowsIdentityIfNecessary(windowsIdentity, authenticationType) : windowsIdentity;

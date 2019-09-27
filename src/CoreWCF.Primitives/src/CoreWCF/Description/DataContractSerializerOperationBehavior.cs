@@ -9,15 +9,15 @@ namespace CoreWCF.Description
 {
     internal class DataContractSerializerOperationBehavior : IOperationBehavior //, IWsdlExportExtension
     {
-        readonly bool builtInOperationBehavior;
+        private readonly bool builtInOperationBehavior;
 
-        OperationDescription operation;
-        DataContractFormatAttribute dataContractFormatAttribute;
+        private OperationDescription operation;
+        private DataContractFormatAttribute dataContractFormatAttribute;
         internal bool ignoreExtensionDataObject = DataContractSerializerDefaults.IgnoreExtensionDataObject;
-        bool ignoreExtensionDataObjectSetExplicit;
+        private bool ignoreExtensionDataObjectSetExplicit;
         internal int maxItemsInObjectGraph = DataContractSerializerDefaults.MaxItemsInObjectGraph;
-        bool maxItemsInObjectGraphSetExplicit;
-        DataContractResolver dataContractResolver;
+        private bool maxItemsInObjectGraphSetExplicit;
+        private DataContractResolver dataContractResolver;
 
         public DataContractFormatAttribute DataContractFormatAttribute
         {
@@ -100,7 +100,9 @@ namespace CoreWCF.Description
             MessageDescription request = operation.Messages[0];
             MessageDescription response = null;
             if (operation.Messages.Count == 2)
+            {
                 response = operation.Messages[1];
+            }
 
             formatRequest = (request != null) && !request.IsUntypedMessage;
             formatReply = (response != null) && !response.IsUntypedMessage;
@@ -108,9 +110,13 @@ namespace CoreWCF.Description
             if (formatRequest || formatReply)
             {
                 if (PrimitiveOperationFormatter.IsContractSupported(operation))
+                {
                     return new PrimitiveOperationFormatter(operation, dataContractFormatAttribute.Style == OperationFormatStyle.Rpc);
+                }
                 else
+                {
                     return new DataContractSerializerOperationFormatter(operation, dataContractFormatAttribute, this);
+                }
             }
 
             return null;
@@ -128,13 +134,19 @@ namespace CoreWCF.Description
         void IOperationBehavior.ApplyDispatchBehavior(OperationDescription description, DispatchOperation dispatch)
         {
             if (description == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(description));
+            }
 
             if (dispatch == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(dispatch));
+            }
 
             if (dispatch.Formatter != null)
+            {
                 return;
+            }
 
             bool formatRequest;
             bool formatReply;
@@ -146,13 +158,19 @@ namespace CoreWCF.Description
         void IOperationBehavior.ApplyClientBehavior(OperationDescription description, ClientOperation proxy)
         {
             if (description == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(description));
+            }
 
             if (proxy == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(proxy));
+            }
 
             if (proxy.Formatter != null)
+            {
                 return;
+            }
 
             bool formatRequest;
             bool formatReply;

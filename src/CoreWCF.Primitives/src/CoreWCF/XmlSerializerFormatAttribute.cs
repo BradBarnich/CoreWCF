@@ -4,10 +4,10 @@ namespace CoreWCF
 {
     internal sealed class XmlSerializerFormatAttribute : Attribute
     {
-        bool supportFaults = false;
-        OperationFormatStyle style;
-        bool isStyleSet;
-        OperationFormatUse use;
+        private bool supportFaults = false;
+        private OperationFormatStyle style;
+        private bool isStyleSet;
+        private OperationFormatUse use;
 
         public bool SupportFaults
         {
@@ -34,7 +34,9 @@ namespace CoreWCF
                 ValidateOperationFormatUse(value);
                 use = value;
                 if (!isStyleSet && IsEncoded)
+                {
                     Style = OperationFormatStyle.Rpc;
+                }
             }
         }
 

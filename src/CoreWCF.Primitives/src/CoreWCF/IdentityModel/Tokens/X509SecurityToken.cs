@@ -9,12 +9,12 @@ namespace CoreWCF.IdentityModel.Tokens
 {
     internal class X509SecurityToken : SecurityToken, IDisposable
     {
-        string id;
-        X509Certificate2 certificate;
-        DateTime effectiveTime = SecurityUtils.MaxUtcDateTime;
-        DateTime expirationTime = SecurityUtils.MinUtcDateTime;
-        bool disposed = false;
-        bool disposable;
+        private string id;
+        private X509Certificate2 certificate;
+        private DateTime effectiveTime = SecurityUtils.MaxUtcDateTime;
+        private DateTime expirationTime = SecurityUtils.MinUtcDateTime;
+        private bool disposed = false;
+        private bool disposable;
 
         public X509SecurityToken(X509Certificate2 certificate)
             : this(certificate, SecurityUniqueId.Create().Value)
@@ -44,9 +44,14 @@ namespace CoreWCF.IdentityModel.Tokens
         internal X509SecurityToken(X509Certificate2 certificate, string id, bool clone, bool disposable)
         {
             if (certificate == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(certificate));
+            }
+
             if (id == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(id));
+            }
 
             this.id = id;
             this.certificate = clone ? new X509Certificate2(certificate) : certificate;
@@ -74,7 +79,10 @@ namespace CoreWCF.IdentityModel.Tokens
             {
                 ThrowIfDisposed();
                 if (effectiveTime == SecurityUtils.MaxUtcDateTime)
+                {
                     effectiveTime = certificate.NotBefore.ToUniversalTime();
+                }
+
                 return effectiveTime;
             }
         }
@@ -85,7 +93,10 @@ namespace CoreWCF.IdentityModel.Tokens
             {
                 ThrowIfDisposed();
                 if (expirationTime == SecurityUtils.MinUtcDateTime)
+                {
                     expirationTime = certificate.NotAfter.ToUniversalTime();
+                }
+
                 return expirationTime;
             }
         }

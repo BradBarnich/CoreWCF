@@ -15,14 +15,14 @@ namespace CoreWCF.IdentityModel.Claims
 {
     internal class X509CertificateClaimSet : ClaimSet, IIdentityInfo, IDisposable
     {
-        X509Certificate2 certificate;
-        DateTime expirationTime = SecurityUtils.MinUtcDateTime;
-        ClaimSet issuer;
-        X509Identity identity;
-        X509ChainElementCollection elements;
-        IList<Claim> claims;
-        int index;
-        bool disposed = false;
+        private X509Certificate2 certificate;
+        private DateTime expirationTime = SecurityUtils.MinUtcDateTime;
+        private ClaimSet issuer;
+        private X509Identity identity;
+        private X509ChainElementCollection elements;
+        private IList<Claim> claims;
+        private int index;
+        private bool disposed = false;
 
         public X509CertificateClaimSet(X509Certificate2 certificate)
             : this(certificate, true)
@@ -32,16 +32,19 @@ namespace CoreWCF.IdentityModel.Claims
         internal X509CertificateClaimSet(X509Certificate2 certificate, bool clone)
         {
             if (certificate == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(certificate));
+            }
+
             this.certificate = clone ? new X509Certificate2(certificate) : certificate;
         }
 
-        X509CertificateClaimSet(X509CertificateClaimSet from)
+        private X509CertificateClaimSet(X509CertificateClaimSet from)
             : this(from.X509Certificate, true)
         {
         }
 
-        X509CertificateClaimSet(X509ChainElementCollection elements, int index)
+        private X509CertificateClaimSet(X509ChainElementCollection elements, int index)
         {
             this.elements = elements;
             this.index = index;
@@ -74,7 +77,10 @@ namespace CoreWCF.IdentityModel.Claims
             {
                 ThrowIfDisposed();
                 if (identity == null)
+                {
                     identity = new X509Identity(certificate, false, false);
+                }
+
                 return identity;
             }
         }
@@ -85,7 +91,10 @@ namespace CoreWCF.IdentityModel.Claims
             {
                 ThrowIfDisposed();
                 if (expirationTime == SecurityUtils.MinUtcDateTime)
+                {
                     expirationTime = certificate.NotAfter.ToUniversalTime();
+                }
+
                 return expirationTime;
             }
         }
@@ -113,10 +122,13 @@ namespace CoreWCF.IdentityModel.Claims
                     }
                     // SelfSigned?
                     else if (StringComparer.OrdinalIgnoreCase.Equals(certificate.SubjectName.Name, certificate.IssuerName.Name))
+                    {
                         issuer = this;
+                    }
                     else
+                    {
                         issuer = new X500DistinguishedNameClaimSet(certificate.IssuerName);
-
+                    }
                 }
                 return issuer;
             }
@@ -161,7 +173,7 @@ namespace CoreWCF.IdentityModel.Claims
             }
         }
 
-        IList<Claim> InitializeClaimsCore()
+        private IList<Claim> InitializeClaimsCore()
         {
             List<Claim> claims = new List<Claim>();
             byte[] thumbprint = certificate.GetCertHash();
@@ -171,42 +183,56 @@ namespace CoreWCF.IdentityModel.Claims
             // Ordering SubjectName, Dns, SimpleName, Email, Upn
             string value = certificate.SubjectName.Name;
             if (!string.IsNullOrEmpty(value))
+            {
                 claims.Add(Claim.CreateX500DistinguishedNameClaim(certificate.SubjectName));
+            }
 
             claims.AddRange(GetDnsClaims(certificate));
 
             value = certificate.GetNameInfo(X509NameType.SimpleName, false);
             if (!string.IsNullOrEmpty(value))
+            {
                 claims.Add(Claim.CreateNameClaim(value));
+            }
 
             value = certificate.GetNameInfo(X509NameType.EmailName, false);
             if (!string.IsNullOrEmpty(value))
+            {
                 claims.Add(Claim.CreateMailAddressClaim(new MailAddress(value)));
+            }
 
             value = certificate.GetNameInfo(X509NameType.UpnName, false);
             if (!string.IsNullOrEmpty(value))
+            {
                 claims.Add(Claim.CreateUpnClaim(value));
+            }
 
             value = certificate.GetNameInfo(X509NameType.UrlName, false);
             if (!string.IsNullOrEmpty(value))
+            {
                 claims.Add(Claim.CreateUriClaim(new Uri(value)));
+            }
 
             RSA rsa = certificate.PublicKey.Key as RSA;
             if (rsa != null)
+            {
                 claims.Add(Claim.CreateRsaClaim(rsa));
+            }
 
             return claims;
         }
 
-        void EnsureClaims()
+        private void EnsureClaims()
         {
             if (claims != null)
+            {
                 return;
+            }
 
             claims = InitializeClaimsCore();
         }
 
-        static bool SupportedClaimType(string claimType)
+        private static bool SupportedClaimType(string claimType)
         {
             return claimType == null ||
                 ClaimTypes.Thumbprint.Equals(claimType) ||
@@ -243,7 +269,9 @@ namespace CoreWCF.IdentityModel.Claims
                 if (right == null || Rights.PossessProperty.Equals(right))
                 {
                     foreach (var claim in GetDnsClaims(certificate))
+                    {
                         yield return claim;
+                    }
                 }
             }
             else
@@ -273,7 +301,9 @@ namespace CoreWCF.IdentityModel.Claims
             // old behavior, default for <= 4.6
             string value = cert.GetNameInfo(X509NameType.DnsName, false);
             if (!string.IsNullOrEmpty(value))
+            {
                 dnsClaimEntries.Add(Claim.CreateDnsClaim(value));
+            }
 
             return dnsClaimEntries;
         }
@@ -290,7 +320,7 @@ namespace CoreWCF.IdentityModel.Claims
             return disposed ? base.ToString() : SecurityUtils.ClaimSetToString(this);
         }
 
-        void ThrowIfDisposed()
+        private void ThrowIfDisposed()
         {
             if (disposed)
             {
@@ -298,14 +328,16 @@ namespace CoreWCF.IdentityModel.Claims
             }
         }
 
-        class X500DistinguishedNameClaimSet : DefaultClaimSet, IIdentityInfo
+        private class X500DistinguishedNameClaimSet : DefaultClaimSet, IIdentityInfo
         {
-            IIdentity identity;
+            private IIdentity identity;
 
             public X500DistinguishedNameClaimSet(X500DistinguishedName x500DistinguishedName)
             {
                 if (x500DistinguishedName == null)
+                {
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(x500DistinguishedName));
+                }
 
                 identity = new X509Identity(x500DistinguishedName);
                 List<Claim> claims = new List<Claim>(2);
@@ -422,15 +454,15 @@ namespace CoreWCF.IdentityModel.Claims
         }
     }
 
-    class X509Identity : GenericIdentity, IDisposable
+    internal class X509Identity : GenericIdentity, IDisposable
     {
-        const string X509 = "X509";
-        const string Thumbprint = "; ";
-        X500DistinguishedName x500DistinguishedName;
-        X509Certificate2 certificate;
-        string name;
-        bool disposed = false;
-        bool disposable = true;
+        private const string X509 = "X509";
+        private const string Thumbprint = "; ";
+        private X500DistinguishedName x500DistinguishedName;
+        private X509Certificate2 certificate;
+        private string name;
+        private bool disposed = false;
+        private bool disposable = true;
 
         public X509Identity(X509Certificate2 certificate)
             : this(certificate, true, true)
@@ -468,30 +500,42 @@ namespace CoreWCF.IdentityModel.Claims
             }
         }
 
-        string GetName()
+        private string GetName()
         {
             if (x500DistinguishedName != null)
+            {
                 return x500DistinguishedName.Name;
+            }
 
             string value = certificate.SubjectName.Name;
             if (!string.IsNullOrEmpty(value))
+            {
                 return value;
+            }
 
             value = certificate.GetNameInfo(X509NameType.DnsName, false);
             if (!string.IsNullOrEmpty(value))
+            {
                 return value;
+            }
 
             value = certificate.GetNameInfo(X509NameType.SimpleName, false);
             if (!string.IsNullOrEmpty(value))
+            {
                 return value;
+            }
 
             value = certificate.GetNameInfo(X509NameType.EmailName, false);
             if (!string.IsNullOrEmpty(value))
+            {
                 return value;
+            }
 
             value = certificate.GetNameInfo(X509NameType.UpnName, false);
             if (!string.IsNullOrEmpty(value))
+            {
                 return value;
+            }
 
             return string.Empty;
         }
@@ -513,7 +557,7 @@ namespace CoreWCF.IdentityModel.Claims
             }
         }
 
-        void ThrowIfDisposed()
+        private void ThrowIfDisposed()
         {
             if (disposed)
             {

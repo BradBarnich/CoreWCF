@@ -5,20 +5,21 @@ namespace CoreWCF.Description
 {
     public class MessagePartDescription
     {
-        XmlName name;
-        string ns;
-        int index;
-        Type type;
-        int serializationPosition;
+        private XmlName name;
+        private string ns;
+        private int index;
+        private Type type;
+
+        private int serializationPosition;
         //ProtectionLevel protectionLevel;
         //bool hasProtectionLevel;
-        MemberInfo memberInfo;
+        private MemberInfo memberInfo;
         // TODO: Was ICustomAttributeProvider
-        CustomAttributeProvider additionalAttributesProvider;
+        private CustomAttributeProvider additionalAttributesProvider;
 
-        bool multiple;
+        private bool multiple;
         //string baseType;
-        string uniquePartName;
+        private string uniquePartName;
 
         public MessagePartDescription(string name, string ns)
         {

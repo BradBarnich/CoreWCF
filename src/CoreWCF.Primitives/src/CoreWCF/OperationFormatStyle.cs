@@ -6,7 +6,7 @@
         Rpc,
     }
 
-    static class OperationFormatStyleHelper
+    internal static class OperationFormatStyleHelper
     {
         static public bool IsDefined(OperationFormatStyle x)
         {

@@ -13,32 +13,38 @@ namespace CoreWCF.Dispatcher
 {
     internal abstract class OperationFormatter : IClientMessageFormatter, IDispatchMessageFormatter
     {
-        MessageDescription replyDescription;
-        MessageDescription requestDescription;
-        XmlDictionaryString action;
-        XmlDictionaryString replyAction;
+        private MessageDescription replyDescription;
+        private MessageDescription requestDescription;
+        private XmlDictionaryString action;
+        private XmlDictionaryString replyAction;
         protected StreamFormatter requestStreamFormatter, replyStreamFormatter;
-        XmlDictionary dictionary;
-        string operationName;
-        static object[] emptyObjectArray = new object[0];
+        private XmlDictionary dictionary;
+        private string operationName;
+        private static object[] emptyObjectArray = new object[0];
 
         public OperationFormatter(OperationDescription description, bool isRpc, bool isEncoded)
         {
             Validate(description, isRpc, isEncoded);
             requestDescription = description.Messages[0];
             if (description.Messages.Count == 2)
+            {
                 replyDescription = description.Messages[1];
+            }
 
             int stringCount = 3 + requestDescription.Body.Parts.Count;
             if (replyDescription != null)
+            {
                 stringCount += 2 + replyDescription.Body.Parts.Count;
+            }
 
             dictionary = new XmlDictionary(stringCount * 2);
             GetActions(description, dictionary, out action, out replyAction);
             operationName = description.Name;
             requestStreamFormatter = StreamFormatter.Create(requestDescription, operationName, true/*isRequest*/);
             if (replyDescription != null)
+            {
                 replyStreamFormatter = StreamFormatter.Create(replyDescription, operationName, false/*isResponse*/);
+            }
         }
 
         protected abstract void AddHeadersToMessage(Message message, MessageDescription messageDescription, object[] parameters, bool isRequest);
@@ -55,7 +61,10 @@ namespace CoreWCF.Dispatcher
             get
             {
                 if (action != null)
+                {
                     return action.Value;
+                }
+
                 return null;
             }
         }
@@ -64,7 +73,10 @@ namespace CoreWCF.Dispatcher
             get
             {
                 if (replyAction != null)
+                {
                     return replyAction.Value;
+                }
+
                 return null;
             }
         }
@@ -97,10 +109,14 @@ namespace CoreWCF.Dispatcher
         public object DeserializeReply(Message message, object[] parameters)
         {
             if (message == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(message));
+            }
 
             if (parameters == null)
+            {
                 throw TraceUtility.ThrowHelperError(new ArgumentNullException(nameof(parameters)), message);
+            }
 
             try
             {
@@ -161,10 +177,14 @@ namespace CoreWCF.Dispatcher
         public void DeserializeRequest(Message message, object[] parameters)
         {
             if (message == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(message));
+            }
 
             if (parameters == null)
+            {
                 throw TraceUtility.ThrowHelperError(new ArgumentNullException(nameof(parameters)), message);
+            }
 
             try
             {
@@ -212,7 +232,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        object DeserializeBodyContents(Message message, object[] parameters, bool isRequest)
+        private object DeserializeBodyContents(Message message, object[] parameters, bool isRequest)
         {
             MessageDescription messageDescription;
             StreamFormatter streamFormatter;
@@ -247,10 +267,15 @@ namespace CoreWCF.Dispatcher
             object[] parts = null;
 
             if (messageVersion == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(messageVersion));
+            }
 
             if (parameters == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(parameters));
+            }
+
             if (requestDescription.IsTypedMessage)
             {
                 TypedMessageParts typedMessageParts = new TypedMessageParts(parameters[0], requestDescription);
@@ -278,10 +303,14 @@ namespace CoreWCF.Dispatcher
             object resultPart = null;
 
             if (messageVersion == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(messageVersion));
+            }
 
             if (parameters == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(parameters));
+            }
 
             if (replyDescription.IsTypedMessage)
             {
@@ -312,7 +341,7 @@ namespace CoreWCF.Dispatcher
             return msg;
         }
 
-        void SetupStreamAndMessageDescription(bool isRequest, out StreamFormatter streamFormatter, out MessageDescription messageDescription)
+        private void SetupStreamAndMessageDescription(bool isRequest, out StreamFormatter streamFormatter, out MessageDescription messageDescription)
         {
             if (isRequest)
             {
@@ -326,7 +355,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        async Task SerializeBodyContentsAsync(XmlDictionaryWriter writer, MessageVersion version, object[] parameters, object returnValue, bool isRequest)
+        private async Task SerializeBodyContentsAsync(XmlDictionaryWriter writer, MessageVersion version, object[] parameters, object returnValue, bool isRequest)
         {
             MessageDescription messageDescription;
             StreamFormatter streamFormatter;
@@ -342,7 +371,7 @@ namespace CoreWCF.Dispatcher
             SerializeBody(writer, version, RequestAction, messageDescription, returnValue, parameters, isRequest);
         }
 
-        void SerializeBodyContents(XmlDictionaryWriter writer, MessageVersion version, object[] parameters, object returnValue, bool isRequest)
+        private void SerializeBodyContents(XmlDictionaryWriter writer, MessageVersion version, object[] parameters, object returnValue, bool isRequest)
         {
             MessageDescription messageDescription;
             StreamFormatter streamFormatter;
@@ -358,7 +387,7 @@ namespace CoreWCF.Dispatcher
             SerializeBody(writer, version, RequestAction, messageDescription, returnValue, parameters, isRequest);
         }
 
-        void AddPropertiesToMessage(Message message, MessageDescription messageDescription, object[] parameters)
+        private void AddPropertiesToMessage(Message message, MessageDescription messageDescription, object[] parameters)
         {
             if (messageDescription.Properties.Count > 0)
             {
@@ -366,7 +395,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        void AddPropertiesToMessageCore(Message message, MessageDescription messageDescription, object[] parameters)
+        private void AddPropertiesToMessageCore(Message message, MessageDescription messageDescription, object[] parameters)
         {
             MessageProperties properties = message.Properties;
             MessagePropertyDescriptionCollection propertyDescriptions = messageDescription.Properties;
@@ -375,11 +404,13 @@ namespace CoreWCF.Dispatcher
                 MessagePropertyDescription propertyDescription = propertyDescriptions[i];
                 object parameter = parameters[propertyDescription.Index];
                 if (null != parameter)
+                {
                     properties.Add(propertyDescription.Name, parameter);
+                }
             }
         }
 
-        void GetPropertiesFromMessage(Message message, MessageDescription messageDescription, object[] parameters)
+        private void GetPropertiesFromMessage(Message message, MessageDescription messageDescription, object[] parameters)
         {
             if (messageDescription.Properties.Count > 0)
             {
@@ -387,7 +418,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        void GetPropertiesFromMessageCore(Message message, MessageDescription messageDescription, object[] parameters)
+        private void GetPropertiesFromMessageCore(Message message, MessageDescription messageDescription, object[] parameters)
         {
             MessageProperties properties = message.Properties;
             MessagePropertyDescriptionCollection propertyDescriptions = messageDescription.Properties;
@@ -408,7 +439,10 @@ namespace CoreWCF.Dispatcher
             relay = headerDescription.Relay;
 
             if (headerDescription.TypedHeader && parameterValue != null)
+            {
                 parameterValue = TypedHeaderManager.GetContent(headerDescription.Type, parameterValue, out mustUnderstand, out relay, out actor);
+            }
+
             return parameterValue;
         }
 
@@ -445,20 +479,30 @@ namespace CoreWCF.Dispatcher
                     if (isRpc && operation.IsValidateRpcWrapperName)
                     {
                         if (!isEncoded)
+                        {
                             throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.Format(SR.SFxTypedMessageCannotBeRpcLiteral, operation.Name)));
-
+                        }
                     }
                     hasTypedOrUntypedMessage = true;
                 }
                 else if (message.IsVoid)
+                {
                     hasVoid = true;
+                }
                 else
+                {
                     hasParameter = true;
+                }
             }
             if (hasParameter && hasTypedOrUntypedMessage)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.Format(SR.SFxTypedOrUntypedMessageCannotBeMixedWithParameters, operation.Name)));
+            }
+
             if (isRpc && hasTypedOrUntypedMessage && hasVoid)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.Format(SR.SFxTypedOrUntypedMessageCannotBeMixedWithVoidInRpc, operation.Name)));
+            }
         }
 
         internal static void GetActions(OperationDescription description, XmlDictionary dictionary, out XmlDictionaryString action, out XmlDictionaryString replyAction)
@@ -466,18 +510,34 @@ namespace CoreWCF.Dispatcher
             string actionString, replyActionString;
             actionString = description.Messages[0].Action;
             if (actionString == MessageHeaders.WildcardAction)
+            {
                 actionString = null;
+            }
+
             if (!description.IsOneWay)
+            {
                 replyActionString = description.Messages[1].Action;
+            }
             else
+            {
                 replyActionString = null;
+            }
+
             if (replyActionString == MessageHeaders.WildcardAction)
+            {
                 replyActionString = null;
+            }
+
             action = replyAction = null;
             if (actionString != null)
+            {
                 action = AddToDictionary(dictionary, actionString);
+            }
+
             if (replyActionString != null)
+            {
                 replyAction = AddToDictionary(dictionary, replyActionString);
+            }
         }
 
         internal static NetDispatcherFaultException CreateDeserializationFailedFault(string reason, Exception innerException)
@@ -497,10 +557,10 @@ namespace CoreWCF.Dispatcher
             xmlReader.Skip();
         }
 
-        class TypedMessageParts
+        private class TypedMessageParts
         {
-            object instance;
-            MemberInfo[] members;
+            private object instance;
+            private MemberInfo[] members;
 
             public TypedMessageParts(object instance, MessageDescription description)
             {
@@ -517,18 +577,24 @@ namespace CoreWCF.Dispatcher
                 members = new MemberInfo[description.Body.Parts.Count + description.Properties.Count + description.Headers.Count];
 
                 foreach (MessagePartDescription part in description.Headers)
+                {
                     members[part.Index] = part.MemberInfo;
+                }
 
                 foreach (MessagePartDescription part in description.Properties)
+                {
                     members[part.Index] = part.MemberInfo;
+                }
 
                 foreach (MessagePartDescription part in description.Body.Parts)
+                {
                     members[part.Index] = part.MemberInfo;
+                }
 
                 this.instance = instance;
             }
 
-            object GetValue(int index)
+            private object GetValue(int index)
             {
                 MemberInfo memberInfo = members[index];
                 PropertyInfo propertyInfo = memberInfo as PropertyInfo;
@@ -542,7 +608,7 @@ namespace CoreWCF.Dispatcher
                 }
             }
 
-            void SetValue(object value, int index)
+            private void SetValue(object value, int index)
             {
                 MemberInfo memberInfo = members[index];
                 PropertyInfo propertyInfo = memberInfo as PropertyInfo;
@@ -580,7 +646,7 @@ namespace CoreWCF.Dispatcher
 
         internal class OperationFormatterMessage : BodyWriterMessage
         {
-            OperationFormatter operationFormatter;
+            private OperationFormatter operationFormatter;
             public OperationFormatterMessage(OperationFormatter operationFormatter, MessageVersion version, ActionHeader action,
                object[] parameters, object returnValue, bool isRequest)
                 : base(version, action, new OperationFormatterBodyWriter(operationFormatter, version, parameters, returnValue, isRequest))
@@ -591,7 +657,7 @@ namespace CoreWCF.Dispatcher
 
             public OperationFormatterMessage(MessageVersion version, string action, BodyWriter bodyWriter) : base(version, action, bodyWriter) { }
 
-            OperationFormatterMessage(MessageHeaders headers, KeyValuePair<string, object>[] properties, OperationFormatterBodyWriter bodyWriter)
+            private OperationFormatterMessage(MessageHeaders headers, KeyValuePair<string, object>[] properties, OperationFormatterBodyWriter bodyWriter)
                 : base(headers, properties, bodyWriter)
             {
                 operationFormatter = bodyWriter.OperationFormatter;
@@ -619,13 +685,13 @@ namespace CoreWCF.Dispatcher
                 return new OperationFormatterMessageBuffer(base.Headers, properties, bufferedBodyWriter);
             }
 
-            class OperationFormatterBodyWriter : BodyWriter
+            private class OperationFormatterBodyWriter : BodyWriter
             {
-                bool isRequest;
-                OperationFormatter operationFormatter;
-                object[] parameters;
-                object returnValue;
-                MessageVersion version;
+                private bool isRequest;
+                private OperationFormatter operationFormatter;
+                private object[] parameters;
+                private object returnValue;
+                private MessageVersion version;
 
                 public OperationFormatterBodyWriter(OperationFormatter operationFormatter, MessageVersion version,
                     object[] parameters, object returnValue, bool isRequest)
@@ -638,12 +704,12 @@ namespace CoreWCF.Dispatcher
                     this.version = version;
                 }
 
-                object ThisLock
+                private object ThisLock
                 {
                     get { return this; }
                 }
 
-                static bool AreParametersBuffered(bool isRequest, OperationFormatter operationFormatter)
+                private static bool AreParametersBuffered(bool isRequest, OperationFormatter operationFormatter)
                 {
                     StreamFormatter streamFormatter = isRequest ? operationFormatter.requestStreamFormatter : operationFormatter.replyStreamFormatter;
                     return streamFormatter == null;
@@ -668,7 +734,7 @@ namespace CoreWCF.Dispatcher
                 }
             }
 
-            class OperationFormatterMessageBuffer : BodyWriterMessageBuffer
+            private class OperationFormatterMessageBuffer : BodyWriterMessageBuffer
             {
                 public OperationFormatterMessageBuffer(MessageHeaders headers,
                     KeyValuePair<string, object>[] properties, BodyWriter bodyWriter)
@@ -680,11 +746,17 @@ namespace CoreWCF.Dispatcher
                 {
                     OperationFormatterBodyWriter operationFormatterBodyWriter = base.BodyWriter as OperationFormatterBodyWriter;
                     if (operationFormatterBodyWriter == null)
+                    {
                         return base.CreateMessage();
+                    }
+
                     lock (ThisLock)
                     {
                         if (base.Closed)
+                        {
                             throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(CreateBufferDisposedException());
+                        }
+
                         return new OperationFormatterMessage(base.Headers, base.Properties, operationFormatterBodyWriter);
                     }
                 }
@@ -702,9 +774,13 @@ namespace CoreWCF.Dispatcher
                 this.operationFormatter = operationFormatter;
                 this.version = version;
                 if (actor != null)
+                {
                     innerHeader = MessageHeader.CreateHeader(name, ns, null/*headerValue*/, mustUnderstand, actor, relay);
+                }
                 else
+                {
                     innerHeader = MessageHeader.CreateHeader(name, ns, null/*headerValue*/, mustUnderstand, "", relay);
+                }
             }
 
 
@@ -789,7 +865,7 @@ namespace CoreWCF.Dispatcher
         internal class QNameComparer : IEqualityComparer<QName>
         {
             static internal QNameComparer Singleton = new QNameComparer();
-            QNameComparer() { }
+            private QNameComparer() { }
 
             public bool Equals(QName x, QName y)
             {
@@ -812,7 +888,10 @@ namespace CoreWCF.Dispatcher
             {
                 MessageHeaderDescription message;
                 if (base.TryGetValue(new QName(name, ns), out message))
+                {
                     return message;
+                }
+
                 return null;
             }
         }

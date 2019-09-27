@@ -7,10 +7,8 @@ namespace CoreWCF.IdentityModel.Claims
     [DataContract(Namespace = XsiConstants.Namespace)]
     internal class DefaultClaimSet : ClaimSet
     {
-        [DataMember(Name = "Issuer")]
-        ClaimSet issuer;
-        [DataMember(Name = "Claims")]
-        IList<Claim> claims;
+        [DataMember(Name = "Issuer")] private ClaimSet issuer;
+        [DataMember(Name = "Claims")] private IList<Claim> claims;
 
         public DefaultClaimSet(params Claim[] claims)
         {
@@ -50,7 +48,9 @@ namespace CoreWCF.IdentityModel.Claims
         public override bool ContainsClaim(Claim claim)
         {
             if (claim == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(claim));
+            }
 
             for (int i = 0; i < claims.Count; ++i)
             {
@@ -87,9 +87,14 @@ namespace CoreWCF.IdentityModel.Claims
         protected void Initialize(ClaimSet issuer, IList<Claim> claims)
         {
             if (issuer == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(issuer));
+            }
+
             if (claims == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(claims));
+            }
 
             this.issuer = issuer;
             this.claims = claims;

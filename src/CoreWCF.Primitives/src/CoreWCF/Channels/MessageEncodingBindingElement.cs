@@ -66,7 +66,9 @@ namespace CoreWCF.Channels
         {
             MessageEncodingBindingElement encoding = b as MessageEncodingBindingElement;
             if (encoding == null)
+            {
                 return false;
+            }
 
             return true;
         }

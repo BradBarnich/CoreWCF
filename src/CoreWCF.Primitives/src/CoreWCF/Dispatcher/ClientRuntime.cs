@@ -15,22 +15,22 @@ namespace CoreWCF.Dispatcher
         //bool addTransactionFlowProperties = true;
         internal SynchronizedCollection<IClientMessageInspector> messageInspectors;
         internal SynchronizedKeyedCollection<string, ClientOperation> operations;
-        Type callbackProxyType;
-        ProxyBehaviorCollection<IChannelInitializer> channelInitializers;
-        string contractName;
-        string contractNamespace;
-        Type contractProxyType;
-        DispatchRuntime dispatchRuntime;
-        IdentityVerifier identityVerifier;
+        private Type callbackProxyType;
+        private ProxyBehaviorCollection<IChannelInitializer> channelInitializers;
+        private string contractName;
+        private string contractNamespace;
+        private Type contractProxyType;
+        private DispatchRuntime dispatchRuntime;
+        private IdentityVerifier identityVerifier;
 
-        IClientOperationSelector operationSelector;
-        ImmutableClientRuntime runtime;
-        ClientOperation unhandled;
-        bool useSynchronizationContext = true;
-        Uri via;
-        SharedRuntimeState shared;
-        int maxFaultSize;
-        bool messageVersionNoneFaultsEnabled;
+        private IClientOperationSelector operationSelector;
+        private ImmutableClientRuntime runtime;
+        private ClientOperation unhandled;
+        private bool useSynchronizationContext = true;
+        private Uri via;
+        private SharedRuntimeState shared;
+        private int maxFaultSize;
+        private bool messageVersionNoneFaultsEnabled;
 
         internal ClientRuntime(DispatchRuntime dispatchRuntime, SharedRuntimeState shared)
             : this(dispatchRuntime.EndpointDispatcher.ContractName,
@@ -38,7 +38,9 @@ namespace CoreWCF.Dispatcher
                    shared)
         {
             if (dispatchRuntime == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(dispatchRuntime));
+            }
 
             this.dispatchRuntime = dispatchRuntime;
             this.shared = shared;
@@ -52,7 +54,7 @@ namespace CoreWCF.Dispatcher
             Fx.Assert(!shared.IsOnServer, "Client constructor called on server?");
         }
 
-        ClientRuntime(string contractName, string contractNamespace, SharedRuntimeState shared)
+        private ClientRuntime(string contractName, string contractNamespace, SharedRuntimeState shared)
         {
             this.contractName = contractName;
             this.contractNamespace = contractNamespace;
@@ -194,7 +196,9 @@ namespace CoreWCF.Dispatcher
             get
             {
                 if (dispatchRuntime == null)
+                {
                     dispatchRuntime = new DispatchRuntime(this, shared);
+                }
 
                 return dispatchRuntime;
             }
@@ -289,7 +293,9 @@ namespace CoreWCF.Dispatcher
                     int max = 0;
 
                     for (int i = 0; i < operations.Count; i++)
+                    {
                         max = System.Math.Max(max, operations[i].ParameterInspectors.Count);
+                    }
 
                     return max;
                 }
@@ -375,7 +381,9 @@ namespace CoreWCF.Dispatcher
             lock (ThisLock)
             {
                 if (runtime == null)
+                {
                     runtime = new ImmutableClientRuntime(this);
+                }
 
                 return runtime;
             }
@@ -443,9 +451,9 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        class ProxyBehaviorCollection<T> : SynchronizedCollection<T>
+        private class ProxyBehaviorCollection<T> : SynchronizedCollection<T>
         {
-            ClientRuntime outer;
+            private ClientRuntime outer;
 
             internal ProxyBehaviorCollection(ClientRuntime outer)
                 : base(outer.ThisLock)
@@ -488,9 +496,9 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        class OperationCollection : SynchronizedKeyedCollection<string, ClientOperation>
+        private class OperationCollection : SynchronizedKeyedCollection<string, ClientOperation>
         {
-            ClientRuntime outer;
+            private ClientRuntime outer;
 
             internal OperationCollection(ClientRuntime outer)
                 : base(outer.ThisLock)
@@ -512,9 +520,14 @@ namespace CoreWCF.Dispatcher
             protected override void InsertItem(int index, ClientOperation item)
             {
                 if (item == null)
+                {
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(item));
+                }
+
                 if (item.Parent != outer)
+                {
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgument(SR.SFxMismatchedOperationParent);
+                }
 
                 outer.InvalidateRuntime();
                 base.InsertItem(index, item);
@@ -529,9 +542,14 @@ namespace CoreWCF.Dispatcher
             protected override void SetItem(int index, ClientOperation item)
             {
                 if (item == null)
+                {
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(item));
+                }
+
                 if (item.Parent != outer)
+                {
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgument(SR.SFxMismatchedOperationParent);
+                }
 
                 outer.InvalidateRuntime();
                 base.SetItem(index, item);
@@ -545,9 +563,9 @@ namespace CoreWCF.Dispatcher
         }
 
 
-        class OperationCollectionWrapper : KeyedCollection<string, ClientOperation>
+        private class OperationCollectionWrapper : KeyedCollection<string, ClientOperation>
         {
-            OperationCollection inner;
+            private OperationCollection inner;
             internal OperationCollectionWrapper(OperationCollection inner) { this.inner = inner; }
             protected override void ClearItems() { inner.InternalClearItems(); }
             protected override string GetKeyForItem(ClientOperation item) { return inner.InternalGetKeyForItem(item); }

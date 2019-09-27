@@ -44,7 +44,9 @@ namespace CoreWCF
         public SpnEndpointIdentity(string spnName)
         {
             if (spnName == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(spnName));
+            }
 
             base.Initialize(Claim.CreateSpnClaim(spnName));
         }
@@ -52,10 +54,14 @@ namespace CoreWCF
         public SpnEndpointIdentity(Claim identity)
         {
             if (identity == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(identity));
+            }
 
             if (!ClaimTypes.Spn.Equals(identity.ClaimType))
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgument(SR.Format(SR.UnrecognizedClaimTypeForIdentity, identity.ClaimType, ClaimTypes.Spn));
+            }
 
             base.Initialize(identity);
         }
@@ -63,7 +69,9 @@ namespace CoreWCF
         internal override void WriteContentsTo(XmlDictionaryWriter writer)
         {
             if (writer == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(writer));
+            }
 
             writer.WriteElementString(XD.AddressingDictionary.Spn, XD.AddressingDictionary.IdentityExtensionNamespace, (string)IdentityClaim.Resource);
         }
@@ -118,10 +126,15 @@ namespace CoreWCF
                         catch (Exception e)
                         {
                             // Always immediately rethrow fatal exceptions.
-                            if (Fx.IsFatal(e)) throw;
+                            if (Fx.IsFatal(e))
+                            {
+                                throw;
+                            }
 
                             if (e is NullReferenceException || e is SEHException)
+                            {
                                 throw;
+                            }
 
                             //SecurityTraceRecordHelper.TraceSpnToSidMappingFailure(spn, e);
                         }

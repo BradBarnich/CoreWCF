@@ -6,9 +6,10 @@ namespace CoreWCF
     [AttributeUsage(ServiceModelAttributeTargets.MessageContract, AllowMultiple = false)]
     public sealed class MessageContractAttribute : Attribute
     {
-        bool isWrapped = true;
-        string wrappedName;
-        string wrappedNs;
+        private bool isWrapped = true;
+        private string wrappedName;
+
+        private string wrappedNs;
         //ProtectionLevel protectionLevel = ProtectionLevel.None;
         //bool hasProtectionLevel = false;
 
@@ -48,10 +49,16 @@ namespace CoreWCF
             set
             {
                 if (value == null)
+                {
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(value));
+                }
+
                 if (value == string.Empty)
+                {
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(value),
                         SR.SFxWrapperNameCannotBeEmpty));
+                }
+
                 wrappedName = value;
             }
         }
@@ -65,7 +72,10 @@ namespace CoreWCF
             set
             {
                 if (!string.IsNullOrEmpty(value))
+                {
                     NamingHelper.CheckUriProperty(value, "WrapperNamespace");
+                }
+
                 wrappedNs = value;
             }
         }

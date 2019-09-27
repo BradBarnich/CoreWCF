@@ -4,7 +4,7 @@ namespace CoreWCF.Dispatcher
 {
     internal class SharedRuntimeState
     {
-        bool _isImmutable;
+        private bool _isImmutable;
 
         internal SharedRuntimeState(bool isOnServer)
         {

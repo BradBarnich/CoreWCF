@@ -5,11 +5,11 @@ namespace CoreWCF.Security
 {
     public sealed class X509CertificateRecipientServiceCredential
     {
-        X509Certificate2 certificate;
+        private X509Certificate2 certificate;
         internal const StoreLocation DefaultStoreLocation = StoreLocation.LocalMachine;
         internal const StoreName DefaultStoreName = StoreName.My;
         internal const X509FindType DefaultFindType = X509FindType.FindBySubjectDistinguishedName;
-        bool isReadOnly;
+        private bool isReadOnly;
 
         internal X509CertificateRecipientServiceCredential()
         {
@@ -63,7 +63,7 @@ namespace CoreWCF.Security
             isReadOnly = true;
         }
 
-        void ThrowIfImmutable()
+        private void ThrowIfImmutable()
         {
             if (isReadOnly)
             {

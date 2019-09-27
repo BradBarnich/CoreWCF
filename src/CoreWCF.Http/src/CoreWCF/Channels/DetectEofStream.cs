@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 
 namespace CoreWCF.Channels
 {
-    abstract class DetectEofStream : DelegatingStream
+    internal abstract class DetectEofStream : DelegatingStream
     {
-        bool _isAtEof;
+        private bool _isAtEof;
 
         protected DetectEofStream(Stream stream)
             : base(stream)

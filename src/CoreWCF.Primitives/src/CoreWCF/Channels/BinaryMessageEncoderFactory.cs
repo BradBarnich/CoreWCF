@@ -8,29 +8,29 @@ using CoreWCF.Xml;
 
 namespace CoreWCF.Channels
 {
-    class BinaryMessageEncoderFactory : MessageEncoderFactory
+    internal class BinaryMessageEncoderFactory : MessageEncoderFactory
     {
-        const int maxPooledXmlReaderPerMessage = 2;
+        private const int maxPooledXmlReaderPerMessage = 2;
 
-        BinaryMessageEncoder messageEncoder;
-        MessageVersion messageVersion;
-        int maxReadPoolSize;
-        int maxWritePoolSize;
-        CompressionFormat compressionFormat;
+        private BinaryMessageEncoder messageEncoder;
+        private MessageVersion messageVersion;
+        private int maxReadPoolSize;
+        private int maxWritePoolSize;
+        private CompressionFormat compressionFormat;
 
         // Double-checked locking pattern requires volatile for read/write synchronization
         //volatile SynchronizedPool<XmlDictionaryWriter> streamedWriterPool;
         //volatile SynchronizedPool<XmlDictionaryReader> streamedReaderPool;
-        volatile SynchronizedPool<BinaryBufferedMessageData> bufferedDataPool;
-        volatile SynchronizedPool<BinaryBufferedMessageWriter> bufferedWriterPool;
-        volatile SynchronizedPool<RecycledMessageState> recycledStatePool;
+        private volatile SynchronizedPool<BinaryBufferedMessageData> bufferedDataPool;
+        private volatile SynchronizedPool<BinaryBufferedMessageWriter> bufferedWriterPool;
+        private volatile SynchronizedPool<RecycledMessageState> recycledStatePool;
 
-        object thisLock;
-        int maxSessionSize;
-        OnXmlDictionaryReaderClose onStreamedReaderClose;
-        XmlDictionaryReaderQuotas readerQuotas;
-        XmlDictionaryReaderQuotas bufferedReadReaderQuotas;
-        BinaryVersion binaryVersion;
+        private object thisLock;
+        private int maxSessionSize;
+        private OnXmlDictionaryReaderClose onStreamedReaderClose;
+        private XmlDictionaryReaderQuotas readerQuotas;
+        private XmlDictionaryReaderQuotas bufferedReadReaderQuotas;
+        private BinaryVersion binaryVersion;
 
         public BinaryMessageEncoderFactory(MessageVersion messageVersion, int maxReadPoolSize, int maxWritePoolSize, int maxSessionSize,
             XmlDictionaryReaderQuotas readerQuotas, long maxReceivedMessageSize, BinaryVersion version, CompressionFormat compressionFormat)
@@ -101,18 +101,18 @@ namespace CoreWCF.Channels
             get { return compressionFormat; }
         }
 
-        long MaxReceivedMessageSize
+        private long MaxReceivedMessageSize
         {
             get;
             set;
         }
 
-        object ThisLock
+        private object ThisLock
         {
             get { return thisLock; }
         }
 
-        SynchronizedPool<RecycledMessageState> RecycledStatePool
+        private SynchronizedPool<RecycledMessageState> RecycledStatePool
         {
             get
             {
@@ -136,7 +136,7 @@ namespace CoreWCF.Channels
             return new BinaryMessageEncoder(this, true, maxSessionSize);
         }
 
-        XmlDictionaryWriter TakeStreamedWriter(Stream stream)
+        private XmlDictionaryWriter TakeStreamedWriter(Stream stream)
         {
             return XmlDictionaryWriter.CreateBinaryWriter(stream, binaryVersion.Dictionary, null, false);
             // TODO: Revert once IXmlBinaryWriterInitializer is available
@@ -163,13 +163,13 @@ namespace CoreWCF.Channels
             //return xmlWriter;
         }
 
-        void ReturnStreamedWriter(XmlDictionaryWriter xmlWriter)
+        private void ReturnStreamedWriter(XmlDictionaryWriter xmlWriter)
         {
             xmlWriter.Dispose();
             //streamedWriterPool.Return(xmlWriter);
         }
 
-        BinaryBufferedMessageWriter TakeBufferedWriter()
+        private BinaryBufferedMessageWriter TakeBufferedWriter()
         {
             if (bufferedWriterPool == null)
             {
@@ -191,12 +191,12 @@ namespace CoreWCF.Channels
             return messageWriter;
         }
 
-        void ReturnMessageWriter(BinaryBufferedMessageWriter messageWriter)
+        private void ReturnMessageWriter(BinaryBufferedMessageWriter messageWriter)
         {
             bufferedWriterPool.Return(messageWriter);
         }
 
-        XmlDictionaryReader TakeStreamedReader(Stream stream)
+        private XmlDictionaryReader TakeStreamedReader(Stream stream)
         {
             return XmlDictionaryReader.CreateBinaryReader(stream,
                 binaryVersion.Dictionary,
@@ -240,12 +240,12 @@ namespace CoreWCF.Channels
             //return xmlReader;
         }
 
-        void ReturnStreamedReader(XmlDictionaryReader xmlReader)
+        private void ReturnStreamedReader(XmlDictionaryReader xmlReader)
         {
             //streamedReaderPool.Return(xmlReader);
         }
 
-        BinaryBufferedMessageData TakeBufferedData(BinaryMessageEncoder messageEncoder)
+        private BinaryBufferedMessageData TakeBufferedData(BinaryMessageEncoder messageEncoder)
         {
             if (bufferedDataPool == null)
             {
@@ -267,18 +267,18 @@ namespace CoreWCF.Channels
             return messageData;
         }
 
-        void ReturnBufferedData(BinaryBufferedMessageData messageData)
+        private void ReturnBufferedData(BinaryBufferedMessageData messageData)
         {
             messageData.SetMessageEncoder(null);
             bufferedDataPool.Return(messageData);
         }
 
-        class BinaryBufferedMessageData : BufferedMessageData
+        private class BinaryBufferedMessageData : BufferedMessageData
         {
-            BinaryMessageEncoderFactory factory;
-            BinaryMessageEncoder messageEncoder;
-            Pool<XmlDictionaryReader> readerPool;
-            OnXmlDictionaryReaderClose onClose;
+            private BinaryMessageEncoderFactory factory;
+            private BinaryMessageEncoder messageEncoder;
+            private Pool<XmlDictionaryReader> readerPool;
+            private OnXmlDictionaryReaderClose onClose;
 
             public BinaryBufferedMessageData(BinaryMessageEncoderFactory factory, int maxPoolSize)
                 : base(factory.RecycledStatePool)
@@ -350,11 +350,11 @@ namespace CoreWCF.Channels
             }
         }
 
-        class BinaryBufferedMessageWriter : BufferedMessageWriter
+        private class BinaryBufferedMessageWriter : BufferedMessageWriter
         {
-            XmlDictionaryWriter writer;
-            IXmlDictionary dictionary;
-            XmlBinaryWriterSession session;
+            private XmlDictionaryWriter writer;
+            private IXmlDictionary dictionary;
+            private XmlBinaryWriterSession session;
 
             public BinaryBufferedMessageWriter(IXmlDictionary dictionary)
             {
@@ -395,29 +395,30 @@ namespace CoreWCF.Channels
             }
         }
 
-        class BinaryMessageEncoder : MessageEncoder, ICompressedMessageEncoder
+        private class BinaryMessageEncoder : MessageEncoder, ICompressedMessageEncoder
         {
-            const string SupportedCompressionTypesMessageProperty = "BinaryMessageEncoder.SupportedCompressionTypes";
+            private const string SupportedCompressionTypesMessageProperty = "BinaryMessageEncoder.SupportedCompressionTypes";
 
-            BinaryMessageEncoderFactory factory;
-            bool isSession;
-            XmlBinaryWriterSessionWithQuota writerSession;
-            BinaryBufferedMessageWriter sessionMessageWriter;
-            XmlBinaryReaderSession readerSession;
+            private BinaryMessageEncoderFactory factory;
+            private bool isSession;
+            private XmlBinaryWriterSessionWithQuota writerSession;
+            private BinaryBufferedMessageWriter sessionMessageWriter;
+
+            private XmlBinaryReaderSession readerSession;
             //XmlBinaryReaderSession readerSessionForLogging;
             //bool readerSessionForLoggingIsInvalid = false;
             //int writeIdCounter;
-            int idCounter;
-            int maxSessionSize;
-            int remainingReaderSessionSize;
-            bool isReaderSessionInvalid;
-            MessagePatterns messagePatterns;
-            string contentType;
-            string normalContentType;
-            string gzipCompressedContentType;
-            string deflateCompressedContentType;
-            CompressionFormat sessionCompressionFormat;
-            readonly long maxReceivedMessageSize;
+            private int idCounter;
+            private int maxSessionSize;
+            private int remainingReaderSessionSize;
+            private bool isReaderSessionInvalid;
+            private MessagePatterns messagePatterns;
+            private string contentType;
+            private string normalContentType;
+            private string gzipCompressedContentType;
+            private string deflateCompressedContentType;
+            private CompressionFormat sessionCompressionFormat;
+            private readonly long maxReceivedMessageSize;
 
             public BinaryMessageEncoder(BinaryMessageEncoderFactory factory, bool isSession, int maxSessionSize)
             {
@@ -473,7 +474,7 @@ namespace CoreWCF.Channels
                 get { return factory.CompressionFormat != CompressionFormat.None; }
             }
 
-            ArraySegment<byte> AddSessionInformationToMessage(ArraySegment<byte> messageData, BufferManager bufferManager, int maxMessageSize)
+            private ArraySegment<byte> AddSessionInformationToMessage(ArraySegment<byte> messageData, BufferManager bufferManager, int maxMessageSize)
             {
                 int dictionarySize = 0;
                 byte[] buffer = messageData.Array;
@@ -525,7 +526,7 @@ namespace CoreWCF.Channels
                 return new ArraySegment<byte>(buffer, newOffset, newSize);
             }
 
-            ArraySegment<byte> ExtractSessionInformationFromMessage(ArraySegment<byte> messageData)
+            private ArraySegment<byte> ExtractSessionInformationFromMessage(ArraySegment<byte> messageData)
             {
                 if (isReaderSessionInvalid)
                 {
@@ -828,12 +829,12 @@ namespace CoreWCF.Channels
                 message.Properties.Add(SupportedCompressionTypesMessageProperty, supportedCompressionTypes);
             }
 
-            static bool ContentTypeEqualsOrStartsWith(string contentType, string supportedContentType)
+            private static bool ContentTypeEqualsOrStartsWith(string contentType, string supportedContentType)
             {
                 return contentType == supportedContentType || contentType.StartsWith(supportedContentType, StringComparison.OrdinalIgnoreCase);
             }
 
-            CompressionFormat CheckContentType(string contentType)
+            private CompressionFormat CheckContentType(string contentType)
             {
                 CompressionFormat compressionFormat = CompressionFormat.None;
                 if (contentType == null)
@@ -873,7 +874,7 @@ namespace CoreWCF.Channels
                 return compressionFormat;
             }
 
-            CompressionFormat CheckCompressedWrite(Message message)
+            private CompressionFormat CheckCompressedWrite(Message message)
             {
                 CompressionFormat compressionFormat = sessionCompressionFormat;
                 if (compressionFormat != CompressionFormat.None && !isSession)
@@ -896,10 +897,10 @@ namespace CoreWCF.Channels
             }
         }
 
-        class XmlBinaryWriterSessionWithQuota : XmlBinaryWriterSession
+        private class XmlBinaryWriterSessionWithQuota : XmlBinaryWriterSession
         {
-            int bytesRemaining;
-            List<XmlDictionaryString> newStrings;
+            private int bytesRemaining;
+            private List<XmlDictionaryString> newStrings;
 
             public XmlBinaryWriterSessionWithQuota(int maxSessionSize)
             {
@@ -957,9 +958,9 @@ namespace CoreWCF.Channels
         }
     }
 
-    class BinaryFormatBuilder
+    internal class BinaryFormatBuilder
     {
-        List<byte> bytes;
+        private List<byte> bytes;
 
         public BinaryFormatBuilder()
         {
@@ -1029,7 +1030,7 @@ namespace CoreWCF.Channels
             AppendNode(XmlBinaryNodeType.EndElement);
         }
 
-        void AppendKey(int key)
+        private void AppendKey(int key)
         {
             if (key < 0 || key >= 0x4000)
             {
@@ -1047,12 +1048,12 @@ namespace CoreWCF.Channels
             }
         }
 
-        void AppendNode(XmlBinaryNodeType value)
+        private void AppendNode(XmlBinaryNodeType value)
         {
             AppendByte((int)value);
         }
 
-        void AppendByte(int value)
+        private void AppendByte(int value)
         {
             if (value < 0 || value > 0xFF)
             {
@@ -1062,7 +1063,7 @@ namespace CoreWCF.Channels
             bytes.Add((byte)value);
         }
 
-        void AppendUtf8(char value)
+        private void AppendUtf8(char value)
         {
             AppendByte(1);
             AppendByte((int)value);
@@ -1078,7 +1079,7 @@ namespace CoreWCF.Channels
             return value * 2 + 1;
         }
 
-        int GetPrefixOffset(char prefix)
+        private int GetPrefixOffset(char prefix)
         {
             if (prefix < 'a' || prefix > 'z')
             {
@@ -1096,7 +1097,7 @@ namespace CoreWCF.Channels
         }
     }
 
-    static class BinaryFormatParser
+    internal static class BinaryFormatParser
     {
         public static bool IsSessionKey(int value)
         {
@@ -1220,20 +1221,20 @@ namespace CoreWCF.Channels
         }
     }
 
-    class MessagePatterns
+    internal class MessagePatterns
     {
-        static readonly byte[] commonFragment; // <Envelope><Headers><Action>
-        static readonly byte[] requestFragment1; // </Action><MessageID>
-        static readonly byte[] requestFragment2; // </MessageID><ReplyTo>...</ReplyTo><To>session-to-key</To></Headers><Body>
-        static readonly byte[] responseFragment1; // </Action><RelatesTo>
-        static readonly byte[] responseFragment2; // </RelatesTo><To>static-anonymous-key</To></Headers><Body>
-        static readonly byte[] bodyFragment; // <Envelope><Body>
-        const int ToValueSessionKey = 1;
+        private static readonly byte[] commonFragment; // <Envelope><Headers><Action>
+        private static readonly byte[] requestFragment1; // </Action><MessageID>
+        private static readonly byte[] requestFragment2; // </MessageID><ReplyTo>...</ReplyTo><To>session-to-key</To></Headers><Body>
+        private static readonly byte[] responseFragment1; // </Action><RelatesTo>
+        private static readonly byte[] responseFragment2; // </RelatesTo><To>static-anonymous-key</To></Headers><Body>
+        private static readonly byte[] bodyFragment; // <Envelope><Body>
+        private const int ToValueSessionKey = 1;
 
-        IXmlDictionary dictionary;
-        XmlBinaryReaderSession readerSession;
-        ToHeader toHeader;
-        MessageVersion messageVersion;
+        private IXmlDictionary dictionary;
+        private XmlBinaryReaderSession readerSession;
+        private ToHeader toHeader;
+        private MessageVersion messageVersion;
 
         static MessagePatterns()
         {
@@ -1474,7 +1475,7 @@ namespace CoreWCF.Channels
             return patternMessage;
         }
 
-        bool TryLookupKey(int key, out XmlDictionaryString result)
+        private bool TryLookupKey(int key, out XmlDictionaryString result)
         {
             if (BinaryFormatParser.IsSessionKey(key))
             {
@@ -1486,13 +1487,13 @@ namespace CoreWCF.Channels
             }
         }
 
-        sealed class PatternMessage : ReceivedMessage
+        private sealed class PatternMessage : ReceivedMessage
         {
-            IBufferedMessageData messageData;
-            MessageHeaders headers;
-            RecycledMessageState recycledMessageState;
-            MessageProperties properties;
-            XmlDictionaryReader reader;
+            private IBufferedMessageData messageData;
+            private MessageHeaders headers;
+            private RecycledMessageState recycledMessageState;
+            private MessageProperties properties;
+            private XmlDictionaryReader reader;
 
             public PatternMessage(IBufferedMessageData messageData, MessageVersion messageVersion)
             {
@@ -1603,7 +1604,7 @@ namespace CoreWCF.Channels
                 get { return recycledMessageState; }
             }
 
-            XmlDictionaryReader GetBufferedReaderAtBody()
+            private XmlDictionaryReader GetBufferedReaderAtBody()
             {
                 XmlDictionaryReader reader = messageData.GetMessageReader();
                 reader.ReadStartElement();
@@ -1721,15 +1722,15 @@ namespace CoreWCF.Channels
             }
         }
 
-        class PatternMessageBuffer : MessageBuffer
+        private class PatternMessageBuffer : MessageBuffer
         {
-            bool closed;
-            MessageHeaders headers;
-            IBufferedMessageData messageDataAtBody;
-            MessageVersion messageVersion;
-            KeyValuePair<string, object>[] properties;
-            object thisLock = new object();
-            RecycledMessageState recycledMessageState;
+            private bool closed;
+            private MessageHeaders headers;
+            private IBufferedMessageData messageDataAtBody;
+            private MessageVersion messageVersion;
+            private KeyValuePair<string, object>[] properties;
+            private object thisLock = new object();
+            private RecycledMessageState recycledMessageState;
 
             public PatternMessageBuffer(IBufferedMessageData messageDataAtBody, MessageVersion messageVersion,
                 KeyValuePair<string, object>[] properties, MessageHeaders headers)
@@ -1769,7 +1770,7 @@ namespace CoreWCF.Channels
                 }
             }
 
-            object ThisLock
+            private object ThisLock
             {
                 get
                 {

@@ -6,11 +6,11 @@ namespace CoreWCF.Channels
 {
     public sealed class MessageVersion
     {
-        EnvelopeVersion envelope;
-        AddressingVersion addressing;
-        static MessageVersion none;
-        static MessageVersion soap11;
-        static MessageVersion soap12Addressing10;
+        private EnvelopeVersion envelope;
+        private AddressingVersion addressing;
+        private static MessageVersion none;
+        private static MessageVersion soap11;
+        private static MessageVersion soap12Addressing10;
 
         static MessageVersion()
         {
@@ -109,7 +109,10 @@ namespace CoreWCF.Channels
         {
             int code = 0;
             if (Envelope == EnvelopeVersion.Soap11)
+            {
                 code += 1;
+            }
+
             return code;
         }
 
@@ -147,9 +150,15 @@ namespace CoreWCF.Channels
             }
 
             if (envelope != messageVersion.Envelope)
+            {
                 return false;
+            }
+
             if (addressing.Namespace != messageVersion.Addressing.Namespace)
+            {
                 return false;
+            }
+
             return true;
         }
     }

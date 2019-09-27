@@ -11,12 +11,12 @@ namespace CoreWCF.Dispatcher
 {
     internal class MessageFilterTable<TFilterData> : IMessageFilterTable<TFilterData>
     {
-        Dictionary<Type, Type> filterTypeMappings;
-        Dictionary<MessageFilter, TFilterData> filters;
-        SortedBuffer<FilterTableEntry, TableEntryComparer> tables;
-        int defaultPriority;
+        private Dictionary<Type, Type> filterTypeMappings;
+        private Dictionary<MessageFilter, TFilterData> filters;
+        private SortedBuffer<FilterTableEntry, TableEntryComparer> tables;
+        private int defaultPriority;
 
-        static readonly TableEntryComparer staticComparerInstance = new TableEntryComparer();
+        private static readonly TableEntryComparer staticComparerInstance = new TableEntryComparer();
 
         public MessageFilterTable()
             : this(0)
@@ -34,7 +34,7 @@ namespace CoreWCF.Dispatcher
             Init(0);
         }
 
-        void Init(int defaultPriority)
+        private void Init(int defaultPriority)
         {
             CreateEmptyTables();
             this.defaultPriority = defaultPriority;
@@ -83,7 +83,7 @@ namespace CoreWCF.Dispatcher
         }
 
         [DataMember]
-        Entry[] Entries
+        private Entry[] Entries
         {
             get
             {
@@ -225,7 +225,7 @@ namespace CoreWCF.Dispatcher
             ((ICollection<KeyValuePair<MessageFilter, TFilterData>>)filters).CopyTo(array, arrayIndex);
         }
 
-        void CreateEmptyTables()
+        private void CreateEmptyTables()
         {
             filterTypeMappings = new Dictionary<Type, Type>();
             filters = new Dictionary<MessageFilter, TFilterData>();
@@ -237,7 +237,9 @@ namespace CoreWCF.Dispatcher
             IMessageFilterTable<TFilterData> ft = filter.CreateFilterTable<TFilterData>();
 
             if (ft == null)
+            {
                 return new SequentialMessageFilterTable<TFilterData>();
+            }
 
             return ft;
         }
@@ -576,7 +578,7 @@ namespace CoreWCF.Dispatcher
             return filters.TryGetValue(filter, out data);
         }
 
-        void ValidateTable(IMessageFilterTable<TFilterData> table)
+        private void ValidateTable(IMessageFilterTable<TFilterData> table)
         {
             Type t = GetType();
             if (t.IsInstanceOfType(table))
@@ -587,7 +589,7 @@ namespace CoreWCF.Dispatcher
 
         ///////////////////////////////////////////////////
 
-        struct FilterTableEntry
+        private struct FilterTableEntry
         {
             internal IMessageFilterTable<TFilterData> table;
             internal int priority;
@@ -599,7 +601,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        class TableEntryComparer : IComparer<FilterTableEntry>
+        private class TableEntryComparer : IComparer<FilterTableEntry>
         {
             public TableEntryComparer() { }
 
@@ -634,7 +636,7 @@ namespace CoreWCF.Dispatcher
         }
 
         [DataContract]
-        class Entry
+        private class Entry
         {
             [DataMember(IsRequired = true)]
             internal MessageFilter filter;

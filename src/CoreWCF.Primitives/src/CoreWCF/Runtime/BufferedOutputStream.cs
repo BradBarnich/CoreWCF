@@ -7,19 +7,19 @@ namespace CoreWCF.Runtime
 {
     internal class BufferedOutputStream : Stream
     {
-        InternalBufferManager bufferManager;
+        private InternalBufferManager bufferManager;
 
-        byte[][] chunks;
+        private byte[][] chunks;
 
-        int chunkCount;
-        byte[] currentChunk;
-        int currentChunkSize;
-        int maxSize;
-        int maxSizeQuota;
-        int totalSize;
-        bool callerReturnsBuffer;
-        bool bufferReturned;
-        bool initialized;
+        private int chunkCount;
+        private byte[] currentChunk;
+        private int currentChunkSize;
+        private int maxSize;
+        private int maxSizeQuota;
+        private int totalSize;
+        private bool callerReturnsBuffer;
+        private bool bufferReturned;
+        private bool initialized;
 
         // requires an explicit call to Init() by the caller
         public BufferedOutputStream()
@@ -101,7 +101,7 @@ namespace CoreWCF.Runtime
             initialized = true;
         }
 
-        void AllocNextChunk(int minimumChunkSize)
+        private void AllocNextChunk(int minimumChunkSize)
         {
             int newChunkSize;
             if (currentChunk.Length > (int.MaxValue / 2))
@@ -259,7 +259,7 @@ namespace CoreWCF.Runtime
             return new InvalidOperationException(SR.Format(SR.BufferedOutputStreamQuotaExceeded, maxSizeQuota));
         }
 
-        void WriteCore(byte[] buffer, int offset, int size)
+        private void WriteCore(byte[] buffer, int offset, int size)
         {
             Fx.Assert(initialized, "Cannot write to uninitialized stream");
             Fx.Assert(!bufferReturned, "Cannot write to stream once ToArray has been called.");

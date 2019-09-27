@@ -6,7 +6,7 @@ namespace CoreWCF.Dispatcher
 {
     internal class ThreadBehavior
     {
-        readonly SynchronizationContext context;
+        private readonly SynchronizationContext context;
 
         internal ThreadBehavior(DispatchRuntime dispatch)
         {

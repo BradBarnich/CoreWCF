@@ -13,12 +13,13 @@ using System.Diagnostics;
 
 namespace CoreWCF.Dispatcher
 {
-    delegate Task<MessageRpc> MessageRpcProcessor(MessageRpc rpc);
-    delegate void MessageRpcErrorHandler(MessageRpc rpc);
+    internal delegate Task<MessageRpc> MessageRpcProcessor(MessageRpc rpc);
+
+    internal delegate void MessageRpcErrorHandler(MessageRpc rpc);
 
     // TODO: Pool MessageRpc objects. These are zero cost on .NET Framework as it's a struct but passing things by ref is problematic
     // when using async/await. This causes an allocation per request so pool them to remove that allocation.
-    class MessageRpc
+    internal class MessageRpc
     {
         internal readonly ServiceChannel Channel;
         internal readonly ChannelHandler channelHandler;
@@ -66,10 +67,10 @@ namespace CoreWCF.Dispatcher
         //internal EventTraceActivity EventTraceActivity;
         internal bool _processCallReturned;
 
-        bool paused;
-        bool switchedThreads;
-        bool isInstanceContextSingleton;
-        SignalGate<IAsyncResult> invokeContinueGate;
+        private bool paused;
+        private bool switchedThreads;
+        private bool isInstanceContextSingleton;
+        private SignalGate<IAsyncResult> invokeContinueGate;
 
         internal MessageRpc(RequestContext requestContext, Message request, DispatchOperationRuntime operation,
             ServiceChannel channel, ServiceHostBase host, ChannelHandler channelHandler, bool cleanThread,
@@ -191,7 +192,7 @@ namespace CoreWCF.Dispatcher
             AbortInstanceContext();
         }
 
-        void AbortRequestContext(RequestContext requestContext)
+        private void AbortRequestContext(RequestContext requestContext)
         {
             try
             {
@@ -221,7 +222,7 @@ namespace CoreWCF.Dispatcher
             TraceCallDurationInDispatcherIfNecessary(false);
         }
 
-        void TraceCallDurationInDispatcherIfNecessary(bool requestContextWasClosedSuccessfully)
+        private void TraceCallDurationInDispatcherIfNecessary(bool requestContextWasClosedSuccessfully)
         {
             // only need to trace once (either for the failure or success case)
             //if (TD.DispatchFailedIsEnabled())
@@ -250,7 +251,7 @@ namespace CoreWCF.Dispatcher
             TraceCallDurationInDispatcherIfNecessary(true);
         }
 
-        void DisposeRequestContext(RequestContext context)
+        private void DisposeRequestContext(RequestContext context)
         {
             try
             {
@@ -335,7 +336,7 @@ namespace CoreWCF.Dispatcher
             RequestContext.OnOperationInvoke();
         }
 
-        bool ProcessError(Exception e)
+        private bool ProcessError(Exception e)
         {
             MessageRpcErrorHandler handler = ErrorProcessor;
             try
@@ -426,7 +427,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        void DisposeParameterList(object[] parameters)
+        private void DisposeParameterList(object[] parameters)
         {
             IDisposable disposableParameter = null;
             if (parameters != null)
@@ -543,7 +544,7 @@ namespace CoreWCF.Dispatcher
             invokeContinueGate = new SignalGate<IAsyncResult>();
         }
 
-        void IncrementBusyCount()
+        private void IncrementBusyCount()
         {
             // TODO: Do we want a way to keep track of bust count? I believe this originally drove PerformanceCounters so we might want to re-work this functionality.
             // Only increment the counter on the service side.
@@ -557,7 +558,7 @@ namespace CoreWCF.Dispatcher
             //}
         }
 
-        void DecrementBusyCount()
+        private void DecrementBusyCount()
         {
             // See comment on IncrementBusyCount
             //if (Host != null)

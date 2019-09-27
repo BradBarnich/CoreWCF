@@ -10,14 +10,14 @@ namespace CoreWCF.Dispatcher
 {
     internal class InstanceBehavior
     {
-        const BindingFlags DefaultBindingFlags = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public;
+        private const BindingFlags DefaultBindingFlags = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public;
 
-        IInstanceContextInitializer[] initializers;
-        IInstanceContextProvider instanceContextProvider;
-        IInstanceProvider provider;
-        InstanceContext singleton;
-        bool isSynchronized;
-        ImmutableDispatchRuntime immutableRuntime;
+        private IInstanceContextInitializer[] initializers;
+        private IInstanceContextProvider instanceContextProvider;
+        private IInstanceProvider provider;
+        private InstanceContext singleton;
+        private bool isSynchronized;
+        private ImmutableDispatchRuntime immutableRuntime;
 
         internal InstanceBehavior(DispatchRuntime dispatch, ImmutableDispatchRuntime immutableRuntime)
         {
@@ -133,11 +133,15 @@ namespace CoreWCF.Dispatcher
         internal bool CanUnload(InstanceContext instanceContext)
         {
             if (InstanceContextProviderBase.IsProviderSingleton(instanceContextProvider))
+            {
                 return false;
+            }
 
             if (InstanceContextProviderBase.IsProviderPerCall(instanceContextProvider) ||
                 InstanceContextProviderBase.IsProviderSessionful(instanceContextProvider))
+            {
                 return true;
+            }
 
             //User provided InstanceContextProvider. Call the provider to check for idle.
             if (!instanceContextProvider.IsIdle(instanceContext))
@@ -181,12 +185,14 @@ namespace CoreWCF.Dispatcher
             rpc.InstanceContext.BindRpc(rpc);
         }
 
-        static ConstructorInfo GetConstructor(Type type)
+        private static ConstructorInfo GetConstructor(Type type)
         {
             foreach (var constructor in type.GetConstructors(DefaultBindingFlags))
             {
                 if (constructor.GetParameters().Length == 0)
+                {
                     return constructor;
+                }
             }
             return null;
         }
@@ -223,7 +229,9 @@ namespace CoreWCF.Dispatcher
             }
 
             for (int i = 0; i < initializers.Length; i++)
+            {
                 initializers[i].Initialize(instanceContext, message);
+            }
         }
 
         internal void EnsureServiceInstance(MessageRpc rpc)
@@ -266,14 +274,16 @@ namespace CoreWCF.Dispatcher
         }
     }
 
-    class InstanceProvider : IInstanceProvider
+    internal class InstanceProvider : IInstanceProvider
     {
-        CreateInstanceDelegate creator;
+        private CreateInstanceDelegate creator;
 
         internal InstanceProvider(CreateInstanceDelegate creator)
         {
             if (creator == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(creator));
+            }
 
             this.creator = creator;
         }
@@ -292,7 +302,9 @@ namespace CoreWCF.Dispatcher
         {
             IDisposable dispose = instance as IDisposable;
             if (dispose != null)
+            {
                 dispose.Dispose();
+            }
         }
     }
 

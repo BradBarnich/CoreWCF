@@ -40,7 +40,9 @@ namespace CoreWCF.Runtime
         public async Task<IDisposable> TakeLockAsync()
         {
             if (_lockTaken.Value)
+            {
                 return null;
+            }
 
             await _semaphore.WaitAsync();
             _lockTaken.Value = true;
@@ -54,7 +56,9 @@ namespace CoreWCF.Runtime
         public async Task<IDisposable> TakeLockAsync(CancellationToken token)
         {
             if (_lockTaken.Value)
+            {
                 return null;
+            }
 
             await _semaphore.WaitAsync(token);
             _lockTaken.Value = true;
@@ -68,7 +72,9 @@ namespace CoreWCF.Runtime
         public IDisposable TakeLock()
         {
             if (_lockTaken.Value)
+            {
                 return null;
+            }
 
             _semaphore.Wait();
             _lockTaken.Value = true;
@@ -82,7 +88,9 @@ namespace CoreWCF.Runtime
         public IDisposable TakeLock(TimeSpan timeout)
         {
             if (_lockTaken.Value)
+            {
                 return null;
+            }
 
             _semaphore.Wait(timeout);
             _lockTaken.Value = true;
@@ -96,7 +104,9 @@ namespace CoreWCF.Runtime
         public IDisposable TakeLock(int timeout)
         {
             if (_lockTaken.Value)
+            {
                 return null;
+            }
 
             _semaphore.Wait(timeout);
             _lockTaken.Value = true;

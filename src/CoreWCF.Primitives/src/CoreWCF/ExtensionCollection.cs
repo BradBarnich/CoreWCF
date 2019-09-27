@@ -8,12 +8,14 @@ namespace CoreWCF
     public sealed class ExtensionCollection<T> : SynchronizedCollection<IExtension<T>>, IExtensionCollection<T>
         where T : IExtensibleObject<T>
     {
-        readonly T _owner;
+        private readonly T _owner;
 
         public ExtensionCollection(T owner)
         {
             if (owner == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(owner));
+            }
 
             _owner = owner;
         }
@@ -22,7 +24,9 @@ namespace CoreWCF
             : base(syncRoot)
         {
             if (owner == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(owner));
+            }
 
             _owner = owner;
         }
@@ -59,7 +63,9 @@ namespace CoreWCF
                 {
                     IExtension<T> item = items[i];
                     if (item is TE)
+                    {
                         return (TE)item;
+                    }
                 }
             }
 
@@ -77,7 +83,9 @@ namespace CoreWCF
                 {
                     IExtension<T> item = items[i];
                     if (item is TE)
+                    {
                         result.Add((TE)item);
+                    }
                 }
             }
 
@@ -87,7 +95,9 @@ namespace CoreWCF
         protected override void InsertItem(int index, IExtension<T> item)
         {
             if (item == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(item));
+            }
 
             lock (SyncRoot)
             {

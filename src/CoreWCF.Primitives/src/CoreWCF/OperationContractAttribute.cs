@@ -7,11 +7,11 @@ namespace CoreWCF
     [AttributeUsage(ServiceModelAttributeTargets.OperationContract)]
     public sealed class OperationContractAttribute : Attribute
     {
-        string _name;
-        string _action;
-        string _replyAction;
-        bool _asyncPattern;
-        bool _isOneWay;
+        private string _name;
+        private string _action;
+        private string _replyAction;
+        private bool _asyncPattern;
+        private bool _isOneWay;
 
         public string Name
         {

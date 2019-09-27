@@ -169,9 +169,18 @@ namespace CoreWCF.Channels
                 {
                     var tcsProxy = obj as TaskCompletionSourceProxy;
                     Contract.Assert(tcsProxy != null);
-                    if (antecedent.IsFaulted) tcsProxy.TrySetException(antecedent.Exception.InnerException);
-                    else if (antecedent.IsCanceled) tcsProxy.TrySetCanceled();
-                    else tcsProxy.TrySetResult(antecedent.Result);
+                    if (antecedent.IsFaulted)
+                    {
+                        tcsProxy.TrySetException(antecedent.Exception.InnerException);
+                    }
+                    else if (antecedent.IsCanceled)
+                    {
+                        tcsProxy.TrySetCanceled();
+                    }
+                    else
+                    {
+                        tcsProxy.TrySetResult(antecedent.Result);
+                    }
                 };
 
                 try
@@ -195,9 +204,18 @@ namespace CoreWCF.Channels
                 {
                     var tcsObj = obj as TaskCompletionSource<object>;
                     Contract.Assert(tcsObj != null);
-                    if (antecedent.IsFaulted) tcsObj.TrySetException(antecedent.Exception.InnerException);
-                    else if (antecedent.IsCanceled) tcsObj.TrySetCanceled();
-                    else tcsObj.TrySetResult(antecedent.Result);
+                    if (antecedent.IsFaulted)
+                    {
+                        tcsObj.TrySetException(antecedent.Exception.InnerException);
+                    }
+                    else if (antecedent.IsCanceled)
+                    {
+                        tcsObj.TrySetCanceled();
+                    }
+                    else
+                    {
+                        tcsObj.TrySetResult(antecedent.Result);
+                    }
                 };
 
 

@@ -80,8 +80,11 @@ namespace CoreWCF.Dispatcher
         internal int IncrementLimit(int incrementBy)
         {
             if (incrementBy < 0)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(incrementBy), incrementBy,
-                                                     SR.ValueMustBeNonNegative));
+                    SR.ValueMustBeNonNegative));
+            }
+
             int newLimit;
             TaskCompletionSource<object>[] released = null;
 
@@ -97,7 +100,9 @@ namespace CoreWCF.Dispatcher
             }
 
             if (released != null)
+            {
                 Release(released);
+            }
 
             return newLimit;
         }
@@ -114,7 +119,9 @@ namespace CoreWCF.Dispatcher
                     {
                         released = new TaskCompletionSource<object>[Limit];
                         for (int i = 0; i < Limit; i++)
+                        {
                             released[i] = _waiters.Dequeue();
+                        }
 
                         Limit = 0;
                     }
@@ -142,8 +149,10 @@ namespace CoreWCF.Dispatcher
         internal void SetLimit(int messageLimit)
         {
             if (messageLimit < 0)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(messageLimit), messageLimit,
-                                                    SR.ValueMustBeNonNegative));
+                    SR.ValueMustBeNonNegative));
+            }
 
             TaskCompletionSource<object>[] released = null;
 
@@ -154,7 +163,9 @@ namespace CoreWCF.Dispatcher
             }
 
             if (released != null)
+            {
                 Release(released);
+            }
         }
 
         private void ReleaseAsync(object state)
@@ -165,7 +176,9 @@ namespace CoreWCF.Dispatcher
         internal void Release(TaskCompletionSource<object>[] released)
         {
             for (int i = 0; i < released.Length; i++)
+            {
                 ActionItem.Schedule(ReleaseAsync, released[i]);
+            }
         }
     }
 }

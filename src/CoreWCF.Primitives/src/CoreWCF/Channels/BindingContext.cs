@@ -7,12 +7,12 @@ namespace CoreWCF.Channels
 {
     public class BindingContext
     {
-        CustomBinding _binding;
-        BindingParameterCollection _bindingParameters;
-        Uri _listenUriBaseAddress;
-        ListenUriMode _listenUriMode;
-        string _listenUriRelativeAddress;
-        BindingElementCollection _remainingBindingElements;  // kept to ensure each BE builds itself once
+        private CustomBinding _binding;
+        private BindingParameterCollection _bindingParameters;
+        private Uri _listenUriBaseAddress;
+        private ListenUriMode _listenUriMode;
+        private string _listenUriRelativeAddress;
+        private BindingElementCollection _remainingBindingElements;  // kept to ensure each BE builds itself once
 
         public BindingContext(CustomBinding binding, BindingParameterCollection parameters)
             : this(binding, parameters, null, string.Empty, ListenUriMode.Explicit)
@@ -37,7 +37,7 @@ namespace CoreWCF.Channels
             Initialize(binding, binding.Elements, parameters, listenUriBaseAddress, listenUriRelativeAddress, listenUriMode);
         }
 
-        BindingContext(CustomBinding binding,
+        private BindingContext(CustomBinding binding,
                BindingElementCollection remainingBindingElements,
                BindingParameterCollection parameters,
                Uri listenUriBaseAddress,
@@ -106,11 +106,14 @@ namespace CoreWCF.Channels
                 _listenUriBaseAddress, _listenUriRelativeAddress, _listenUriMode);
         }
 
-        BindingElement RemoveNextElement()
+        private BindingElement RemoveNextElement()
         {
             BindingElement element = _remainingBindingElements.Remove<BindingElement>();
             if (element != null)
+            {
                 return element;
+            }
+
             throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.Format(
                 SR.NoChannelBuilderAvailable, _binding.Name, _binding.Namespace)));
         }

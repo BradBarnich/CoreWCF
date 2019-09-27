@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace CoreWCF.Channels
 {
-    interface IConnectionReuseHandler
+    internal interface IConnectionReuseHandler
     {
         Task<bool> ReuseConnectionAsync(FramingConnection connection, CancellationToken cancellationToken);
     }

@@ -9,7 +9,7 @@ using CoreWCF.Channels;
 
 namespace CoreWCF.Dispatcher
 {
-    class EndpointAddressProcessor
+    internal class EndpointAddressProcessor
     {
         internal static readonly QNameKeyComparer QNameComparer = new QNameKeyComparer();
 
@@ -24,8 +24,8 @@ namespace CoreWCF.Dispatcher
         // Pooling
         internal EndpointAddressProcessor next;
 
-        StringBuilder builder;
-        byte[] resultData;
+        private StringBuilder builder;
+        private byte[] resultData;
 
         internal EndpointAddressProcessor(int length)
         {
@@ -115,9 +115,14 @@ namespace CoreWCF.Dispatcher
                         }
 
                         if (reader.IsEmptyElement)
+                        {
                             builder.Append("></>");  // Should be the same as an empty tag.
+                        }
                         else
+                        {
                             builder.Append(">");
+                        }
+
                         break;
 
                     case XmlNodeType.EndElement:
@@ -139,7 +144,9 @@ namespace CoreWCF.Dispatcher
                     case XmlNodeType.SignificantWhitespace:
                     case XmlNodeType.Text:
                         if (valueLength < 0)
+                        {
                             valueLength = builder.Length;
+                        }
 
                         builder.Append(reader.Value);
                         break;
@@ -153,17 +160,19 @@ namespace CoreWCF.Dispatcher
             return builder.ToString();
         }
 
-        static void AppendString(StringBuilder builder, string s)
+        private static void AppendString(StringBuilder builder, string s)
         {
             builder.Append(s);
             builder.Append("^");
             builder.Append(s.Length.ToString(CultureInfo.InvariantCulture));
         }
 
-        static void CompleteValue(StringBuilder builder, int startLength)
+        private static void CompleteValue(StringBuilder builder, int startLength)
         {
             if (startLength < 0)
+            {
                 return;
+            }
 
             int len = builder.Length - startLength;
             builder.Append("^");
@@ -283,7 +292,9 @@ namespace CoreWCF.Dispatcher
             {
                 int i = string.CompareOrdinal(x.name, y.name);
                 if (i != 0)
+                {
                     return i;
+                }
 
                 return string.CompareOrdinal(x.ns, y.ns);
             }
@@ -292,7 +303,9 @@ namespace CoreWCF.Dispatcher
             {
                 int i = string.CompareOrdinal(x.name, y.name);
                 if (i != 0)
+                {
                     return false;
+                }
 
                 return string.CompareOrdinal(x.ns, y.ns) == 0;
             }
@@ -329,12 +342,12 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        class Attr : IComparable<Attr>
+        private class Attr : IComparable<Attr>
         {
             internal string local;
             internal string ns;
             internal string val;
-            string key;
+            private string key;
 
             internal Attr(string l, string ns, string v)
             {

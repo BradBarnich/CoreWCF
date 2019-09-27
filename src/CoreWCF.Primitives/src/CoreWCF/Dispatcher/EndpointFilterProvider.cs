@@ -3,10 +3,10 @@ using CoreWCF.Channels;
 
 namespace CoreWCF.Dispatcher
 {
-    class EndpointFilterProvider
+    internal class EndpointFilterProvider
     {
-        SynchronizedCollection<string> initiatingActions;
-        object mutex;
+        private SynchronizedCollection<string> initiatingActions;
+        private object mutex;
 
         public EndpointFilterProvider(params string[] initiatingActions)
         {
@@ -25,7 +25,9 @@ namespace CoreWCF.Dispatcher
             {
                 priority = 1;
                 if (initiatingActions.Count == 0)
+                {
                     return new MatchNoneMessageFilter();
+                }
 
                 string[] actions = new string[initiatingActions.Count];
                 int index = 0;

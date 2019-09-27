@@ -14,7 +14,7 @@ namespace CoreWCF.IdentityModel
     internal static class SecurityUtils
     {
         public const string Identities = "Identities";
-        static IIdentity anonymousIdentity;
+        private static IIdentity anonymousIdentity;
 
         public const string AuthTypeCertMap = "SSL/PCT"; // mapped from a cert
 
@@ -23,7 +23,10 @@ namespace CoreWCF.IdentityModel
             get
             {
                 if (anonymousIdentity == null)
+                {
                     anonymousIdentity = SecurityUtils.CreateIdentity(string.Empty);
+                }
+
                 return anonymousIdentity;
             }
         }
@@ -76,7 +79,10 @@ namespace CoreWCF.IdentityModel
         {
             string certificateId = certificate.SubjectName.Name;
             if (string.IsNullOrEmpty(certificateId))
+            {
                 certificateId = certificate.Thumbprint;
+            }
+
             return certificateId;
         }
 
@@ -166,17 +172,21 @@ namespace CoreWCF.IdentityModel
             return wid;
         }
 
-        static IntPtr UnsafeGetWindowsIdentityToken(WindowsIdentity wid)
+        private static IntPtr UnsafeGetWindowsIdentityToken(WindowsIdentity wid)
         {
             return wid.Token;
         }
 
-        static WindowsIdentity UnsafeCreateWindowsIdentityFromToken(IntPtr token, string authType)
+        private static WindowsIdentity UnsafeCreateWindowsIdentityFromToken(IntPtr token, string authType)
         {
             if (authType != null)
+            {
                 return new WindowsIdentity(token, authType);
+            }
             else
+            {
                 return new WindowsIdentity(token);
+            }
         }
 
         internal static ClaimSet CloneClaimSetIfNecessary(ClaimSet claimSet)
@@ -246,7 +256,7 @@ namespace CoreWCF.IdentityModel
         }
     }
 
-    static class EmptyReadOnlyCollection<T>
+    internal static class EmptyReadOnlyCollection<T>
     {
         public static ReadOnlyCollection<T> Instance = new ReadOnlyCollection<T>(new List<T>());
     }

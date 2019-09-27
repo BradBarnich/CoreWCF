@@ -41,7 +41,10 @@ namespace CoreWCF.Channels
             PrepareRead(1);
             int i = base.ReadByte();
             if (i != -1)
+            {
                 FinishRead(1);
+            }
+
             return i;
         }
 

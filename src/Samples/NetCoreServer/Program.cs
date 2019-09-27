@@ -5,9 +5,9 @@ using Microsoft.AspNetCore.Hosting;
 
 namespace NetCoreServer
 {
-    class Program
+    internal class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             var host = CreateWebHostBuilder(args).Build();
             host.Run();

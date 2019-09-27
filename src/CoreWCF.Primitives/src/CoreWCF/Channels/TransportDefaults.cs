@@ -58,7 +58,9 @@ namespace CoreWCF.Channels
             for (int i = 0; i < supportedEncodings.Length; i++)
             {
                 if (charSet == supportedEncodings[i].WebName)
+                {
                     return;
+                }
             }
 
             throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(
@@ -73,10 +75,14 @@ namespace CoreWCF.Channels
             {
                 Encoding enc = charSetEncodings[i].Encoding;
                 if (enc == null)
+                {
                     continue;
+                }
 
                 if (enc.WebName == webName)
+                {
                     return charSetEncodings[i].CharSet;
+                }
             }
             return null;
         }
@@ -100,7 +106,9 @@ namespace CoreWCF.Channels
             {
                 string compare = charSetEncodings[i].CharSet;
                 if (compare == null)
+                {
                     continue;
+                }
 
                 if (compare.Equals(charSet, StringComparison.OrdinalIgnoreCase))
                 {
@@ -126,7 +134,7 @@ namespace CoreWCF.Channels
         }
     }
 
-    static class BinaryEncoderDefaults
+    internal static class BinaryEncoderDefaults
     {
         internal static EnvelopeVersion EnvelopeVersion { get { return EnvelopeVersion.Soap12; } }
         internal static BinaryVersion BinaryVersion { get { return BinaryVersion.Version1; } }

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace CoreWCF.Channels
 {
-    interface IStreamUpgradeChannelBindingProvider : IChannelBindingProvider
+    internal interface IStreamUpgradeChannelBindingProvider : IChannelBindingProvider
     {
         ChannelBinding GetChannelBinding(StreamUpgradeAcceptor upgradeAcceptor, ChannelBindingKind kind);
     }

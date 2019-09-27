@@ -7,10 +7,10 @@ namespace CoreWCF.Channels
     {
         internal const string PropertyName = "ChannelBindingMessageProperty";
 
-        ChannelBinding channelBinding;
-        object thisLock;
-        bool ownsCleanup;
-        int refCount;
+        private ChannelBinding channelBinding;
+        private object thisLock;
+        private bool ownsCleanup;
+        private int refCount;
 
         public ChannelBindingMessageProperty(ChannelBinding channelBinding, bool ownsCleanup)
         {
@@ -22,7 +22,7 @@ namespace CoreWCF.Channels
 
         public static string Name { get { return PropertyName; } }
 
-        bool IsDisposed
+        private bool IsDisposed
         {
             get
             {
@@ -67,7 +67,7 @@ namespace CoreWCF.Channels
             }
         }
 
-        void ThrowIfDisposed()
+        private void ThrowIfDisposed()
         {
             if (IsDisposed)
             {

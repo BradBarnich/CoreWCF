@@ -5,7 +5,7 @@ namespace CoreWCF
     [AttributeUsage(ServiceModelAttributeTargets.MessageMember, Inherited = false)]
     public class MessageBodyMemberAttribute : MessageContractMemberAttribute
     {
-        int _order = -1;
+        private int _order = -1;
         internal const string OrderPropertyName = "Order";
         public int Order
         {
@@ -13,8 +13,10 @@ namespace CoreWCF
             set
             {
                 if (value < 0)
+                {
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(value), value,
-                                                    SR.ValueMustBeNonNegative));
+                        SR.ValueMustBeNonNegative));
+                }
 
                 _order = value;
             }

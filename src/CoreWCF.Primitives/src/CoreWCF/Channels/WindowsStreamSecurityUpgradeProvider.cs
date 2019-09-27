@@ -16,12 +16,12 @@ using System.Threading.Tasks;
 
 namespace CoreWCF.Channels
 {
-    class WindowsStreamSecurityUpgradeProvider : StreamSecurityUpgradeProvider
+    internal class WindowsStreamSecurityUpgradeProvider : StreamSecurityUpgradeProvider
     {
-        EndpointIdentity _identity;
-        SecurityTokenManager securityTokenManager;
-        bool isClient;
-        Uri listenUri;
+        private EndpointIdentity _identity;
+        private SecurityTokenManager securityTokenManager;
+        private bool isClient;
+        private Uri listenUri;
 
         public WindowsStreamSecurityUpgradeProvider(WindowsStreamSecurityBindingElement bindingElement,
             BindingContext context, bool isClient)
@@ -80,7 +80,7 @@ namespace CoreWCF.Channels
 
         public ProtectionLevel ProtectionLevel { get; }
 
-        NetworkCredential ServerCredential { get; set; }
+        private NetworkCredential ServerCredential { get; set; }
 
         public override StreamUpgradeAcceptor CreateUpgradeAcceptor()
         {
@@ -122,10 +122,10 @@ namespace CoreWCF.Channels
             }
         }
 
-        class WindowsStreamSecurityUpgradeAcceptor : StreamSecurityUpgradeAcceptorBase
+        private class WindowsStreamSecurityUpgradeAcceptor : StreamSecurityUpgradeAcceptorBase
         {
-            WindowsStreamSecurityUpgradeProvider parent;
-            SecurityMessageProperty clientSecurity;
+            private WindowsStreamSecurityUpgradeProvider parent;
+            private SecurityMessageProperty clientSecurity;
 
             public WindowsStreamSecurityUpgradeAcceptor(WindowsStreamSecurityUpgradeProvider parent)
                 : base(FramingUpgradeString.Negotiate)
@@ -160,7 +160,7 @@ namespace CoreWCF.Channels
                 return (negotiateStream, remoteSecurity);
             }
 
-            SecurityMessageProperty CreateClientSecurity(NegotiateStream negotiateStream,
+            private SecurityMessageProperty CreateClientSecurity(NegotiateStream negotiateStream,
                 bool extractGroupsForWindowsAccounts)
             {
                 WindowsIdentity remoteIdentity = (WindowsIdentity)negotiateStream.RemoteIdentity;

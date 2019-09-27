@@ -14,17 +14,17 @@ namespace CoreWCF.Dispatcher
     {
         protected Dictionary<MessageFilter, TFilterData> filters;
         protected Dictionary<MessageFilter, Candidate> candidates;
-        WeakReference processorPool;
+        private WeakReference processorPool;
 
-        int size;
-        int nextBit;
-        Dictionary<string, HeaderBit[]> headerLookup;
-        Dictionary<Uri, CandidateSet> toHostLookup;
-        Dictionary<Uri, CandidateSet> toNoHostLookup;
+        private int size;
+        private int nextBit;
+        private Dictionary<string, HeaderBit[]> headerLookup;
+        private Dictionary<Uri, CandidateSet> toHostLookup;
+        private Dictionary<Uri, CandidateSet> toNoHostLookup;
 
         internal class ProcessorPool
         {
-            EndpointAddressProcessor processor;
+            private EndpointAddressProcessor processor;
 
             internal ProcessorPool()
             {
@@ -281,7 +281,7 @@ namespace CoreWCF.Dispatcher
             ((ICollection<KeyValuePair<MessageFilter, TFilterData>>)filters).CopyTo(array, arrayIndex);
         }
 
-        EndpointAddressProcessor CreateProcessor(int length)
+        private EndpointAddressProcessor CreateProcessor(int length)
         {
             EndpointAddressProcessor p = null;
             lock (processorPool)
@@ -324,7 +324,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        Candidate InnerMatch(Message message)
+        private Candidate InnerMatch(Message message)
         {
             Uri to = message.Headers.To;
             if (to == null)
@@ -357,7 +357,7 @@ namespace CoreWCF.Dispatcher
             return can;
         }
 
-        Candidate GetSingleMatch(CandidateSet cset, Message message)
+        private Candidate GetSingleMatch(CandidateSet cset, Message message)
         {
             int candiCount = cset.candidates.Count;
 
@@ -407,7 +407,7 @@ namespace CoreWCF.Dispatcher
             return can;
         }
 
-        void InnerMatchData(Message message, ICollection<TFilterData> results)
+        private void InnerMatchData(Message message, ICollection<TFilterData> results)
         {
             Uri to = message.Headers.To;
             if (to != null)
@@ -424,7 +424,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        void InnerMatchData(Message message, ICollection<TFilterData> results, CandidateSet cset)
+        private void InnerMatchData(Message message, ICollection<TFilterData> results, CandidateSet cset)
         {
             EndpointAddressProcessor context = CreateProcessor(size);
             context.ProcessHeaders(message, cset.qnames, headerLookup);
@@ -458,7 +458,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        void InnerMatchFilters(Message message, ICollection<MessageFilter> results, CandidateSet cset)
+        private void InnerMatchFilters(Message message, ICollection<MessageFilter> results, CandidateSet cset)
         {
             EndpointAddressProcessor context = CreateProcessor(size);
             context.ProcessHeaders(message, cset.qnames, headerLookup);
@@ -666,7 +666,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        void ReleaseProcessor(EndpointAddressProcessor processor)
+        private void ReleaseProcessor(EndpointAddressProcessor processor)
         {
             lock (processorPool)
             {

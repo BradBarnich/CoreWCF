@@ -8,7 +8,7 @@ namespace CoreWCF.Channels
 {
     internal class RequestReplyCorrelator : IRequestReplyCorrelator
     {
-        IDictionary<Key,object>  states;
+        private IDictionary<Key,object>  states;
 
         internal RequestReplyCorrelator()
         {
@@ -47,7 +47,9 @@ namespace CoreWCF.Channels
                 value = (T)states[key];
 
                 if (remove)
+                {
                     states.Remove(key);
+                }
             }
 
             return value;
@@ -68,11 +70,14 @@ namespace CoreWCF.Channels
             }
         }
 
-        UniqueId GetRelatesTo(Message reply)
+        private UniqueId GetRelatesTo(Message reply)
         {
             UniqueId relatesTo = reply.Headers.RelatesTo;
             if (relatesTo == null)
+            {
                 throw TraceUtility.ThrowHelperError(new ArgumentException(SR.SuppliedMessageIsNotAReplyItHasNoRelatesTo0), reply);
+            }
+
             return relatesTo;
         }
 
@@ -130,7 +135,9 @@ namespace CoreWCF.Channels
         internal static void PrepareReply(Message reply, UniqueId messageId)
         {
             if (object.ReferenceEquals(messageId, null))
+            {
                 throw TraceUtility.ThrowHelperError(new InvalidOperationException(SR.MissingMessageID), reply);
+            }
 
             MessageHeaders replyHeaders = reply.Headers;
 
@@ -202,7 +209,7 @@ namespace CoreWCF.Channels
 
             internal EndpointAddress ReplyTo { get; }
 
-            bool IsTrivial(EndpointAddress address)
+            private bool IsTrivial(EndpointAddress address)
             {
                 // Note: even if address.IsAnonymous, it may have identity, reference parameters, etc.
                 return (address == null) || (address == EndpointAddress.AnonymousAddress);
@@ -224,7 +231,10 @@ namespace CoreWCF.Channels
             {
                 Key other = obj as Key;
                 if (other == null)
+                {
                     return false;
+                }
+
                 return other.MessageId == MessageId && other.StateType == StateType;
             }
 

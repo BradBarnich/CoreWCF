@@ -82,7 +82,10 @@ namespace CoreWCF.Channels.Framing
                 if (readResult.IsCompleted || readResult.Buffer.Length == 0)
                 {
                     if (!readResult.IsCompleted)
+                    {
                         connection.Input.AdvanceTo(readResult.Buffer.Start);
+                    }
+
                     EnsureDecoderAtEof(connection);
                     connection.EOF = true;
                 }
@@ -235,7 +238,10 @@ namespace CoreWCF.Channels.Framing
                     srcSpan.CopyTo(destSpan);
                     bytesToCopy -= srcSpan.Length;
                     if (bytesToCopy == 0)
+                    {
                         return;
+                    }
+
                     destSpan = destSpan.Slice(srcSpan.Length);
                 }
             }

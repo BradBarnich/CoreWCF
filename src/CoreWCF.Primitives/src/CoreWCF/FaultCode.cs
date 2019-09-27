@@ -5,10 +5,10 @@ namespace CoreWCF
 {
     public class FaultCode
     {
-        FaultCode subCode;
-        string name;
-        string ns;
-        EnvelopeVersion version;
+        private FaultCode subCode;
+        private string name;
+        private string ns;
+        private EnvelopeVersion version;
 
         public FaultCode(string name)
             : this(name, "", null)
@@ -28,25 +28,40 @@ namespace CoreWCF
         public FaultCode(string name, string ns, FaultCode subCode)
         {
             if (name == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(name));
+            }
+
             if (name.Length == 0)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(name)));
+            }
 
             if (!string.IsNullOrEmpty(ns))
+            {
                 NamingHelper.CheckUriParameter(ns, "ns");
+            }
 
             this.name = name;
             this.ns = ns;
             this.subCode = subCode;
 
             if (ns == Message12Strings.Namespace)
+            {
                 version = EnvelopeVersion.Soap12;
+            }
             else if (ns == Message11Strings.Namespace)
+            {
                 version = EnvelopeVersion.Soap11;
+            }
             else if (ns == MessageStrings.Namespace)
+            {
                 version = EnvelopeVersion.None;
+            }
             else
+            {
                 version = null;
+            }
         }
 
         public bool IsPredefinedFault
@@ -62,7 +77,9 @@ namespace CoreWCF
             get
             {
                 if (IsPredefinedFault)
+                {
                     return name == (version ?? EnvelopeVersion.Soap12).SenderFaultName;
+                }
 
                 return false;
             }
@@ -73,7 +90,9 @@ namespace CoreWCF
             get
             {
                 if (IsPredefinedFault)
+                {
                     return name == (version ?? EnvelopeVersion.Soap12).ReceiverFaultName;
+                }
 
                 return false;
             }
@@ -117,7 +136,10 @@ namespace CoreWCF
         internal static FaultCode CreateReceiverFaultCode(FaultCode subCode)
         {
             if (subCode == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(subCode));
+            }
+
             return new FaultCode("Receiver", subCode);
         }
     }

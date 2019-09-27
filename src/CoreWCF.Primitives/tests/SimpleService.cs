@@ -4,7 +4,7 @@ using System.Text;
 
 namespace CoreWCF.Primitives.Tests
 {
-    class SimpleService : ISimpleService
+    internal class SimpleService : ISimpleService
     {
         public string Echo(string echo)
         {
@@ -13,7 +13,7 @@ namespace CoreWCF.Primitives.Tests
     }
 
     [ServiceBehavior(InstanceContextMode = InstanceContextMode.Single)]
-    class SimpleSingletonService : ISimpleService
+    internal class SimpleSingletonService : ISimpleService
     {
         public string Echo(string echo)
         {

@@ -12,27 +12,29 @@ namespace CoreWCF
     {
         private static AsyncLocal<Holder> currentContext = new AsyncLocal<Holder>();
 
-        ServiceChannel channel;
-        Message clientReply;
-        bool closeClientReply;
-        ExtensionCollection<OperationContext> extensions;
-        ServiceHostBase host;
-        RequestContext requestContext;
-        Message request;
-        InstanceContext instanceContext;
-        bool isServiceReentrant = false;
+        private ServiceChannel channel;
+        private Message clientReply;
+        private bool closeClientReply;
+        private ExtensionCollection<OperationContext> extensions;
+        private ServiceHostBase host;
+        private RequestContext requestContext;
+        private Message request;
+        private InstanceContext instanceContext;
+        private bool isServiceReentrant = false;
         internal IPrincipal threadPrincipal;
-        MessageProperties outgoingMessageProperties;
-        MessageHeaders outgoingMessageHeaders;
-        MessageVersion outgoingMessageVersion;
-        EndpointDispatcher endpointDispatcher;
+        private MessageProperties outgoingMessageProperties;
+        private MessageHeaders outgoingMessageHeaders;
+        private MessageVersion outgoingMessageVersion;
+        private EndpointDispatcher endpointDispatcher;
 
         public event EventHandler OperationCompleted;
 
         public OperationContext(IContextChannel channel)
         {
             if (channel == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(channel));
+            }
 
             ServiceChannel serviceChannel = channel as ServiceChannel;
 
@@ -61,7 +63,9 @@ namespace CoreWCF
         internal OperationContext(ServiceHostBase host, MessageVersion outgoingMessageVersion)
         {
             if (outgoingMessageVersion == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(outgoingMessageVersion));
+            }
 
             this.host = host;
             this.outgoingMessageVersion = outgoingMessageVersion;
@@ -166,7 +170,9 @@ namespace CoreWCF
             get
             {
                 if (outgoingMessageHeaders == null)
+                {
                     outgoingMessageHeaders = new MessageHeaders(OutgoingMessageVersion);
+                }
 
                 return outgoingMessageHeaders;
             }
@@ -182,7 +188,9 @@ namespace CoreWCF
             get
             {
                 if (outgoingMessageProperties == null)
+                {
                     outgoingMessageProperties = new MessageProperties();
+                }
 
                 return outgoingMessageProperties;
             }
@@ -199,9 +207,13 @@ namespace CoreWCF
             {
                 Message message = clientReply ?? request;
                 if (message != null)
+                {
                     return message.Headers;
+                }
                 else
+                {
                     return null;
+                }
             }
         }
 
@@ -211,9 +223,13 @@ namespace CoreWCF
             {
                 Message message = clientReply ?? request;
                 if (message != null)
+                {
                     return message.Properties;
+                }
                 else
+                {
                     return null;
+                }
             }
         }
 
@@ -223,9 +239,13 @@ namespace CoreWCF
             {
                 Message message = clientReply ?? request;
                 if (message != null)
+                {
                     return message.Version;
+                }
                 else
+                {
                     return null;
+                }
             }
         }
 
@@ -271,7 +291,9 @@ namespace CoreWCF
             catch (Exception e)
             {
                 if (Fx.IsFatal(e))
+                {
                     throw;
+                }
 
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperCallback(e);
             }
@@ -280,7 +302,9 @@ namespace CoreWCF
         public T GetCallbackChannel<T>()
         {
             if (channel == null || IsUserContext)
+            {
                 return default(T);
+            }
 
             // yes, we might throw InvalidCastException here.  Is it really
             // better to check and throw something else instead?
@@ -333,7 +357,7 @@ namespace CoreWCF
 
         internal class Holder
         {
-            OperationContext context;
+            private OperationContext context;
 
             public OperationContext Context
             {

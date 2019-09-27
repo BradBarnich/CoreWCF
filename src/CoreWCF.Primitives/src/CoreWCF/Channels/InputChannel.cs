@@ -5,9 +5,9 @@ using CoreWCF.Runtime;
 
 namespace CoreWCF.Channels
 {
-    class InputChannel : InputQueueChannel<Message>, IInputChannel
+    internal class InputChannel : InputQueueChannel<Message>, IInputChannel
     {
-        EndpointAddress localAddress;
+        private EndpointAddress localAddress;
 
         public InputChannel(ChannelManagerBase channelManager, EndpointAddress localAddress)
             : base(channelManager)
@@ -80,7 +80,7 @@ namespace CoreWCF.Channels
             }
         }
 
-        static Exception CreateReceiveTimedOutException(IInputChannel channel, TimeSpan timeout)
+        private static Exception CreateReceiveTimedOutException(IInputChannel channel, TimeSpan timeout)
         {
             if (channel.LocalAddress != null)
             {

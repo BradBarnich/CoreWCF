@@ -42,14 +42,14 @@ namespace CoreWCF.Runtime.Collections
     // current use of HopperCache - UriPrefixTable.)
     internal class HopperCache
     {
-        readonly int hopperSize;
-        readonly bool weak;
+        private readonly int hopperSize;
+        private readonly bool weak;
 
-        Hashtable outstandingHopper;
-        Hashtable strongHopper;
-        Hashtable limitedHopper;
-        int promoting;
-        LastHolder mruEntry;
+        private Hashtable outstandingHopper;
+        private Hashtable strongHopper;
+        private Hashtable limitedHopper;
+        private int promoting;
+        private LastHolder mruEntry;
 
 
         public HopperCache(int hopperSize, bool weak)
@@ -213,10 +213,10 @@ namespace CoreWCF.Runtime.Collections
             return value;
         }
 
-        class LastHolder
+        private class LastHolder
         {
-            readonly object key;
-            readonly object value;
+            private readonly object key;
+            private readonly object value;
 
             internal LastHolder(object key, object value)
             {

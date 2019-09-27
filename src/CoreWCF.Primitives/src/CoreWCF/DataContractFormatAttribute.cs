@@ -4,7 +4,7 @@ namespace CoreWCF
 {
     internal sealed class DataContractFormatAttribute : Attribute
     {
-        OperationFormatStyle style;
+        private OperationFormatStyle style;
         public OperationFormatStyle Style
         {
             get { return style; }

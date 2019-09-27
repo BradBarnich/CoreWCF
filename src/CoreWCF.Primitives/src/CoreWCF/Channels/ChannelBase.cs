@@ -5,7 +5,7 @@ namespace CoreWCF.Channels
 {
     public abstract class ChannelBase : CommunicationObject, IChannel, IDefaultCommunicationTimeouts
     {
-        ChannelManagerBase channelManager;
+        private ChannelManagerBase channelManager;
 
         protected ChannelBase(ChannelManagerBase channelManager)
         {

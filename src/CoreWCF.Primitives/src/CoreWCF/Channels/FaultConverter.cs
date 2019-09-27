@@ -74,9 +74,9 @@ namespace CoreWCF.Channels
             return created;
         }
 
-        class DefaultFaultConverter : FaultConverter
+        private class DefaultFaultConverter : FaultConverter
         {
-            MessageVersion version;
+            private MessageVersion version;
 
             internal DefaultFaultConverter(MessageVersion version)
             {

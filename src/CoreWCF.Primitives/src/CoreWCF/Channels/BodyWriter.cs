@@ -6,9 +6,9 @@ namespace CoreWCF.Channels
 {
     public abstract class BodyWriter
     {
-        bool isBuffered;
-        bool canWrite;
-        object thisLock;
+        private bool isBuffered;
+        private bool canWrite;
+        private object thisLock;
 
         protected BodyWriter(bool isBuffered)
         {
@@ -38,8 +38,11 @@ namespace CoreWCF.Channels
         public BodyWriter CreateBufferedCopy(int maxBufferSize)
         {
             if (maxBufferSize < 0)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(maxBufferSize), maxBufferSize,
-                                                    SR.ValueMustBeNonNegative));
+                    SR.ValueMustBeNonNegative));
+            }
+
             if (isBuffered)
             {
                 return this;
@@ -49,12 +52,18 @@ namespace CoreWCF.Channels
                 lock (thisLock)
                 {
                     if (!canWrite)
+                    {
                         throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.BodyWriterCanOnlyBeWrittenOnce));
+                    }
+
                     canWrite = false;
                 }
                 BodyWriter bodyWriter = OnCreateBufferedCopy(maxBufferSize);
                 if (!bodyWriter.IsBuffered)
+                {
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.BodyWriterReturnedIsNotBuffered));
+                }
+
                 return bodyWriter;
             }
         }
@@ -86,16 +95,22 @@ namespace CoreWCF.Channels
             return Task.CompletedTask;
         }
 
-        void EnsureWriteBodyContentsState(XmlDictionaryWriter writer)
+        private void EnsureWriteBodyContentsState(XmlDictionaryWriter writer)
         {
             if (writer == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(writer));
+            }
+
             if (!isBuffered)
             {
                 lock (thisLock)
                 {
                     if (!canWrite)
+                    {
                         throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.BodyWriterCanOnlyBeWrittenOnce));
+                    }
+
                     canWrite = false;
                 }
             }
@@ -113,9 +128,9 @@ namespace CoreWCF.Channels
             return OnWriteBodyContentsAsync(writer);
         }
 
-        class BufferedBodyWriter : BodyWriter
+        private class BufferedBodyWriter : BodyWriter
         {
-            XmlBuffer buffer;
+            private XmlBuffer buffer;
 
             public BufferedBodyWriter(XmlBuffer buffer)
                 : base(true)

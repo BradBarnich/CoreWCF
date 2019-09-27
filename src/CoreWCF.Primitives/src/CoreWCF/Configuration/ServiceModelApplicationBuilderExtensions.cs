@@ -34,7 +34,10 @@ namespace CoreWCF.Configuration
                     // TODO : Error handling if TBE doesn't exist
                     var transportMiddlewareType = tbe.MiddlewareType;
                     if (transportMiddlewareTypes.Contains(transportMiddlewareType))
+                    {
                         continue;
+                    }
+
                     transportMiddlewareTypes.Add(transportMiddlewareType);
                     string scheme = tbe.Scheme;
                     if ("http".Equals(scheme, StringComparison.OrdinalIgnoreCase) ||

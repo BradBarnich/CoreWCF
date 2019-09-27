@@ -6,9 +6,9 @@ namespace CoreWCF.Channels
 {
     public abstract class TransportBindingElement : BindingElement
     {
-        bool manualAddressing;
-        long maxBufferPoolSize;
-        long maxReceivedMessageSize;
+        private bool manualAddressing;
+        private long maxBufferPoolSize;
+        private long maxReceivedMessageSize;
 
         protected TransportBindingElement()
         {

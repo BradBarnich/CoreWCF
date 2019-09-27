@@ -6,7 +6,7 @@ using System.Text;
 
 namespace CoreWCF.Security
 {
-    static class SslProtocolsHelper
+    internal static class SslProtocolsHelper
     {
         internal static bool IsDefined(SslProtocols value)
         {

@@ -13,24 +13,24 @@ namespace CoreWCF.Channels
 {
     public sealed class MessageHeaders : IEnumerable<MessageHeaderInfo>
     {
-        int collectionVersion;
-        int headerCount;
-        Header[] headers;
-        MessageVersion version;
-        IBufferedMessageData bufferedMessageData;
-        UnderstoodHeaders understoodHeaders;
-        const int InitialHeaderCount = 4;
-        const int MaxRecycledArrayLength = 8;
-        static XmlDictionaryString[] localNames;
+        private int collectionVersion;
+        private int headerCount;
+        private Header[] headers;
+        private MessageVersion version;
+        private IBufferedMessageData bufferedMessageData;
+        private UnderstoodHeaders understoodHeaders;
+        private const int InitialHeaderCount = 4;
+        private const int MaxRecycledArrayLength = 8;
+        private static XmlDictionaryString[] localNames;
 
         internal const string WildcardAction = "*";
 
         // The highest node and attribute counts reached by the BVTs were 1829 and 667 respectively.
-        const int MaxBufferedHeaderNodes = 4096;
-        const int MaxBufferedHeaderAttributes = 2048;
-        int nodeCount = 0;
-        int attrCount = 0;
-        bool understoodHeadersModified;
+        private const int MaxBufferedHeaderNodes = 4096;
+        private const int MaxBufferedHeaderAttributes = 2048;
+        private int nodeCount = 0;
+        private int attrCount = 0;
+        private bool understoodHeadersModified;
 
         public MessageHeaders(MessageVersion version, int initialSize)
         {
@@ -53,9 +53,15 @@ namespace CoreWCF.Channels
             }
 
             if (version == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(version));
+            }
+
             if (reader == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(reader));
+            }
+
             if (reader.IsEmptyElement)
             {
                 reader.Read();
@@ -67,7 +73,10 @@ namespace CoreWCF.Channels
             while (reader.IsStartElement())
             {
                 if (xmlBuffer == null)
+                {
                     xmlBuffer = new XmlBuffer(maxSizeOfHeaders);
+                }
+
                 BufferedHeader bufferedHeader = new BufferedHeader(version, xmlBuffer, reader, envelopeAttributes, headerAttributes);
                 HeaderProcessing processing = bufferedHeader.MustUnderstand ? HeaderProcessing.MustUnderstand : 0;
                 HeaderKind kind = GetHeaderKind(bufferedHeader);
@@ -107,7 +116,9 @@ namespace CoreWCF.Channels
         public MessageHeaders(MessageHeaders collection)
         {
             if (collection == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(collection));
+            }
 
             Init(collection.version, collection.headers.Length);
             CopyHeadersFrom(collection);
@@ -120,10 +131,16 @@ namespace CoreWCF.Channels
             {
                 int index = FindHeaderProperty(HeaderKind.Action);
                 if (index < 0)
+                {
                     return null;
+                }
+
                 ActionHeader actionHeader = headers[index].HeaderInfo as ActionHeader;
                 if (actionHeader != null)
+                {
                     return actionHeader.Action;
+                }
+
                 using (XmlDictionaryReader reader = GetReaderAtHeader(index))
                 {
                     return ActionHeader.ReadHeaderValue(reader, version.Addressing);
@@ -132,9 +149,13 @@ namespace CoreWCF.Channels
             set
             {
                 if (value != null)
+                {
                     SetActionHeader(ActionHeader.Create(value, version.Addressing));
+                }
                 else
+                {
                     SetHeaderProperty(HeaderKind.Action, null);
+                }
             }
         }
 
@@ -164,10 +185,16 @@ namespace CoreWCF.Channels
             {
                 int index = FindHeaderProperty(HeaderKind.FaultTo);
                 if (index < 0)
+                {
                     return null;
+                }
+
                 FaultToHeader faultToHeader = headers[index].HeaderInfo as FaultToHeader;
                 if (faultToHeader != null)
+                {
                     return faultToHeader.FaultTo;
+                }
+
                 using (XmlDictionaryReader reader = GetReaderAtHeader(index))
                 {
                     return FaultToHeader.ReadHeaderValue(reader, version.Addressing);
@@ -176,9 +203,13 @@ namespace CoreWCF.Channels
             set
             {
                 if (value != null)
+                {
                     SetFaultToHeader(FaultToHeader.Create(value, version.Addressing));
+                }
                 else
+                {
                     SetHeaderProperty(HeaderKind.FaultTo, null);
+                }
             }
         }
 
@@ -188,10 +219,16 @@ namespace CoreWCF.Channels
             {
                 int index = FindHeaderProperty(HeaderKind.From);
                 if (index < 0)
+                {
                     return null;
+                }
+
                 FromHeader fromHeader = headers[index].HeaderInfo as FromHeader;
                 if (fromHeader != null)
+                {
                     return fromHeader.From;
+                }
+
                 using (XmlDictionaryReader reader = GetReaderAtHeader(index))
                 {
                     return FromHeader.ReadHeaderValue(reader, version.Addressing);
@@ -200,9 +237,13 @@ namespace CoreWCF.Channels
             set
             {
                 if (value != null)
+                {
                     SetFromHeader(FromHeader.Create(value, version.Addressing));
+                }
                 else
+                {
                     SetHeaderProperty(HeaderKind.From, null);
+                }
             }
         }
 
@@ -227,10 +268,16 @@ namespace CoreWCF.Channels
             {
                 int index = FindHeaderProperty(HeaderKind.MessageId);
                 if (index < 0)
+                {
                     return null;
+                }
+
                 MessageIDHeader messageIDHeader = headers[index].HeaderInfo as MessageIDHeader;
                 if (messageIDHeader != null)
+                {
                     return messageIDHeader.MessageId;
+                }
+
                 using (XmlDictionaryReader reader = GetReaderAtHeader(index))
                 {
                     return MessageIDHeader.ReadHeaderValue(reader, version.Addressing);
@@ -239,9 +286,13 @@ namespace CoreWCF.Channels
             set
             {
                 if (value != null)
+                {
                     SetMessageIDHeader(MessageIDHeader.Create(value, version.Addressing));
+                }
                 else
+                {
                     SetHeaderProperty(HeaderKind.MessageId, null);
+                }
             }
         }
 
@@ -268,10 +319,16 @@ namespace CoreWCF.Channels
             {
                 int index = FindHeaderProperty(HeaderKind.ReplyTo);
                 if (index < 0)
+                {
                     return null;
+                }
+
                 ReplyToHeader replyToHeader = headers[index].HeaderInfo as ReplyToHeader;
                 if (replyToHeader != null)
+                {
                     return replyToHeader.ReplyTo;
+                }
+
                 using (XmlDictionaryReader reader = GetReaderAtHeader(index))
                 {
                     return ReplyToHeader.ReadHeaderValue(reader, version.Addressing);
@@ -280,9 +337,13 @@ namespace CoreWCF.Channels
             set
             {
                 if (value != null)
+                {
                     SetReplyToHeader(ReplyToHeader.Create(value, version.Addressing));
+                }
                 else
+                {
                     SetHeaderProperty(HeaderKind.ReplyTo, null);
+                }
             }
         }
 
@@ -292,10 +353,16 @@ namespace CoreWCF.Channels
             {
                 int index = FindHeaderProperty(HeaderKind.To);
                 if (index < 0)
+                {
                     return null;
+                }
+
                 ToHeader toHeader = headers[index].HeaderInfo as ToHeader;
                 if (toHeader != null)
+                {
                     return toHeader.To;
+                }
+
                 using (XmlDictionaryReader reader = GetReaderAtHeader(index))
                 {
                     return ToHeader.ReadHeaderValue(reader, version.Addressing);
@@ -304,9 +371,13 @@ namespace CoreWCF.Channels
             set
             {
                 if (value != null)
+                {
                     SetToHeader(ToHeader.Create(value, version.Addressing));
+                }
                 else
+                {
                     SetHeaderProperty(HeaderKind.To, null);
+                }
             }
         }
 
@@ -315,7 +386,10 @@ namespace CoreWCF.Channels
             get
             {
                 if (understoodHeaders == null)
+                {
                     understoodHeaders = new UnderstoodHeaders(this, understoodHeadersModified);
+                }
+
                 return understoodHeaders;
             }
         }
@@ -365,12 +439,12 @@ namespace CoreWCF.Channels
             Insert(headerCount, toHeader, HeaderKind.To);
         }
 
-        void Add(MessageHeader header, HeaderKind kind)
+        private void Add(MessageHeader header, HeaderKind kind)
         {
             Insert(headerCount, header, kind);
         }
 
-        void AddHeader(Header header)
+        private void AddHeader(Header header)
         {
             InsertHeader(headerCount, header);
         }
@@ -384,7 +458,10 @@ namespace CoreWCF.Channels
         internal void AddUnderstood(MessageHeaderInfo headerInfo)
         {
             if (headerInfo == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(headerInfo));
+            }
+
             for (int i = 0; i < headerCount; i++)
             {
                 if ((object)headers[i].HeaderInfo == (object)headerInfo)
@@ -400,12 +477,12 @@ namespace CoreWCF.Channels
             }
         }
 
-        void CaptureBufferedHeaders()
+        private void CaptureBufferedHeaders()
         {
             CaptureBufferedHeaders(-1);
         }
 
-        void CaptureBufferedHeaders(int exceptIndex)
+        private void CaptureBufferedHeaders(int exceptIndex)
         {
             using (XmlDictionaryReader reader = GetBufferedMessageHeaderReaderAtHeaderContents(bufferedMessageData))
             {
@@ -414,7 +491,9 @@ namespace CoreWCF.Channels
                     if (reader.NodeType != XmlNodeType.Element)
                     {
                         if (reader.MoveToContent() != XmlNodeType.Element)
+                        {
                             break;
+                        }
                     }
 
                     Header header = headers[i];
@@ -432,7 +511,7 @@ namespace CoreWCF.Channels
             bufferedMessageData = null;
         }
 
-        BufferedHeader CaptureBufferedHeader(XmlDictionaryReader reader, MessageHeaderInfo headerInfo)
+        private BufferedHeader CaptureBufferedHeader(XmlDictionaryReader reader, MessageHeaderInfo headerInfo)
         {
             XmlBuffer buffer = new XmlBuffer(int.MaxValue);
             XmlDictionaryWriter writer = buffer.OpenSection(bufferedMessageData.Quotas);
@@ -442,7 +521,7 @@ namespace CoreWCF.Channels
             return new BufferedHeader(version, buffer, 0, headerInfo);
         }
 
-        BufferedHeader CaptureBufferedHeader(IBufferedMessageData bufferedMessageData, MessageHeaderInfo headerInfo, int bufferedMessageHeaderIndex)
+        private BufferedHeader CaptureBufferedHeader(IBufferedMessageData bufferedMessageData, MessageHeaderInfo headerInfo, int bufferedMessageHeaderIndex)
         {
             XmlBuffer buffer = new XmlBuffer(int.MaxValue);
             XmlDictionaryWriter writer = buffer.OpenSection(bufferedMessageData.Quotas);
@@ -452,7 +531,7 @@ namespace CoreWCF.Channels
             return new BufferedHeader(version, buffer, 0, headerInfo);
         }
 
-        BufferedHeader CaptureWriteableHeader(MessageHeader writeableHeader)
+        private BufferedHeader CaptureWriteableHeader(MessageHeader writeableHeader)
         {
             XmlBuffer buffer = new XmlBuffer(int.MaxValue);
             XmlDictionaryWriter writer = buffer.OpenSection(XmlDictionaryReaderQuotas.Max);
@@ -465,7 +544,10 @@ namespace CoreWCF.Channels
         public void Clear()
         {
             for (int i = 0; i < headerCount; i++)
+            {
                 headers[i] = new Header();
+            }
+
             headerCount = 0;
             collectionVersion++;
             bufferedMessageData = null;
@@ -474,7 +556,10 @@ namespace CoreWCF.Channels
         public void CopyHeaderFrom(Message message, int headerIndex)
         {
             if (message == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(message));
+            }
+
             CopyHeaderFrom(message.Headers, headerIndex);
         }
 
@@ -499,7 +584,10 @@ namespace CoreWCF.Channels
             Header header = collection.headers[headerIndex];
             HeaderProcessing processing = header.HeaderInfo.MustUnderstand ? HeaderProcessing.MustUnderstand : 0;
             if ((header.HeaderProcessing & HeaderProcessing.Understood) != 0 || header.HeaderKind != HeaderKind.Unknown)
+            {
                 processing |= HeaderProcessing.Understood;
+            }
+
             switch (header.HeaderType)
             {
                 case HeaderType.BufferedMessageHeader:
@@ -520,16 +608,24 @@ namespace CoreWCF.Channels
         public void CopyHeadersFrom(Message message)
         {
             if (message == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(message));
+            }
+
             CopyHeadersFrom(message.Headers);
         }
 
         public void CopyHeadersFrom(MessageHeaders collection)
         {
             if (collection == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(collection));
+            }
+
             for (int i = 0; i < collection.headerCount; i++)
+            {
                 CopyHeaderFrom(collection, i);
+            }
         }
 
         public void CopyTo(MessageHeaderInfo[] array, int index)
@@ -546,10 +642,12 @@ namespace CoreWCF.Channels
                     SR.Format(SR.ValueMustBeInRange, 0, array.Length - headerCount)));
             }
             for (int i = 0; i < headerCount; i++)
+            {
                 array[i + index] = headers[i].HeaderInfo;
+            }
         }
 
-        Exception CreateDuplicateHeaderException(HeaderKind kind)
+        private Exception CreateDuplicateHeaderException(HeaderKind kind)
         {
             string name;
             switch (kind)
@@ -586,9 +684,14 @@ namespace CoreWCF.Channels
         public int FindHeader(string name, string ns)
         {
             if (name == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(name));
+            }
+
             if (ns == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(ns));
+            }
 
             if (ns == version.Addressing.Namespace)
             {
@@ -600,7 +703,7 @@ namespace CoreWCF.Channels
             }
         }
 
-        int FindAddressingHeader(string name, string ns)
+        private int FindAddressingHeader(string name, string ns)
         {
             int foundAt = -1;
             for (int i = 0; i < headerCount; i++)
@@ -622,7 +725,7 @@ namespace CoreWCF.Channels
             return foundAt;
         }
 
-        int FindNonAddressingHeader(string name, string ns, string[] actors)
+        private int FindNonAddressingHeader(string name, string ns, string[] actors)
         {
             int foundAt = -1;
             for (int i = 0; i < headerCount; i++)
@@ -639,7 +742,10 @@ namespace CoreWCF.Channels
                                 if (foundAt >= 0)
                                 {
                                     if (actors.Length == 1)
+                                    {
                                         throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new MessageHeaderException(SR.Format(SR.MultipleMessageHeadersWithActor, name, ns, actors[0]), name, ns, true));
+                                    }
+
                                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new MessageHeaderException(SR.Format(SR.MultipleMessageHeaders, name, ns), name, ns, true));
                                 }
                                 foundAt = i;
@@ -654,11 +760,20 @@ namespace CoreWCF.Channels
         public int FindHeader(string name, string ns, params string[] actors)
         {
             if (name == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(name));
+            }
+
             if (ns == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(ns));
+            }
+
             if (actors == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(actors));
+            }
+
             int foundAt = -1;
             for (int i = 0; i < headerCount; i++)
             {
@@ -672,7 +787,10 @@ namespace CoreWCF.Channels
                             if (foundAt >= 0)
                             {
                                 if (actors.Length == 1)
+                                {
                                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new MessageHeaderException(SR.Format(SR.MultipleMessageHeadersWithActor, name, ns, actors[0]), name, ns, true));
+                                }
+
                                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new MessageHeaderException(SR.Format(SR.MultipleMessageHeaders, name, ns), name, ns, true));
                             }
                             foundAt = i;
@@ -683,7 +801,7 @@ namespace CoreWCF.Channels
             return foundAt;
         }
 
-        int FindHeaderProperty(HeaderKind kind)
+        private int FindHeaderProperty(HeaderKind kind)
         {
             int index = -1;
             for (int i = 0; i < headerCount; i++)
@@ -691,14 +809,17 @@ namespace CoreWCF.Channels
                 if (headers[i].HeaderKind == kind)
                 {
                     if (index >= 0)
+                    {
                         throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(CreateDuplicateHeaderException(kind));
+                    }
+
                     index = i;
                 }
             }
             return index;
         }
 
-        int FindRelatesTo(Uri relationshipType, out UniqueId messageId)
+        private int FindRelatesTo(Uri relationshipType, out UniqueId messageId)
         {
             UniqueId foundValue = null;
             int foundIndex = -1;
@@ -743,7 +864,7 @@ namespace CoreWCF.Channels
             return GetEnumerator(headers);
         }
 
-        IEnumerator<MessageHeaderInfo> GetEnumerator(MessageHeaderInfo[] headers)
+        private IEnumerator<MessageHeaderInfo> GetEnumerator(MessageHeaderInfo[] headers)
         {
             IList<MessageHeaderInfo> list = new ReadOnlyCollection<MessageHeaderInfo>(headers);
             return list.GetEnumerator();
@@ -764,21 +885,31 @@ namespace CoreWCF.Channels
             return understoodHeaders.GetEnumerator();
         }
 
-        static XmlDictionaryReader GetBufferedMessageHeaderReaderAtHeaderContents(IBufferedMessageData bufferedMessageData)
+        private static XmlDictionaryReader GetBufferedMessageHeaderReaderAtHeaderContents(IBufferedMessageData bufferedMessageData)
         {
             XmlDictionaryReader reader = bufferedMessageData.GetMessageReader();
             if (reader.NodeType == XmlNodeType.Element)
+            {
                 reader.Read();
+            }
             else
+            {
                 reader.ReadStartElement();
+            }
+
             if (reader.NodeType == XmlNodeType.Element)
+            {
                 reader.Read();
+            }
             else
+            {
                 reader.ReadStartElement();
+            }
+
             return reader;
         }
 
-        XmlDictionaryReader GetBufferedMessageHeaderReader(IBufferedMessageData bufferedMessageData, int bufferedMessageHeaderIndex)
+        private XmlDictionaryReader GetBufferedMessageHeaderReader(IBufferedMessageData bufferedMessageData, int bufferedMessageHeaderIndex)
         {
             // Check if we need to change representations
             if (nodeCount > MaxBufferedHeaderNodes || attrCount > MaxBufferedHeaderAttributes)
@@ -791,9 +922,15 @@ namespace CoreWCF.Channels
             for (;;)
             {
                 if (reader.NodeType != XmlNodeType.Element)
+                {
                     reader.MoveToContent();
+                }
+
                 if (bufferedMessageHeaderIndex == 0)
+                {
                     break;
+                }
+
                 Skip(reader);
                 bufferedMessageHeaderIndex--;
             }
@@ -801,7 +938,7 @@ namespace CoreWCF.Channels
             return reader;
         }
 
-        void Skip(XmlDictionaryReader reader)
+        private void Skip(XmlDictionaryReader reader)
         {
             if (reader.MoveToContent() == XmlNodeType.Element && !reader.IsEmptyElement)
             {
@@ -836,7 +973,10 @@ namespace CoreWCF.Channels
         {
             int index = FindHeader(name, ns, actors);
             if (index < 0)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new MessageHeaderException(SR.Format(SR.HeaderNotFound, name, ns), name, ns));
+            }
+
             return GetHeader<T>(index);
 
         }
@@ -844,10 +984,16 @@ namespace CoreWCF.Channels
         public T GetHeader<T>(string name, string ns, XmlObjectSerializer serializer)
         {
             if (serializer == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(serializer));
+            }
+
             int index = FindHeader(name, ns);
             if (index < 0)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new MessageHeaderException(SR.Format(SR.HeaderNotFound, name, ns), name, ns));
+            }
+
             return GetHeader<T>(index, serializer);
         }
 
@@ -867,14 +1013,17 @@ namespace CoreWCF.Channels
         public T GetHeader<T>(int index, XmlObjectSerializer serializer)
         {
             if (serializer == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(serializer));
+            }
+
             using (XmlDictionaryReader reader = GetReaderAtHeader(index))
             {
                 return (T)serializer.ReadObject(reader);
             }
         }
 
-        HeaderKind GetHeaderKind(MessageHeaderInfo headerInfo)
+        private HeaderKind GetHeaderKind(MessageHeaderInfo headerInfo)
         {
             HeaderKind headerKind = HeaderKind.Unknown;
 
@@ -934,7 +1083,7 @@ namespace CoreWCF.Channels
             return headerKind;
         }
 
-        void ValidateHeaderKind(HeaderKind headerKind)
+        private void ValidateHeaderKind(HeaderKind headerKind)
         {
             if (version.Envelope == EnvelopeVersion.None)
             {
@@ -984,14 +1133,16 @@ namespace CoreWCF.Channels
         internal UniqueId GetRelatesTo(Uri relationshipType)
         {
             if (relationshipType == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(relationshipType));
+            }
 
             UniqueId messageId;
             FindRelatesTo(relationshipType, out messageId);
             return messageId;
         }
 
-        void GetRelatesToValues(int index, out Uri relationshipType, out UniqueId messageId)
+        private void GetRelatesToValues(int index, out Uri relationshipType, out UniqueId messageId)
         {
             RelatesToHeader relatesToHeader = headers[index].HeaderInfo as RelatesToHeader;
             if (relatesToHeader != null)
@@ -1023,11 +1174,17 @@ namespace CoreWCF.Channels
                     if (value != null)
                     {
                         if (attrs == null)
+                        {
                             attrs = new string[headerCount];
+                        }
+
                         attrs[index] = value;
                     }
                     if (index == headerCount - 1)
+                    {
                         break;
+                    }
+
                     reader.Skip();
                 }
                 reader.Dispose();
@@ -1044,7 +1201,10 @@ namespace CoreWCF.Channels
                             if (value != null)
                             {
                                 if (attrs == null)
+                                {
                                     attrs = new string[headerCount];
+                                }
+
                                 attrs[index] = value;
                             }
                         }
@@ -1088,7 +1248,9 @@ namespace CoreWCF.Channels
                 if (headers[headerIndex].HeaderProcessing == HeaderProcessing.MustUnderstand)
                 {
                     if (notUnderstoodHeaders == null)
+                    {
                         notUnderstoodHeaders = new Collection<MessageHeaderInfo>();
+                    }
 
                     MessageHeaderInfo headerInfo = headers[headerIndex].HeaderInfo;
                     //if (DiagnosticUtility.ShouldTraceWarning)
@@ -1113,7 +1275,9 @@ namespace CoreWCF.Channels
         public bool HaveMandatoryHeadersBeenUnderstood(params string[] actors)
         {
             if (actors == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(actors));
+            }
 
             for (int headerIndex = 0; headerIndex < headerCount; headerIndex++)
             {
@@ -1210,25 +1374,38 @@ namespace CoreWCF.Channels
         public void Insert(int headerIndex, MessageHeader header)
         {
             if (header == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(header));
+            }
+
             if (!header.IsMessageVersionSupported(version))
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentException(SR.Format(SR.MessageHeaderVersionNotSupported,header.GetType().FullName, version.Envelope.ToString()), nameof(header)));
+            }
+
             Insert(headerIndex, header, GetHeaderKind(header));
         }
 
-        void Insert(int headerIndex, MessageHeader header, HeaderKind kind)
+        private void Insert(int headerIndex, MessageHeader header, HeaderKind kind)
         {
             ReadableMessageHeader readableMessageHeader = header as ReadableMessageHeader;
             HeaderProcessing processing = header.MustUnderstand ? HeaderProcessing.MustUnderstand : 0;
             if (kind != HeaderKind.Unknown)
+            {
                 processing |= HeaderProcessing.Understood;
+            }
+
             if (readableMessageHeader != null)
+            {
                 InsertHeader(headerIndex, new Header(kind, readableMessageHeader, processing));
+            }
             else
+            {
                 InsertHeader(headerIndex, new Header(kind, header, processing));
+            }
         }
 
-        void InsertHeader(int headerIndex, Header header)
+        private void InsertHeader(int headerIndex, Header header)
         {
             ValidateHeaderKind(header.HeaderKind);
 
@@ -1280,20 +1457,25 @@ namespace CoreWCF.Channels
         internal bool IsUnderstood(MessageHeaderInfo headerInfo)
         {
             if (headerInfo == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(headerInfo));
+            }
+
             for (int i = 0; i < headerCount; i++)
             {
                 if ((object)headers[i].HeaderInfo == (object)headerInfo)
                 {
                     if (IsUnderstood(i))
+                    {
                         return true;
+                    }
                 }
             }
 
             return false;
         }
 
-        void ReadBufferedHeader(XmlDictionaryReader reader, RecycledMessageState recycledMessageState, XmlDictionaryString[] localNames, bool understood)
+        private void ReadBufferedHeader(XmlDictionaryReader reader, RecycledMessageState recycledMessageState, XmlDictionaryString[] localNames, bool understood)
         {
             string actor;
             bool mustUnderstand;
@@ -1379,7 +1561,10 @@ namespace CoreWCF.Channels
         internal void RemoveUnderstood(MessageHeaderInfo headerInfo)
         {
             if (headerInfo == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(headerInfo));
+            }
+
             for (int i = 0; i < headerCount; i++)
             {
                 if ((object)headers[i].HeaderInfo == (object)headerInfo)
@@ -1398,9 +1583,15 @@ namespace CoreWCF.Channels
         public void RemoveAll(string name, string ns)
         {
             if (name == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(name));
+            }
+
             if (ns == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(ns));
+            }
+
             for (int i = headerCount - 1; i >= 0; i--)
             {
                 MessageHeaderInfo info = headers[i].HeaderInfo;
@@ -1420,7 +1611,10 @@ namespace CoreWCF.Channels
                     SR.Format(SR.ValueMustBeInRange, 0, headerCount)));
             }
             if (bufferedMessageData != null && headers[headerIndex].HeaderType == HeaderType.BufferedMessageHeader)
+            {
                 CaptureBufferedHeaders(headerIndex);
+            }
+
             Array.Copy(headers, headerIndex + 1, headers, headerIndex, headerCount - headerIndex - 1);
             headers[--headerCount] = new Header();
             collectionVersion++;
@@ -1443,25 +1637,37 @@ namespace CoreWCF.Channels
             ReplaceAt(headerIndex, header, GetHeaderKind(header));
         }
 
-        void ReplaceAt(int headerIndex, MessageHeader header, HeaderKind kind)
+        private void ReplaceAt(int headerIndex, MessageHeader header, HeaderKind kind)
         {
             HeaderProcessing processing = header.MustUnderstand ? HeaderProcessing.MustUnderstand : 0;
             if (kind != HeaderKind.Unknown)
+            {
                 processing |= HeaderProcessing.Understood;
+            }
+
             ReadableMessageHeader readableMessageHeader = header as ReadableMessageHeader;
             if (readableMessageHeader != null)
+            {
                 headers[headerIndex] = new Header(kind, readableMessageHeader, processing);
+            }
             else
+            {
                 headers[headerIndex] = new Header(kind, header, processing);
+            }
+
             collectionVersion++;
         }
 
         public void SetAction(XmlDictionaryString action)
         {
             if (action == null)
+            {
                 SetHeaderProperty(HeaderKind.Action, null);
+            }
             else
+            {
                 SetActionHeader(ActionHeader.Create(action, version.Addressing));
+            }
         }
 
         internal void SetActionHeader(ActionHeader actionHeader)
@@ -1504,7 +1710,7 @@ namespace CoreWCF.Channels
             SetRelatesTo(RelatesToHeader.ReplyRelationshipType, relatesToHeader);
         }
 
-        void SetRelatesTo(Uri relationshipType, RelatesToHeader relatesToHeader)
+        private void SetRelatesTo(Uri relationshipType, RelatesToHeader relatesToHeader)
         {
             UniqueId previousUniqueId;
             int index = FindRelatesTo(relationshipType, out previousUniqueId);
@@ -1535,7 +1741,7 @@ namespace CoreWCF.Channels
             SetHeaderProperty(HeaderKind.To, toHeader);
         }
 
-        void SetHeaderProperty(HeaderKind kind, MessageHeader header)
+        private void SetHeaderProperty(HeaderKind kind, MessageHeader header)
         {
             int index = FindHeaderProperty(kind);
             if (index >= 0)
@@ -1631,7 +1837,7 @@ namespace CoreWCF.Channels
             }
         }
 
-        static void TraceUnderstood(MessageHeaderInfo info)
+        private static void TraceUnderstood(MessageHeaderInfo info)
         {
             //if (DiagnosticUtility.ShouldTraceVerbose)
             //{
@@ -1641,7 +1847,7 @@ namespace CoreWCF.Channels
             //}
         }
 
-        void WriteBufferedMessageHeader(IBufferedMessageData bufferedMessageData, int bufferedMessageHeaderIndex, XmlWriter writer)
+        private void WriteBufferedMessageHeader(IBufferedMessageData bufferedMessageData, int bufferedMessageHeaderIndex, XmlWriter writer)
         {
             using (XmlReader reader = GetBufferedMessageHeaderReader(bufferedMessageData, bufferedMessageHeaderIndex))
             {
@@ -1649,7 +1855,7 @@ namespace CoreWCF.Channels
             }
         }
 
-        void WriteStartBufferedMessageHeader(IBufferedMessageData bufferedMessageData, int bufferedMessageHeaderIndex, XmlWriter writer)
+        private void WriteStartBufferedMessageHeader(IBufferedMessageData bufferedMessageData, int bufferedMessageHeaderIndex, XmlWriter writer)
         {
             using (XmlReader reader = GetBufferedMessageHeaderReader(bufferedMessageData, bufferedMessageHeaderIndex))
             {
@@ -1658,7 +1864,7 @@ namespace CoreWCF.Channels
             }
         }
 
-        void WriteBufferedMessageHeaderContents(IBufferedMessageData bufferedMessageData, int bufferedMessageHeaderIndex, XmlWriter writer)
+        private void WriteBufferedMessageHeaderContents(IBufferedMessageData bufferedMessageData, int bufferedMessageHeaderIndex, XmlWriter writer)
         {
             using (XmlReader reader = GetBufferedMessageHeaderReader(bufferedMessageData, bufferedMessageHeaderIndex))
             {
@@ -1674,7 +1880,7 @@ namespace CoreWCF.Channels
             }
         }
 
-        enum HeaderType : byte
+        private enum HeaderType : byte
         {
             Invalid,
             ReadableHeader,
@@ -1682,7 +1888,7 @@ namespace CoreWCF.Channels
             WriteableHeader
         }
 
-        enum HeaderKind : byte
+        private enum HeaderKind : byte
         {
             Action,
             FaultTo,
@@ -1695,18 +1901,18 @@ namespace CoreWCF.Channels
         }
 
         [Flags]
-        enum HeaderProcessing : byte
+        private enum HeaderProcessing : byte
         {
             MustUnderstand = 0x1,
             Understood = 0x2,
         }
 
-        struct Header
+        private struct Header
         {
-            HeaderType type;
-            HeaderKind kind;
-            HeaderProcessing processing;
-            MessageHeaderInfo info;
+            private HeaderType type;
+            private HeaderKind kind;
+            private HeaderProcessing processing;
+            private MessageHeaderInfo info;
 
             public Header(HeaderKind kind, MessageHeaderInfo info, HeaderProcessing processing)
             {

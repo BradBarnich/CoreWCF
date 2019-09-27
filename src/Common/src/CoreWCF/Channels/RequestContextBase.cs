@@ -9,15 +9,15 @@ namespace CoreWCF.Channels
 {
     internal abstract class RequestContextBase : RequestContext
     {
-        TimeSpan defaultSendTimeout;
-        TimeSpan defaultCloseTimeout;
-        CommunicationState state = CommunicationState.Opened;
-        Message requestMessage;
-        Exception requestMessageException;
-        bool replySent;
-        bool replyInitiated;
-        bool aborted;
-        object thisLock = new object();
+        private TimeSpan defaultSendTimeout;
+        private TimeSpan defaultCloseTimeout;
+        private CommunicationState state = CommunicationState.Opened;
+        private Message requestMessage;
+        private Exception requestMessageException;
+        private bool replySent;
+        private bool replyInitiated;
+        private bool aborted;
+        private object thisLock = new object();
 
         protected RequestContextBase(Message requestMessage, TimeSpan defaultCloseTimeout, TimeSpan defaultSendTimeout)
         {
@@ -97,7 +97,9 @@ namespace CoreWCF.Channels
             lock (ThisLock)
             {
                 if (state == CommunicationState.Closed)
+                {
                     return;
+                }
 
                 state = CommunicationState.Closing;
 
@@ -132,7 +134,9 @@ namespace CoreWCF.Channels
             lock (ThisLock)
             {
                 if (state != CommunicationState.Opened)
+                {
                     return;
+                }
 
                 if (TryInitiateReply())
                 {
@@ -158,7 +162,9 @@ namespace CoreWCF.Channels
             finally
             {
                 if (throwing)
+                {
                     Abort();
+                }
             }
         }
 
@@ -167,7 +173,9 @@ namespace CoreWCF.Channels
             base.Dispose(disposing);
 
             if (!disposing)
+            {
                 return;
+            }
 
             if (replySent)
             {
@@ -188,13 +196,19 @@ namespace CoreWCF.Channels
             if (state == CommunicationState.Closed || state == CommunicationState.Closing)
             {
                 if (aborted)
+                {
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new CommunicationObjectAbortedException(SR.RequestContextAborted));
+                }
                 else
+                {
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ObjectDisposedException(GetType().FullName));
+                }
             }
 
             if (replyInitiated)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.ReplyAlreadySent));
+            }
         }
 
         /// <summary>
@@ -253,10 +267,10 @@ namespace CoreWCF.Channels
         }
     }
 
-    class RequestContextMessageProperty : IDisposable
+    internal class RequestContextMessageProperty : IDisposable
     {
-        RequestContext context;
-        object thisLock = new object();
+        private RequestContext context;
+        private object thisLock = new object();
 
         public RequestContextMessageProperty(RequestContext context)
         {
@@ -276,7 +290,10 @@ namespace CoreWCF.Channels
             lock (thisLock)
             {
                 if (context == null)
+                {
                     return;
+                }
+
                 thisContext = context;
                 context = null;
             }

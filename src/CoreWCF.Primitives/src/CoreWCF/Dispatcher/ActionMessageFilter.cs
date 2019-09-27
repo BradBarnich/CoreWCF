@@ -9,8 +9,8 @@ namespace CoreWCF.Dispatcher
     [DataContract]
     internal class ActionMessageFilter : MessageFilter
     {
-        Dictionary<string, int> actions;
-        ReadOnlyCollection<string> actionSet;
+        private Dictionary<string, int> actions;
+        private ReadOnlyCollection<string> actionSet;
 
         [DataMember(IsRequired = true)]
         internal string[] DCActions
@@ -37,7 +37,7 @@ namespace CoreWCF.Dispatcher
             Init(actions);
         }
 
-        void Init(string[] actions)
+        private void Init(string[] actions)
         {
             if (actions.Length == 0)
             {
@@ -72,7 +72,7 @@ namespace CoreWCF.Dispatcher
             return new ActionMessageFilterTable<FilterData>();
         }
 
-        bool InnerMatch(Message message)
+        private bool InnerMatch(Message message)
         {
             string act = message.Headers.Action;
             if (act == null)

@@ -42,7 +42,7 @@ namespace CoreWCF.Description
             }
         }
 
-        static void AddBindingParameters(ServiceEndpoint endpoint, BindingParameterCollection parameters)
+        private static void AddBindingParameters(ServiceEndpoint endpoint, BindingParameterCollection parameters)
         {
             foreach (IContractBehavior icb in endpoint.Contract.Behaviors)
             {
@@ -122,7 +122,9 @@ namespace CoreWCF.Description
 
             // VSWhidbey#541152: new Uri(Uri, string.Empty) is broken
             if (path.Length == 0)
+            {
                 return baseUri;
+            }
 
             if (!baseUri.AbsoluteUri.EndsWith("/", StringComparison.Ordinal))
             {
@@ -373,7 +375,7 @@ namespace CoreWCF.Description
             return dispatcher;
         }
 
-        static void BuildProxyOperation(OperationDescription operation, ClientRuntime parent)
+        private static void BuildProxyOperation(OperationDescription operation, ClientRuntime parent)
         {
             ClientOperation child;
             if (operation.Messages.Count == 1)
@@ -403,7 +405,7 @@ namespace CoreWCF.Description
             parent.Operations.Add(child);
         }
 
-        static void BuildDispatchOperation(OperationDescription operation, DispatchRuntime parent, EndpointFilterProvider provider)
+        private static void BuildDispatchOperation(OperationDescription operation, DispatchRuntime parent, EndpointFilterProvider provider)
         {
             string requestAction = operation.Messages[0].Action;
             DispatchOperation child = null;
@@ -451,7 +453,7 @@ namespace CoreWCF.Description
 
         }
 
-        static void BindOperations(ContractDescription contract, ClientRuntime proxy, DispatchRuntime dispatch)
+        private static void BindOperations(ContractDescription contract, ClientRuntime proxy, DispatchRuntime dispatch)
         {
             if (!(((proxy == null) != (dispatch == null))))
             {
@@ -510,7 +512,7 @@ namespace CoreWCF.Description
             }
         }
 
-        static bool HaveCommonInitiatingActions(EndpointFilterProvider x, EndpointFilterProvider y, out string commonAction)
+        private static bool HaveCommonInitiatingActions(EndpointFilterProvider x, EndpointFilterProvider y, out string commonAction)
         {
             commonAction = null;
             foreach (string action in x.InitiatingActions)
@@ -643,11 +645,12 @@ namespace CoreWCF.Description
         }
 
         #region InnerClasses
-        class EndpointInfo
+
+        private class EndpointInfo
         {
-            ServiceEndpoint endpoint;
-            EndpointDispatcher endpointDispatcher;
-            EndpointFilterProvider provider;
+            private ServiceEndpoint endpoint;
+            private EndpointDispatcher endpointDispatcher;
+            private EndpointFilterProvider provider;
 
             public EndpointInfo(ServiceEndpoint endpoint, EndpointDispatcher endpointDispatcher, EndpointFilterProvider provider)
             {
@@ -662,8 +665,8 @@ namespace CoreWCF.Description
 
         internal class ListenUriInfo
         {
-            Uri listenUri;
-            ListenUriMode listenUriMode;
+            private Uri listenUri;
+            private ListenUriMode listenUriMode;
 
             public ListenUriInfo(Uri listenUri, ListenUriMode listenUriMode)
             {
@@ -709,7 +712,7 @@ namespace CoreWCF.Description
             }
         }
 
-        class StuffPerListenUriInfo
+        private class StuffPerListenUriInfo
         {
             public BindingParameterCollection Parameters = new BindingParameterCollection();
             public Collection<ServiceEndpoint> Endpoints = new Collection<ServiceEndpoint>();

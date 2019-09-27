@@ -40,9 +40,9 @@ namespace CoreWCF.Security
             get { return WSSecurity11; }
         }
 
-        class SecurityVersion10 : SecurityVersion
+        private class SecurityVersion10 : SecurityVersion
         {
-            static readonly SecurityVersion10 instance = new SecurityVersion10();
+            private static readonly SecurityVersion10 instance = new SecurityVersion10();
 
             protected SecurityVersion10()
                 : base(XD.SecurityJan2004Dictionary.Security, XD.SecurityJan2004Dictionary.Namespace, XD.SecurityJan2004Dictionary.Prefix)
@@ -59,11 +59,11 @@ namespace CoreWCF.Security
             internal override XmlDictionaryString InvalidSecurityFaultCode => XD.SecurityJan2004Dictionary.InvalidSecurityFaultCode;
         }
 
-        sealed class SecurityVersion11 : SecurityVersion10
+        private sealed class SecurityVersion11 : SecurityVersion10
         {
-            static readonly SecurityVersion11 instance = new SecurityVersion11();
+            private static readonly SecurityVersion11 instance = new SecurityVersion11();
 
-            SecurityVersion11() : base()
+            private SecurityVersion11() : base()
             {
             }
 

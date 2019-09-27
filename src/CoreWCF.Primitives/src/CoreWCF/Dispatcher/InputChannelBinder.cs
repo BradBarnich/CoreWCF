@@ -9,8 +9,8 @@ namespace CoreWCF.Dispatcher
 {
     internal class InputChannelBinder : IChannelBinder
     {
-        IInputChannel channel;
-        Uri listenUri;
+        private IInputChannel channel;
+        private Uri listenUri;
 
         public InputChannelBinder()
         {
@@ -100,7 +100,7 @@ namespace CoreWCF.Dispatcher
             return channel.WaitForMessageAsync(token);
         }
 
-        RequestContext WrapMessage(Message message)
+        private RequestContext WrapMessage(Message message)
         {
             if (message == null)
             {
@@ -112,9 +112,9 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        class InputRequestContext : RequestContextBase
+        private class InputRequestContext : RequestContextBase
         {
-            InputChannelBinder binder;
+            private InputChannelBinder binder;
 
             internal InputRequestContext(Message request, InputChannelBinder binder)
                 : base(request, TimeSpan.Zero, TimeSpan.Zero)

@@ -18,7 +18,9 @@ namespace CoreWCF
         internal void Initialize(Claim identityClaim)
         {
             if (identityClaim == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(identityClaim));
+            }
 
             Initialize(identityClaim, null);
         }
@@ -26,7 +28,9 @@ namespace CoreWCF
         internal void Initialize(Claim identityClaim, IEqualityComparer<Claim> claimComparer)
         {
             if (identityClaim == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(identityClaim));
+            }
 
             _identityClaim = identityClaim;
             _claimComparer = claimComparer;
@@ -47,7 +51,9 @@ namespace CoreWCF
         public static EndpointIdentity CreateIdentity(Claim identity)
         {
             if (identity == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(identity));
+            }
 
             if (identity.ClaimType.Equals(ClaimTypes.Dns))
             {
@@ -101,15 +107,21 @@ namespace CoreWCF
         public override bool Equals(object obj)
         {
             if (obj == (object)this)
+            {
                 return true;
+            }
 
             // as handles null do we need the double null check?
             if (obj == null)
+            {
                 return false;
+            }
 
             EndpointIdentity otherIdentity = obj as EndpointIdentity;
             if (otherIdentity == null)
+            {
                 return false;
+            }
 
             return Matches(otherIdentity.IdentityClaim);
         }
@@ -138,13 +150,17 @@ namespace CoreWCF
         internal static EndpointIdentity ReadIdentity(XmlDictionaryReader reader)
         {
             if (reader == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(reader));
+            }
 
             EndpointIdentity readIdentity = null;
 
             reader.MoveToContent();
             if (reader.IsEmptyElement)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new XmlException(SR.Format(SR.UnexpectedEmptyElementExpectingClaim, XD.AddressingDictionary.Identity.Value, XD.AddressingDictionary.IdentityExtensionNamespace.Value)));
+            }
 
             reader.ReadStartElement(XD.AddressingDictionary.Identity, XD.AddressingDictionary.IdentityExtensionNamespace);
 
@@ -202,7 +218,9 @@ namespace CoreWCF
         internal void WriteTo(XmlDictionaryWriter writer)
         {
             if (writer == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(writer));
+            }
 
             writer.WriteStartElement(XD.AddressingDictionary.Identity, XD.AddressingDictionary.IdentityExtensionNamespace);
 

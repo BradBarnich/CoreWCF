@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace CoreWCF.Channels
 {
-    class ReplyChannel : InputQueueChannel<RequestContext>, IReplyChannel
+    internal class ReplyChannel : InputQueueChannel<RequestContext>, IReplyChannel
     {
-        EndpointAddress localAddress;
+        private EndpointAddress localAddress;
 
         public ReplyChannel(ChannelManagerBase channelManager, EndpointAddress localAddress)
             : base(channelManager)
@@ -59,7 +59,7 @@ namespace CoreWCF.Channels
             }
         }
 
-        static Exception CreateReceiveRequestTimedOutException(IReplyChannel channel, TimeSpan timeout)
+        private static Exception CreateReceiveRequestTimedOutException(IReplyChannel channel, TimeSpan timeout)
         {
             if (channel.LocalAddress != null)
             {

@@ -8,11 +8,11 @@ namespace CoreWCF.Dispatcher
 {
     internal class XmlSerializerObjectSerializer : XmlObjectSerializer
     {
-        XmlSerializer serializer;
-        Type rootType;
-        string rootName;
-        string rootNamespace;
-        bool isSerializerSetExplicit = false;
+        private XmlSerializer serializer;
+        private Type rootType;
+        private string rootName;
+        private string rootNamespace;
+        private bool isSerializerSetExplicit = false;
 
         internal XmlSerializerObjectSerializer(Type type)
         {
@@ -28,7 +28,7 @@ namespace CoreWCF.Dispatcher
             Initialize(type, qualifiedName.Name, qualifiedName.Namespace, xmlSerializer);
         }
 
-        void Initialize(Type type, string rootName, string rootNamespace, XmlSerializer xmlSerializer)
+        private void Initialize(Type type, string rootName, string rootNamespace, XmlSerializer xmlSerializer)
         {
             if (type == null)
             {
@@ -42,7 +42,9 @@ namespace CoreWCF.Dispatcher
             if (serializer == null)
             {
                 if (this.rootName == null)
+                {
                     serializer = new XmlSerializer(type);
+                }
                 else
                 {
                     XmlRootAttribute xmlRoot = new XmlRootAttribute();
@@ -52,7 +54,9 @@ namespace CoreWCF.Dispatcher
                 }
             }
             else
+            {
                 isSerializerSetExplicit = true;
+            }
 
             //try to get rootName and rootNamespace from type since root name not set explicitly
             if (this.rootName == null)
@@ -66,9 +70,13 @@ namespace CoreWCF.Dispatcher
         public override void WriteObject(XmlDictionaryWriter writer, object graph)
         {
             if (isSerializerSetExplicit)
+            {
                 serializer.Serialize(writer, new object[] { graph });
+            }
             else
+            {
                 serializer.Serialize(writer, graph);
+            }
         }
 
         public override void WriteStartObject(XmlDictionaryWriter writer, object graph)
@@ -92,18 +100,26 @@ namespace CoreWCF.Dispatcher
             {
                 object[] deserializedObjects = (object[])serializer.Deserialize(reader);
                 if (deserializedObjects != null && deserializedObjects.Length > 0)
+                {
                     return deserializedObjects[0];
+                }
                 else
+                {
                     return null;
+                }
             }
             else
+            {
                 return serializer.Deserialize(reader);
+            }
         }
 
         public override bool IsStartObject(XmlDictionaryReader reader)
         {
             if (reader == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(reader));
+            }
 
             reader.MoveToElement();
 

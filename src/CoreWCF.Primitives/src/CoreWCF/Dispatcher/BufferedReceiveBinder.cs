@@ -8,13 +8,13 @@ namespace CoreWCF.Dispatcher
 {
     internal class BufferedReceiveBinder : IChannelBinder
     {
-        static Action<object> tryReceive = TryReceive;
+        private static Action<object> tryReceive = TryReceive;
 
-        IChannelBinder channelBinder;
-        InputQueue<RequestContextWrapper> inputQueue;
+        private IChannelBinder channelBinder;
+        private InputQueue<RequestContextWrapper> inputQueue;
 
-        
-        int pendingOperationSemaphore;
+
+        private int pendingOperationSemaphore;
 
         public BufferedReceiveBinder(IChannelBinder channelBinder)
         {
@@ -114,7 +114,7 @@ namespace CoreWCF.Dispatcher
         // TryReceive threads
         //
 
-        static async void TryReceive(object state)
+        private static async void TryReceive(object state)
         {
             BufferedReceiveBinder binder = (BufferedReceiveBinder)state;
 
@@ -149,7 +149,7 @@ namespace CoreWCF.Dispatcher
         // A RequestContext may be 'null' (some pieces of ChannelHandler depend on this) but the InputQueue
         // will not allow null items to be enqueued. Wrap the RequestContexts in another object to
         // facilitate this semantic
-        class RequestContextWrapper
+        private class RequestContextWrapper
         {
             public RequestContextWrapper(RequestContext requestContext)
             {

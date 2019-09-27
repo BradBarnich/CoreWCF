@@ -6,9 +6,9 @@ namespace CoreWCF.Channels
     public sealed class TcpConnectionPoolSettings
     {
         //string _groupName;
-        TimeSpan _idleTimeout;
+        private TimeSpan _idleTimeout;
         //TimeSpan _leaseTimeout;
-        int _maxOutboundConnectionsPerEndpoint;
+        private int _maxOutboundConnectionsPerEndpoint;
 
         internal TcpConnectionPoolSettings()
         {
@@ -106,13 +106,17 @@ namespace CoreWCF.Channels
             //    return false;
 
             if (_idleTimeout != tcp._idleTimeout)
+            {
                 return false;
+            }
 
             //if (_leaseTimeout != tcp._leaseTimeout)
             //    return false;
 
             if (_maxOutboundConnectionsPerEndpoint != tcp._maxOutboundConnectionsPerEndpoint)
+            {
                 return false;
+            }
 
             return true;
         }

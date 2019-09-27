@@ -8,26 +8,26 @@ using System.Collections.Generic;
 
 namespace CoreWCF.Dispatcher
 {
-    class ImmutableDispatchRuntime
+    internal class ImmutableDispatchRuntime
     {
-        readonly AuthenticationBehavior _authenticationBehavior;
-        readonly AuthorizationBehavior _authorizationBehavior;
-        readonly int _correlationCount;
-        readonly ConcurrencyBehavior _concurrency;
-        readonly IDemuxer _demuxer;
-        readonly ErrorBehavior _error;
-        readonly bool _enableFaults;
-        readonly bool _impersonateOnSerializingReply;
-        readonly IInputSessionShutdown[] _inputSessionShutdownHandlers;
-        readonly bool _isOnServer;
-        readonly bool _manualAddressing;
-        readonly IDispatchMessageInspector[] _messageInspectors;
-        readonly SecurityImpersonationBehavior _securityImpersonation;
-        readonly TerminatingOperationBehavior _terminate;
-        readonly ThreadBehavior _thread;
+        private readonly AuthenticationBehavior _authenticationBehavior;
+        private readonly AuthorizationBehavior _authorizationBehavior;
+        private readonly int _correlationCount;
+        private readonly ConcurrencyBehavior _concurrency;
+        private readonly IDemuxer _demuxer;
+        private readonly ErrorBehavior _error;
+        private readonly bool _enableFaults;
+        private readonly bool _impersonateOnSerializingReply;
+        private readonly IInputSessionShutdown[] _inputSessionShutdownHandlers;
+        private readonly bool _isOnServer;
+        private readonly bool _manualAddressing;
+        private readonly IDispatchMessageInspector[] _messageInspectors;
+        private readonly SecurityImpersonationBehavior _securityImpersonation;
+        private readonly TerminatingOperationBehavior _terminate;
+        private readonly ThreadBehavior _thread;
 
-        readonly MessageRpcErrorHandler _processMessageNonCleanupError;
-        readonly MessageRpcErrorHandler _processMessageCleanupError;
+        private readonly MessageRpcErrorHandler _processMessageNonCleanupError;
+        private readonly MessageRpcErrorHandler _processMessageCleanupError;
 
         internal ImmutableDispatchRuntime(DispatchRuntime dispatch)
         {
@@ -132,7 +132,7 @@ namespace CoreWCF.Dispatcher
             get { return _error; }
         }
 
-        Task AcquireDynamicInstanceContextAsync(MessageRpc rpc)
+        private Task AcquireDynamicInstanceContextAsync(MessageRpc rpc)
         {
             if (rpc.InstanceContext.QuotaThrottle != null)
             {
@@ -144,7 +144,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        Task AcquireDynamicInstanceContextCoreAsync(MessageRpc rpc)
+        private Task AcquireDynamicInstanceContextCoreAsync(MessageRpc rpc)
         {
             return rpc.InstanceContext.QuotaThrottle.AcquireAsync();
         }
@@ -184,7 +184,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        void BeforeSendReply(MessageRpc rpc, ref Exception exception, ref bool thereIsAnUnhandledException)
+        private void BeforeSendReply(MessageRpc rpc, ref Exception exception, ref bool thereIsAnUnhandledException)
         {
             if (_messageInspectors.Length > 0)
             {
@@ -299,7 +299,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        void InputSessionDoneReceivingCore(ServiceChannel channel)
+        private void InputSessionDoneReceivingCore(ServiceChannel channel)
         {
             IDuplexContextChannel proxy = channel.Proxy as IDuplexContextChannel;
 
@@ -340,7 +340,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        void InputSessionFaultedCore(ServiceChannel channel)
+        private void InputSessionFaultedCore(ServiceChannel channel)
         {
             IDuplexContextChannel proxy = channel.Proxy as IDuplexContextChannel;
 
@@ -368,7 +368,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        void AddMessageProperties(Message message, OperationContext context, ServiceChannel replyChannel)
+        private void AddMessageProperties(Message message, OperationContext context, ServiceChannel replyChannel)
         {
             if (context.InternalServiceChannel == replyChannel)
             {
@@ -384,7 +384,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        void PrepareReply(MessageRpc rpc)
+        private void PrepareReply(MessageRpc rpc)
         {
             RequestContext context = rpc.OperationContext.RequestContext;
             Exception exception = null;
@@ -470,7 +470,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        bool PrepareAndAddressReply(ref MessageRpc rpc)
+        private bool PrepareAndAddressReply(ref MessageRpc rpc)
         {
             bool canSendReply = true;
 
@@ -906,7 +906,7 @@ namespace CoreWCF.Dispatcher
             return rpc;
         }
 
-        void ProcessMessageNonCleanupError(MessageRpc rpc)
+        private void ProcessMessageNonCleanupError(MessageRpc rpc)
         {
             try
             {
@@ -925,12 +925,12 @@ namespace CoreWCF.Dispatcher
             PrepareReply(rpc);
         }
 
-        void ProcessMessageCleanupError(MessageRpc rpc)
+        private void ProcessMessageCleanupError(MessageRpc rpc)
         {
             _error.HandleError(rpc);
         }
 
-        void SetActivityIdOnThread(MessageRpc rpc)
+        private void SetActivityIdOnThread(MessageRpc rpc)
         {
             //if (FxTrace.Trace.IsEnd2EndActivityTracingEnabled && rpc.EventTraceActivity != null)
             //{
@@ -939,7 +939,7 @@ namespace CoreWCF.Dispatcher
             //}
         }
 
-        void TransferChannelFromPendingList(MessageRpc rpc)
+        private void TransferChannelFromPendingList(MessageRpc rpc)
         {
             if (rpc.Channel.IsPending)
             {
@@ -963,15 +963,15 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        interface IDemuxer
+        private interface IDemuxer
         {
             DispatchOperationRuntime GetOperation(ref Message request);
         }
 
-        class ActionDemuxer : IDemuxer
+        private class ActionDemuxer : IDemuxer
         {
-            HybridDictionary map;
-            DispatchOperationRuntime unhandled;
+            private HybridDictionary map;
+            private DispatchOperationRuntime unhandled;
 
             internal ActionDemuxer()
             {
@@ -1010,11 +1010,11 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        class CustomDemuxer : IDemuxer
+        private class CustomDemuxer : IDemuxer
         {
-            Dictionary<string, DispatchOperationRuntime> _map;
-            IDispatchOperationSelector _selector;
-            DispatchOperationRuntime _unhandled;
+            private Dictionary<string, DispatchOperationRuntime> _map;
+            private IDispatchOperationSelector _selector;
+            private DispatchOperationRuntime _unhandled;
 
             internal CustomDemuxer(IDispatchOperationSelector selector)
             {

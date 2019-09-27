@@ -22,7 +22,7 @@ using System.Collections.Generic;
 
 namespace CoreWCF.Security
 {
-    static class ProtectionLevelHelper
+    internal static class ProtectionLevelHelper
     {
         internal static bool IsDefined(ProtectionLevel value)
         {
@@ -74,11 +74,13 @@ namespace CoreWCF.Security
                 }
             }
             else
+            {
                 return 1;
+            }
         }
     }
 
-    static class SslProtocolsHelper
+    internal static class SslProtocolsHelper
     {
         internal static bool IsDefined(SslProtocols value)
         {
@@ -104,10 +106,10 @@ namespace CoreWCF.Security
     {
         public const string Principal = "Principal";
         public const string Identities = "Identities";
-        static bool computedDomain;
-        static string currentDomain;
-        static IIdentity anonymousIdentity;
-        static X509SecurityTokenAuthenticator nonValidatingX509Authenticator;
+        private static bool computedDomain;
+        private static string currentDomain;
+        private static IIdentity anonymousIdentity;
+        private static X509SecurityTokenAuthenticator nonValidatingX509Authenticator;
 
         internal static IIdentity AnonymousIdentity
         {
@@ -216,17 +218,21 @@ namespace CoreWCF.Security
             return wid;
         }
 
-        static IntPtr UnsafeGetWindowsIdentityToken(WindowsIdentity wid)
+        private static IntPtr UnsafeGetWindowsIdentityToken(WindowsIdentity wid)
         {
             return wid.Token;
         }
 
-        static WindowsIdentity UnsafeCreateWindowsIdentityFromToken(IntPtr token, string authType)
+        private static WindowsIdentity UnsafeCreateWindowsIdentityFromToken(IntPtr token, string authType)
         {
             if (authType != null)
+            {
                 return new WindowsIdentity(token, authType);
+            }
             else
+            {
                 return new WindowsIdentity(token);
+            }
         }
 
         internal static Claim GetPrimaryIdentityClaim(ReadOnlyCollection<IAuthorizationPolicy> authorizationPolicies)
@@ -319,7 +325,7 @@ namespace CoreWCF.Security
             }
         }
 
-        static bool CanKeyDoKeyExchange(X509Certificate2 certificate)
+        private static bool CanKeyDoKeyExchange(X509Certificate2 certificate)
         {
             bool canDoKeyExchange = false;
 
@@ -367,7 +373,7 @@ namespace CoreWCF.Security
             return result;
         }
 
-        static class NetworkCredentialHelper
+        private static class NetworkCredentialHelper
         {
             static internal bool IsNullOrEmpty(NetworkCredential credential)
             {
@@ -399,7 +405,7 @@ namespace CoreWCF.Security
                 return credential.Domain;
             }
 
-            static NetworkCredential UnsafeGetDefaultNetworkCredentials()
+            private static NetworkCredential UnsafeGetDefaultNetworkCredentials()
             {
                 return CredentialCache.DefaultNetworkCredentials;
             }
@@ -410,12 +416,14 @@ namespace CoreWCF.Security
         {
             X509Certificate2 certificate = GetCertificateFromStoreCore(storeName, storeLocation, findType, findValue, target, true);
             if (certificate == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.Format(SR.CannotFindCert, storeName, storeLocation, findType, findValue)));
+            }
 
             return certificate;
         }
 
-        static X509Certificate2 GetCertificateFromStoreCore(StoreName storeName, StoreLocation storeLocation,
+        private static X509Certificate2 GetCertificateFromStoreCore(StoreName storeName, StoreLocation storeLocation,
             X509FindType findType, object findValue, EndpointAddress target, bool throwIfMultipleOrNoMatch)
         {
             if (findValue == null)
@@ -449,7 +457,7 @@ namespace CoreWCF.Security
             }
         }
 
-        static Exception CreateCertificateLoadException(StoreName storeName, StoreLocation storeLocation,
+        private static Exception CreateCertificateLoadException(StoreName storeName, StoreLocation storeLocation,
             X509FindType findType, object findValue, EndpointAddress target, int certCount)
         {
             if (certCount == 0)
@@ -494,7 +502,7 @@ namespace CoreWCF.Security
             certificate.Reset();
         }
 
-        static bool TryCreateIdentity(ClaimSet claimSet, string claimType, out EndpointIdentity identity)
+        private static bool TryCreateIdentity(ClaimSet claimSet, string claimType, out EndpointIdentity identity)
         {
             identity = null;
             foreach (Claim claim in claimSet.FindClaims(claimType, null))
@@ -570,15 +578,17 @@ namespace CoreWCF.Security
             return CloseCommunicationObjectAsync(tokenAuthenticator, aborted, token);
         }
 
-        static Task OpenCommunicationObjectAsync(ICommunicationObject obj, CancellationToken token)
+        private static Task OpenCommunicationObjectAsync(ICommunicationObject obj, CancellationToken token)
         {
             if (obj != null)
+            {
                 return obj.OpenAsync(token);
+            }
 
             return Task.CompletedTask;
         }
 
-        static Task CloseCommunicationObjectAsync(object obj, bool aborted, CancellationToken token)
+        private static Task CloseCommunicationObjectAsync(object obj, bool aborted, CancellationToken token)
         {
             if (obj != null)
             {

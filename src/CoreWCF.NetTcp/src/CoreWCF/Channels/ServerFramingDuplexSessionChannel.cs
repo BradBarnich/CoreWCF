@@ -12,9 +12,9 @@ namespace CoreWCF.Channels
 {
     internal class ServerFramingDuplexSessionChannel : FramingDuplexSessionChannel
     {
-        StreamUpgradeAcceptor upgradeAcceptor;
+        private StreamUpgradeAcceptor upgradeAcceptor;
         private IServiceProvider _serviceProvider;
-        IStreamUpgradeChannelBindingProvider channelBindingProvider;
+        private IStreamUpgradeChannelBindingProvider channelBindingProvider;
 
         public ServerFramingDuplexSessionChannel(FramingConnection connection, ITransportFactorySettings settings,
             bool exposeConnectionProperty, IServiceProvider serviceProvider)
@@ -81,7 +81,7 @@ namespace CoreWCF.Channels
 
     internal abstract class FramingDuplexSessionChannel : TransportDuplexSessionChannel
     {
-        bool exposeConnectionProperty;
+        private bool exposeConnectionProperty;
 
         private FramingDuplexSessionChannel(ITransportFactorySettings settings,
             EndpointAddress localAddress, Uri localVia, EndpointAddress remoteAddress, Uri via, bool exposeConnectionProperty)
@@ -168,10 +168,9 @@ namespace CoreWCF.Channels
             return messageData;
         }
 
-        class FramingConnectionDuplexSession : ConnectionDuplexSession
+        private class FramingConnectionDuplexSession : ConnectionDuplexSession
         {
-
-            FramingConnectionDuplexSession(FramingDuplexSessionChannel channel)
+            private FramingConnectionDuplexSession(FramingDuplexSessionChannel channel)
                 : base(channel)
             {
             }
@@ -190,9 +189,9 @@ namespace CoreWCF.Channels
                 }
             }
 
-            class SecureConnectionDuplexSession : FramingConnectionDuplexSession, ISecuritySession
+            private class SecureConnectionDuplexSession : FramingConnectionDuplexSession, ISecuritySession
             {
-                EndpointIdentity remoteIdentity;
+                private EndpointIdentity remoteIdentity;
 
                 public SecureConnectionDuplexSession(FramingDuplexSessionChannel channel)
                     : base(channel)
@@ -225,11 +224,11 @@ namespace CoreWCF.Channels
 
     internal abstract class TransportDuplexSessionChannel : TransportOutputChannel, IDuplexSessionChannel
     {
-        IDuplexSession _duplexSession;
-        bool _isInputSessionClosed;
-        bool _isOutputSessionClosed;
-        EndpointAddress _localAddress;
-        ChannelBinding _channelBindingToken;
+        private IDuplexSession _duplexSession;
+        private bool _isInputSessionClosed;
+        private bool _isOutputSessionClosed;
+        private EndpointAddress _localAddress;
+        private ChannelBinding _channelBindingToken;
 
         protected TransportDuplexSessionChannel(
           ITransportFactorySettings settings,
@@ -446,7 +445,7 @@ namespace CoreWCF.Channels
         // cleanup after the framing handshake has completed
         protected abstract Task CompleteCloseAsync(CancellationToken token);
 
-        void ThrowIfOutputSessionClosed()
+        private void ThrowIfOutputSessionClosed()
         {
             if (_isOutputSessionClosed)
             {
@@ -454,7 +453,7 @@ namespace CoreWCF.Channels
             }
         }
 
-        void OnInputSessionClosed()
+        private void OnInputSessionClosed()
         {
             lock (ThisLock)
             {
@@ -467,7 +466,7 @@ namespace CoreWCF.Channels
             }
         }
 
-        void OnOutputSessionClosed(CancellationToken token)
+        private void OnOutputSessionClosed(CancellationToken token)
         {
             bool releaseConnection = false;
             lock (ThisLock)
@@ -522,8 +521,8 @@ namespace CoreWCF.Channels
 
         internal class ConnectionDuplexSession : IDuplexSession
         {
-            static UriGenerator _uriGenerator;
-            string _id;
+            private static UriGenerator _uriGenerator;
+            private string _id;
 
             public ConnectionDuplexSession(TransportDuplexSessionChannel channel)
                 : base()
@@ -552,7 +551,7 @@ namespace CoreWCF.Channels
 
             public TransportDuplexSessionChannel Channel { get; }
 
-            static UriGenerator UriGenerator
+            private static UriGenerator UriGenerator
             {
                 get
                 {
@@ -684,7 +683,10 @@ namespace CoreWCF.Channels
             public bool TryLookup(string value, out XmlDictionaryString result)
             {
                 if (value == null)
+                {
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(value));
+                }
+
                 if (value == to.Value)
                 {
                     result = to;
@@ -708,7 +710,10 @@ namespace CoreWCF.Channels
             public bool TryLookup(XmlDictionaryString value, out XmlDictionaryString result)
             {
                 if (value == null)
+                {
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(value));
+                }
+
                 if (value == to)
                 {
                     result = to;
@@ -754,12 +759,16 @@ namespace CoreWCF.Channels
         public Task SendAsync(Message message, CancellationToken token)
         {
             if (message == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(message));
+            }
 
             // TODO: Fix exception message as a negative timeout wasn't passed, a cancelled token was
             if (token.IsCancellationRequested)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(
                     new ArgumentException(SR.SFxTimeoutOutOfRange0, nameof(token)));
+            }
 
             ThrowIfDisposedOrNotOpen();
 

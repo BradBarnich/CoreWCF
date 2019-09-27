@@ -176,7 +176,9 @@ namespace CoreWCF.Channels.Framing
                 }
 
                 if (readResult.IsCompleted)
+                {
                     break;
+                }
 
                 readTotal += readResult.Buffer.Length;
                 Input.AdvanceTo(readResult.Buffer.End);

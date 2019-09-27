@@ -59,7 +59,9 @@ namespace CoreWCF.Security
                 }
             }
             else
+            {
                 return 1;
+            }
         }
 
     }

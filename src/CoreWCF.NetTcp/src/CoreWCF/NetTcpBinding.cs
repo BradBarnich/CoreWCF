@@ -13,9 +13,9 @@ namespace CoreWCF
     public class NetTcpBinding : Binding
     {
         // private BindingElements
-        TcpTransportBindingElement transport;
-        BinaryMessageEncodingBindingElement encoding;
-        NetTcpSecurity security = new NetTcpSecurity();
+        private TcpTransportBindingElement transport;
+        private BinaryMessageEncodingBindingElement encoding;
+        private NetTcpSecurity security = new NetTcpSecurity();
 
         public NetTcpBinding() { Initialize(); }
         public NetTcpBinding(SecurityMode securityMode)
@@ -84,7 +84,10 @@ namespace CoreWCF
             set
             {
                 if (value == null)
+                {
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(value));
+                }
+
                 value.CopyTo(encoding.ReaderQuotas);
             }
         }
@@ -108,12 +111,15 @@ namespace CoreWCF
             set
             {
                 if (value == null)
+                {
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(value));
+                }
+
                 security = value;
             }
         }
 
-        void Initialize()
+        private void Initialize()
         {
             transport = new TcpTransportBindingElement();
             encoding = new BinaryMessageEncodingBindingElement();
@@ -167,7 +173,7 @@ namespace CoreWCF
             return bindingElements.Clone();
         }
 
-        BindingElement CreateTransportSecurity()
+        private BindingElement CreateTransportSecurity()
         {
             return security.CreateTransportSecurity();
         }

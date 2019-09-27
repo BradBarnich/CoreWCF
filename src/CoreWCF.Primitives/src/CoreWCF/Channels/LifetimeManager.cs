@@ -5,21 +5,21 @@ using CoreWCF.Runtime;
 
 namespace CoreWCF.Channels
 {
-    enum LifetimeState
+    internal enum LifetimeState
     {
         Opened,
         Closing,
         Closed
     }
 
-    class LifetimeManager
+    internal class LifetimeManager
     {
-        bool _aborted;
-        int _busyCount;
-        ICommunicationWaiter _busyWaiter;
-        int _busyWaiterCount;
-        object _mutex;
-        LifetimeState _state;
+        private bool _aborted;
+        private int _busyCount;
+        private ICommunicationWaiter _busyWaiter;
+        private int _busyWaiterCount;
+        private object _mutex;
+        private LifetimeState _state;
 
         public LifetimeManager(object mutex)
         {
@@ -47,7 +47,10 @@ namespace CoreWCF.Channels
             lock (ThisLock)
             {
                 if (State == LifetimeState.Closed || _aborted)
+                {
                     return;
+                }
+
                 _aborted = true;
                 _state = LifetimeState.Closing;
             }
@@ -56,7 +59,7 @@ namespace CoreWCF.Channels
             _state = LifetimeState.Closed;
         }
 
-        void ThrowIfNotOpened()
+        private void ThrowIfNotOpened()
         {
             if (!_aborted && _state != LifetimeState.Opened)
             {
@@ -101,7 +104,10 @@ namespace CoreWCF.Channels
                     if (_busyWaiter != null)
                     {
                         if (!aborting && _aborted)
+                        {
                             return CommunicationWaitResult.Aborted;
+                        }
+
                         busyWaiter = _busyWaiter;
                     }
                     else
@@ -126,7 +132,7 @@ namespace CoreWCF.Channels
             return result;
         }
 
-        CommunicationWaitResult AbortCore(CancellationToken token)
+        private CommunicationWaitResult AbortCore(CancellationToken token)
         {
             ICommunicationWaiter busyWaiter = null;
             CommunicationWaitResult result = CommunicationWaitResult.Succeeded;
@@ -194,7 +200,9 @@ namespace CoreWCF.Channels
             }
 
             if (empty && State == LifetimeState.Opened)
+            {
                 OnEmpty();
+            }
         }
 
         protected virtual void IncrementBusyCount()
@@ -223,7 +231,7 @@ namespace CoreWCF.Channels
         }
     }
 
-    enum CommunicationWaitResult
+    internal enum CommunicationWaitResult
     {
         Waiting,
         Succeeded,
@@ -231,7 +239,7 @@ namespace CoreWCF.Channels
         Aborted
     }
 
-    interface ICommunicationWaiter : IDisposable
+    internal interface ICommunicationWaiter : IDisposable
     {
         void Signal();
         Task<CommunicationWaitResult> WaitAsync(bool aborting, CancellationToken token);
@@ -262,7 +270,10 @@ namespace CoreWCF.Channels
             lock (ThisLock)
             {
                 if (_closed)
+                {
                     return;
+                }
+
                 _closed = true;
                 _tcs?.TrySetResult(false);
             }
@@ -273,7 +284,10 @@ namespace CoreWCF.Channels
             lock (ThisLock)
             {
                 if (_closed)
+                {
                     return;
+                }
+
                 _tcs.TrySetResult(true);
             }
         }

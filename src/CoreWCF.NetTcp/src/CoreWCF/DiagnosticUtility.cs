@@ -25,7 +25,9 @@ namespace CoreWCF
                 if (exceptionUtility == null)
                     // TODO: Make this generic shared code used by multiple assemblies
                     //exceptionUtility = new ExceptionUtility("System.ServiceModel", "System.ServiceModel 4.0.0.0", (object)DiagnosticUtility.diagnosticTrace, (object)FxTrace.Exception);
+                {
                     exceptionUtility = new ExceptionUtility();
+                }
             }
 
             return exceptionUtility;

@@ -5,8 +5,8 @@ namespace CoreWCF.Channels
 {
     internal class CommunicationObjectManager<TItemType> : LifetimeManager where TItemType : class, ICommunicationObject
     {
-        bool _inputClosed;
-        readonly ISet<TItemType> _itemsSet;
+        private bool _inputClosed;
+        private readonly ISet<TItemType> _itemsSet;
 
         public CommunicationObjectManager(object mutex)
             : base(mutex)
@@ -23,7 +23,9 @@ namespace CoreWCF.Channels
                 if (State == LifetimeState.Opened && !_inputClosed)
                 {
                     if (_itemsSet.Contains(item))
+                    {
                         return;
+                    }
 
                     _itemsSet.Add(item);
                     IncrementBusyCountWithoutLock();
@@ -57,7 +59,7 @@ namespace CoreWCF.Channels
             IncrementBusyCount();
         }
 
-        void OnItemClosed(object sender, EventArgs args)
+        private void OnItemClosed(object sender, EventArgs args)
         {
             Remove((TItemType)sender);
         }
@@ -67,7 +69,10 @@ namespace CoreWCF.Channels
             lock (ThisLock)
             {
                 if (!_itemsSet.Contains(item))
+                {
                     return;
+                }
+
                 _itemsSet.Remove(item);
             }
 
@@ -82,7 +87,9 @@ namespace CoreWCF.Channels
                 int index = 0;
                 TItemType[] items = new TItemType[_itemsSet.Count];
                 foreach (TItemType item in _itemsSet)
+                {
                     items[index++] = item;
+                }
 
                 return items;
             }

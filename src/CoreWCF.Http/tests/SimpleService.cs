@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-class SimpleService : ISimpleService
+internal class SimpleService : ISimpleService
 {
     public string Echo(string echo)
     {

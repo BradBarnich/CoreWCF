@@ -11,29 +11,37 @@ namespace CoreWCF.Dispatcher
 {
     internal class StreamFormatter
     {
-        string wrapperName;
-        string wrapperNS;
-        string partName;
-        string partNS;
-        int streamIndex;
-        bool isRequest;
-        string operationName;
-        const int returnValueIndex = -1;
+        private string wrapperName;
+        private string wrapperNS;
+        private string partName;
+        private string partNS;
+        private int streamIndex;
+        private bool isRequest;
+        private string operationName;
+        private const int returnValueIndex = -1;
 
         internal static StreamFormatter Create(MessageDescription messageDescription, string operationName, bool isRequest)
         {
             MessagePartDescription streamPart = ValidateAndGetStreamPart(messageDescription, isRequest, operationName);
             if (streamPart == null)
+            {
                 return null;
+            }
+
             return new StreamFormatter(messageDescription, streamPart, operationName, isRequest);
         }
 
-        StreamFormatter(MessageDescription messageDescription, MessagePartDescription streamPart, string operationName, bool isRequest)
+        private StreamFormatter(MessageDescription messageDescription, MessagePartDescription streamPart, string operationName, bool isRequest)
         {
             if ((object)streamPart == (object)messageDescription.Body.ReturnValue)
+            {
                 streamIndex = returnValueIndex;
+            }
             else
+            {
                 streamIndex = streamPart.Index;
+            }
+
             wrapperName = messageDescription.Body.WrapperName;
             wrapperNS = messageDescription.Body.WrapperNamespace;
             partName = streamPart.Name;
@@ -62,13 +70,19 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        Stream GetStreamAndWriteStartWrapperIfNecessary(XmlDictionaryWriter writer, object[] parameters, object returnValue)
+        private Stream GetStreamAndWriteStartWrapperIfNecessary(XmlDictionaryWriter writer, object[] parameters, object returnValue)
         {
             Stream streamValue = GetStreamValue(parameters, returnValue);
             if (streamValue == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(partName);
+            }
+
             if (WrapperName != null)
+            {
                 writer.WriteStartElement(WrapperName, WrapperNamespace);
+            }
+
             writer.WriteStartElement(PartName, PartNamespace);
             return streamValue;
         }
@@ -77,25 +91,36 @@ namespace CoreWCF.Dispatcher
         {
             Stream streamValue = GetStreamValue(parameters, returnValue);
             if (streamValue == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(partName);
+            }
+
             if (WrapperName != null)
+            {
                 await writer.WriteStartElementAsync(null, WrapperName, WrapperNamespace);
+            }
+
             await writer.WriteStartElementAsync(null, PartName, PartNamespace);
             return streamValue;
         }
 
-        void WriteEndWrapperIfNecessary(XmlDictionaryWriter writer)
+        private void WriteEndWrapperIfNecessary(XmlDictionaryWriter writer)
         {
             writer.WriteEndElement();
             if (wrapperName != null)
+            {
                 writer.WriteEndElement();
+            }
         }
 
         private Task WriteEndWrapperIfNecessaryAsync(XmlDictionaryWriter writer)
         {
             writer.WriteEndElement();
             if (wrapperName != null)
+            {
                 writer.WriteEndElement();
+            }
+
             return Task.CompletedTask;
         }
 
@@ -127,34 +152,50 @@ namespace CoreWCF.Dispatcher
         }
 
 
-        Stream GetStreamValue(object[] parameters, object returnValue)
+        private Stream GetStreamValue(object[] parameters, object returnValue)
         {
             if (streamIndex == returnValueIndex)
+            {
                 return (Stream)returnValue;
+            }
+
             return (Stream)parameters[streamIndex];
         }
 
-        void SetStreamValue(object[] parameters, ref object returnValue, Stream streamValue)
+        private void SetStreamValue(object[] parameters, ref object returnValue, Stream streamValue)
         {
             if (streamIndex == returnValueIndex)
+            {
                 returnValue = streamValue;
+            }
             else
+            {
                 parameters[streamIndex] = streamValue;
+            }
         }
 
-        static MessagePartDescription ValidateAndGetStreamPart(MessageDescription messageDescription, bool isRequest, string operationName)
+        private static MessagePartDescription ValidateAndGetStreamPart(MessageDescription messageDescription, bool isRequest, string operationName)
         {
             MessagePartDescription part = GetStreamPart(messageDescription);
             if (part != null)
+            {
                 return part;
+            }
+
             if (HasStream(messageDescription))
             {
                 if (messageDescription.IsTypedMessage)
+                {
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.Format(SR.SFxInvalidStreamInTypedMessage, messageDescription.MessageName)));
+                }
                 else if (isRequest)
+                {
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.Format(SR.SFxInvalidStreamInRequest, operationName)));
+                }
                 else
+                {
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.Format(SR.SFxInvalidStreamInResponse, operationName)));
+                }
             }
             return null;
         }
@@ -162,28 +203,41 @@ namespace CoreWCF.Dispatcher
         private static bool HasStream(MessageDescription messageDescription)
         {
             if (messageDescription.Body.ReturnValue != null && messageDescription.Body.ReturnValue.Type == typeof(Stream))
+            {
                 return true;
+            }
+
             foreach (MessagePartDescription part in messageDescription.Body.Parts)
             {
                 if (part.Type == typeof(Stream))
+                {
                     return true;
+                }
             }
             return false;
         }
 
-        static MessagePartDescription GetStreamPart(MessageDescription messageDescription)
+        private static MessagePartDescription GetStreamPart(MessageDescription messageDescription)
         {
             if (OperationFormatter.IsValidReturnValue(messageDescription.Body.ReturnValue))
             {
                 if (messageDescription.Body.Parts.Count == 0)
+                {
                     if (messageDescription.Body.ReturnValue.Type == typeof(Stream))
+                    {
                         return messageDescription.Body.ReturnValue;
+                    }
+                }
             }
             else
             {
                 if (messageDescription.Body.Parts.Count == 1)
+                {
                     if (messageDescription.Body.Parts[0].Type == typeof(Stream))
+                    {
                         return messageDescription.Body.Parts[0];
+                    }
+                }
             }
             return null;
         }
@@ -195,12 +249,12 @@ namespace CoreWCF.Dispatcher
 
         internal class MessageBodyStream : Stream
         {
-            Message message;
-            XmlDictionaryReader reader;
-            long position;
-            string wrapperName, wrapperNs;
-            string elementName, elementNs;
-            bool isRequest;
+            private Message message;
+            private XmlDictionaryReader reader;
+            private long position;
+            private string wrapperName, wrapperNs;
+            private string elementName, elementNs;
+            private bool isRequest;
             internal MessageBodyStream(Message message, string wrapperName, string wrapperNs, string elementName, string elementNs, bool isRequest)
             {
                 this.message = message;
@@ -216,15 +270,26 @@ namespace CoreWCF.Dispatcher
             {
                 EnsureStreamIsOpen();
                 if (buffer == null)
+                {
                     throw TraceUtility.ThrowHelperError(new ArgumentNullException(nameof(buffer)), message);
+                }
+
                 if (offset < 0)
+                {
                     throw TraceUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(offset), offset,
-                                                    SR.ValueMustBeNonNegative), message);
+                        SR.ValueMustBeNonNegative), message);
+                }
+
                 if (count < 0)
+                {
                     throw TraceUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(count), count,
-                                                    SR.ValueMustBeNonNegative), message);
+                        SR.ValueMustBeNonNegative), message);
+                }
+
                 if (buffer.Length - offset < count)
+                {
                     throw TraceUtility.ThrowHelperError(new ArgumentException(SR.Format(SR.SFxInvalidStreamOffsetLength, offset + count)), message);
+                }
 
                 try
                 {
@@ -261,7 +326,10 @@ namespace CoreWCF.Dispatcher
                 catch (Exception ex)
                 {
                     if (Fx.IsFatal(ex))
+                    {
                         throw;
+                    }
+
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new IOException(SR.SFxStreamIOException, ex));
                 }
             }
@@ -269,11 +337,13 @@ namespace CoreWCF.Dispatcher
             private void EnsureStreamIsOpen()
             {
                 if (message.State == MessageState.Closed)
+                {
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ObjectDisposedException(
                         isRequest ? SR.SFxStreamRequestMessageClosed : SR.SFxStreamResponseMessageClosed));
+                }
             }
 
-            static void Exhaust(XmlDictionaryReader reader)
+            private static void Exhaust(XmlDictionaryReader reader)
             {
                 if (reader != null)
                 {
@@ -323,7 +393,7 @@ namespace CoreWCF.Dispatcher
 
         internal class OperationStreamProvider //: IStreamProvider
         {
-            Stream stream;
+            private Stream stream;
 
             internal OperationStreamProvider(Stream stream)
             {
@@ -347,7 +417,9 @@ namespace CoreWCF.Dispatcher
             public static void WriteValue(XmlDictionaryWriter writer, OperationStreamProvider value)
             {
                 if (value == null)
+                {
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(value));
+                }
 
                 Stream stream = value.GetStream();
                 if (stream == null)
@@ -383,7 +455,9 @@ namespace CoreWCF.Dispatcher
             internal static async Task WriteValueAsync(XmlDictionaryWriter writer, OperationStreamProvider value)
             {
                 if (value == null)
+                {
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(value)));
+                }
 
                 Stream stream = value.GetStream();
                 if (stream == null)

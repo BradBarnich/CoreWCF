@@ -3,15 +3,15 @@ using CoreWCF.Runtime;
 
 namespace CoreWCF.Collections.Generic
 {
-    class MruCache<TKey, TValue>
+    internal class MruCache<TKey, TValue>
         where TKey : class
         where TValue : class
     {
-        LinkedList<TKey> _mruList;
-        Dictionary<TKey, CacheEntry> _items;
-        int _lowWatermark;
-        int _highWatermark;
-        CacheEntry _mruEntry;
+        private LinkedList<TKey> _mruList;
+        private Dictionary<TKey, CacheEntry> _items;
+        private int _lowWatermark;
+        private int _highWatermark;
+        private CacheEntry _mruEntry;
 
         public MruCache(int watermark)
             : this(watermark * 4 / 5, watermark)
@@ -160,7 +160,7 @@ namespace CoreWCF.Collections.Generic
             return found;
         }
 
-        struct CacheEntry
+        private struct CacheEntry
         {
             internal TValue value;
             internal LinkedListNode<TKey> node;

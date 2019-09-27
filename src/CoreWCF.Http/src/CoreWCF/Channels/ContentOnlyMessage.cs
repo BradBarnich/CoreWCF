@@ -8,10 +8,10 @@ namespace CoreWCF.Channels
     /// <summary>
     /// Base class for non-SOAP messages
     /// </summary>
-    abstract class ContentOnlyMessage : Message
+    internal abstract class ContentOnlyMessage : Message
     {
-        MessageHeaders headers;
-        MessageProperties properties;
+        private MessageHeaders headers;
+        private MessageProperties properties;
 
         protected ContentOnlyMessage()
         {
@@ -68,9 +68,9 @@ namespace CoreWCF.Channels
         }
     }
 
-    class StringMessage : ContentOnlyMessage
+    internal class StringMessage : ContentOnlyMessage
     {
-        string data;
+        private string data;
 
         public StringMessage(string data)
             : base()
@@ -95,7 +95,7 @@ namespace CoreWCF.Channels
         }
     }
 
-    class NullMessage : StringMessage
+    internal class NullMessage : StringMessage
     {
         public NullMessage()
             : base(string.Empty)

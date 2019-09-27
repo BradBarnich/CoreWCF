@@ -6,12 +6,13 @@ namespace CoreWCF.Description
 {
     public class MessageDescription
     {
-        static Type typeOfUntypedMessage;
-        string action;
-        MessageDirection direction;
-        MessageDescriptionItems items;
-        XmlName messageName;
-        Type messageType;
+        private static Type typeOfUntypedMessage;
+        private string action;
+        private MessageDirection direction;
+        private MessageDescriptionItems items;
+        private XmlName messageName;
+
+        private Type messageType;
         //XmlQualifiedName xsdType;
 
         public MessageDescription(string action, MessageDirection direction) : this(action, direction, null) { }
@@ -19,7 +20,9 @@ namespace CoreWCF.Description
         internal MessageDescription(string action, MessageDirection direction, MessageDescriptionItems items)
         {
             if (!MessageDirectionHelper.IsDefined(direction))
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(direction)));
+            }
 
             this.action = action;
             this.direction = direction;
@@ -57,7 +60,10 @@ namespace CoreWCF.Description
             get
             {
                 if (items == null)
+                {
                     items = new MessageDescriptionItems();
+                }
+
                 return items;
             }
         }
@@ -116,16 +122,19 @@ namespace CoreWCF.Description
 
     internal class MessageDescriptionItems
     {
-        MessageHeaderDescriptionCollection headers;
-        MessageBodyDescription body;
-        MessagePropertyDescriptionCollection properties;
+        private MessageHeaderDescriptionCollection headers;
+        private MessageBodyDescription body;
+        private MessagePropertyDescriptionCollection properties;
 
         internal MessageBodyDescription Body
         {
             get
             {
                 if (body == null)
+                {
                     body = new MessageBodyDescription();
+                }
+
                 return body;
             }
             set
@@ -139,7 +148,10 @@ namespace CoreWCF.Description
             get
             {
                 if (headers == null)
+                {
                     headers = new MessageHeaderDescriptionCollection();
+                }
+
                 return headers;
             }
         }
@@ -149,7 +161,10 @@ namespace CoreWCF.Description
             get
             {
                 if (properties == null)
+                {
                     properties = new MessagePropertyDescriptionCollection();
+                }
+
                 return properties;
             }
         }

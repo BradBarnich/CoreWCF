@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 namespace CoreWCF.Channels
 {
-    class SynchronizedMessageSource
+    internal class SynchronizedMessageSource
     {
-        IMessageSource source;
-        SemaphoreSlim sourceLock;
+        private IMessageSource source;
+        private SemaphoreSlim sourceLock;
 
         public SynchronizedMessageSource(IMessageSource source)
         {
@@ -36,7 +36,9 @@ namespace CoreWCF.Channels
             finally
             {
                 if(lockAcquired)
+                {
                     sourceLock.Release();
+                }
             }
         }
 
@@ -59,7 +61,9 @@ namespace CoreWCF.Channels
             finally
             {
                 if(lockAcquired)
+                {
                     sourceLock.Release();
+                }
             }
         }
     }

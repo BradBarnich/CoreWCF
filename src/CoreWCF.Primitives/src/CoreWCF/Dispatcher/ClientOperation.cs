@@ -8,26 +8,26 @@ namespace CoreWCF.Dispatcher
 {
     public sealed class ClientOperation
     {
-        string action;
-        SynchronizedCollection<FaultContractInfo> faultContractInfos;
-        bool serializeRequest;
-        bool deserializeReply;
-        IClientMessageFormatter formatter;
-        IClientFaultFormatter faultFormatter;
-        bool isInitiating = true;
-        bool isOneWay;
-        bool isTerminating;
-        bool isSessionOpenNotificationEnabled;
-        string name;
+        private string action;
+        private SynchronizedCollection<FaultContractInfo> faultContractInfos;
+        private bool serializeRequest;
+        private bool deserializeReply;
+        private IClientMessageFormatter formatter;
+        private IClientFaultFormatter faultFormatter;
+        private bool isInitiating = true;
+        private bool isOneWay;
+        private bool isTerminating;
+        private bool isSessionOpenNotificationEnabled;
+        private string name;
 
-        ClientRuntime parent;
-        string replyAction;
-        MethodInfo beginMethod;
-        MethodInfo endMethod;
-        MethodInfo syncMethod;
-        MethodInfo taskMethod;
-        Type taskTResult;
-        bool isFaultFormatterSetExplicit = false;
+        private ClientRuntime parent;
+        private string replyAction;
+        private MethodInfo beginMethod;
+        private MethodInfo endMethod;
+        private MethodInfo syncMethod;
+        private MethodInfo taskMethod;
+        private Type taskTResult;
+        private bool isFaultFormatterSetExplicit = false;
         private SynchronizedCollection<IParameterInspector> parameterInspectors;
 
         public ClientOperation(ClientRuntime parent, string name, string action)
@@ -38,10 +38,14 @@ namespace CoreWCF.Dispatcher
         public ClientOperation(ClientRuntime parent, string name, string action, string replyAction)
         {
             if (parent == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(parent));
+            }
 
             if (name == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(name));
+            }
 
             this.parent = parent;
             this.name = name;

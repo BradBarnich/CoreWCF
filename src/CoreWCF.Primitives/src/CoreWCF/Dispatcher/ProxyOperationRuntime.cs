@@ -14,34 +14,39 @@ namespace CoreWCF.Dispatcher
         static internal readonly ParameterInfo[] NoParams = new ParameterInfo[0];
         static internal readonly object[] EmptyArray = new object[0];
 
-        readonly IClientMessageFormatter _formatter;
-        readonly bool _isInitiating;
-        readonly bool _isOneWay;
-        readonly bool _isTerminating;
-        readonly bool _isSessionOpenNotificationEnabled;
-        readonly string _name;
-        readonly IParameterInspector[] _parameterInspectors;
-        readonly IClientFaultFormatter _faultFormatter;
-        readonly ImmutableClientRuntime _parent;
-        bool _serializeRequest;
-        bool _deserializeReply;
-        string _action;
-        string _replyAction;
+        private readonly IClientMessageFormatter _formatter;
+        private readonly bool _isInitiating;
+        private readonly bool _isOneWay;
+        private readonly bool _isTerminating;
+        private readonly bool _isSessionOpenNotificationEnabled;
+        private readonly string _name;
+        private readonly IParameterInspector[] _parameterInspectors;
+        private readonly IClientFaultFormatter _faultFormatter;
+        private readonly ImmutableClientRuntime _parent;
+        private bool _serializeRequest;
+        private bool _deserializeReply;
+        private string _action;
+        private string _replyAction;
 
-        MethodInfo _beginMethod;
-        MethodInfo _syncMethod;
-        MethodInfo _taskMethod;
-        ParameterInfo[] _inParams;
-        ParameterInfo[] _outParams;
-        ParameterInfo[] _endOutParams;
-        ParameterInfo _returnParam;
+        private MethodInfo _beginMethod;
+        private MethodInfo _syncMethod;
+        private MethodInfo _taskMethod;
+        private ParameterInfo[] _inParams;
+        private ParameterInfo[] _outParams;
+        private ParameterInfo[] _endOutParams;
+        private ParameterInfo _returnParam;
 
         internal ProxyOperationRuntime(ClientOperation operation, ImmutableClientRuntime parent)
         {
             if (operation == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(operation));
+            }
+
             if (parent == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(parent));
+            }
 
             _parent = parent;
             _formatter = operation.Formatter;
@@ -266,7 +271,9 @@ namespace CoreWCF.Dispatcher
 
                 rpc.Request = (Message)rpc.InputParameters[0];
                 if (!IsValidAction(rpc.Request, Action))
+                {
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.Format(SR.SFxInvalidRequestAction, Name, rpc.Request.Headers.Action ?? "{NULL}", Action)));
+                }
             }
         }
 
@@ -322,7 +329,10 @@ namespace CoreWCF.Dispatcher
                 outs = new object[_outParams.Length];
             }
             if (_inParams.Length == 0)
+            {
                 return Array.Empty<object>();
+            }
+
             return methodCall.Args;
         }
 

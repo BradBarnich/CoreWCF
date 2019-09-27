@@ -10,16 +10,18 @@ namespace CoreWCF
 {
     public class UpnEndpointIdentity : EndpointIdentity
     {
-        SecurityIdentifier _upnSid;
-        bool _hasUpnSidBeenComputed;
-        WindowsIdentity _windowsIdentity;
+        private SecurityIdentifier _upnSid;
+        private bool _hasUpnSidBeenComputed;
+        private WindowsIdentity _windowsIdentity;
 
-        object _thisLock = new object();
+        private object _thisLock = new object();
 
         public UpnEndpointIdentity(string upnName)
         {
             if (upnName == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(upnName));
+            }
 
             Initialize(Claim.CreateUpnClaim(upnName));
             _hasUpnSidBeenComputed = false;
@@ -28,10 +30,14 @@ namespace CoreWCF
         public UpnEndpointIdentity(Claim identity)
         {
             if (identity == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(identity));
+            }
 
             if (!identity.ClaimType.Equals(ClaimTypes.Upn))
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgument(SR.Format(SR.UnrecognizedClaimTypeForIdentity, identity.ClaimType, ClaimTypes.Upn));
+            }
 
             Initialize(identity);
         }
@@ -59,7 +65,7 @@ namespace CoreWCF
             }
         }
 
-        string GetUpnFromWindowsIdentity(WindowsIdentity windowsIdentity)
+        private string GetUpnFromWindowsIdentity(WindowsIdentity windowsIdentity)
         {
             string downlevelName = null;
             string upnName = null;
@@ -86,12 +92,12 @@ namespace CoreWCF
             return upnName ?? downlevelName;
         }
 
-        bool IsMachineJoinedToDomain()
+        private bool IsMachineJoinedToDomain()
         {
             throw new PlatformNotSupportedException();
         }
 
-        string GetUpnFromDownlevelName(string downlevelName)
+        private string GetUpnFromDownlevelName(string downlevelName)
         {
             throw new PlatformNotSupportedException();
         }
@@ -99,7 +105,9 @@ namespace CoreWCF
         internal override void WriteContentsTo(XmlDictionaryWriter writer)
         {
             if (writer == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(writer));
+            }
 
             writer.WriteElementString(XD.AddressingDictionary.Upn, XD.AddressingDictionary.IdentityExtensionNamespace, (string)IdentityClaim.Resource);
         }

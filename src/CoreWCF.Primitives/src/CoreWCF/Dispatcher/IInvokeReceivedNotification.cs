@@ -2,7 +2,7 @@
 
 namespace CoreWCF.Dispatcher
 {
-    interface IInvokeReceivedNotification
+    internal interface IInvokeReceivedNotification
     {
         void NotifyInvokeReceived();
         void NotifyInvokeReceived(RequestContext request);

@@ -2,7 +2,7 @@
 
 namespace CoreWCF
 {
-    static class AddressingStrings
+    internal static class AddressingStrings
     {
         // Main dictionary strings
         public const string Action = ServiceModelStringsVersion1.String5;
@@ -43,7 +43,7 @@ namespace CoreWCF
         public const string ChannelTerminated = "ChannelTerminated";
     }
 
-    static class Addressing10Strings
+    internal static class Addressing10Strings
     {
         // Main dictionary strings
         public const string Namespace = ServiceModelStringsVersion1.String3;

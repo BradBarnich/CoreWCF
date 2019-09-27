@@ -8,26 +8,26 @@ namespace CoreWCF
 {
     internal class XmlBuffer
     {
-        List<Section> _sections;
-        byte[] _buffer;
-        int _offset;
-        BufferedOutputStream _stream;
-        BufferState _bufferState;
-        XmlDictionaryWriter _writer;
-        XmlDictionaryReaderQuotas _quotas;
+        private List<Section> _sections;
+        private byte[] _buffer;
+        private int _offset;
+        private BufferedOutputStream _stream;
+        private BufferState _bufferState;
+        private XmlDictionaryWriter _writer;
+        private XmlDictionaryReaderQuotas _quotas;
 
-        enum BufferState
+        private enum BufferState
         {
             Created,
             Writing,
             Reading,
         }
 
-        struct Section
+        private struct Section
         {
-            int _offset;
-            int _size;
-            XmlDictionaryReaderQuotas _quotas;
+            private int _offset;
+            private int _size;
+            private XmlDictionaryReaderQuotas _quotas;
 
             public Section(int offset, int size, XmlDictionaryReaderQuotas quotas)
             {
@@ -55,8 +55,11 @@ namespace CoreWCF
         public XmlBuffer(int maxBufferSize)
         {
             if (maxBufferSize < 0)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(maxBufferSize), maxBufferSize,
-                                                    SR.ValueMustBeNonNegative));
+                    SR.ValueMustBeNonNegative));
+            }
+
             int initialBufferSize = Math.Min(512, maxBufferSize);
             _stream = new BufferManagerOutputStream(SR.XmlBufferQuotaExceeded, initialBufferSize, maxBufferSize,
                 BufferManager.CreateBufferManager(0, int.MaxValue));
@@ -80,7 +83,10 @@ namespace CoreWCF
         public XmlDictionaryWriter OpenSection(XmlDictionaryReaderQuotas quotas)
         {
             if (_bufferState != BufferState.Created)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(CreateInvalidStateException());
+            }
+
             _bufferState = BufferState.Writing;
             _quotas = new XmlDictionaryReaderQuotas();
             quotas.CopyTo(_quotas);
@@ -107,7 +113,10 @@ namespace CoreWCF
         public void CloseSection()
         {
             if (_bufferState != BufferState.Writing)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(CreateInvalidStateException());
+            }
+
             _writer.Dispose();
             _writer = null;
             _bufferState = BufferState.Created;
@@ -119,7 +128,10 @@ namespace CoreWCF
         public void Close()
         {
             if (_bufferState != BufferState.Created)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(CreateInvalidStateException());
+            }
+
             _bufferState = BufferState.Reading;
             int bufferSize;
             _buffer = _stream.ToArray(out bufferSize);
@@ -127,7 +139,7 @@ namespace CoreWCF
             _stream = null;
         }
 
-        Exception CreateInvalidStateException()
+        private Exception CreateInvalidStateException()
         {
             return new InvalidOperationException(SR.XmlBufferInInvalidState);
         }
@@ -135,7 +147,10 @@ namespace CoreWCF
         public XmlDictionaryReader GetReader(int sectionIndex)
         {
             if (_bufferState != BufferState.Reading)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(CreateInvalidStateException());
+            }
+
             Section section = _sections[sectionIndex];
             XmlDictionaryReader reader = XmlDictionaryReader.CreateBinaryReader(_buffer, section.Offset, section.Size, XD.Dictionary, section.Quotas);
             reader.MoveToContent();
@@ -145,7 +160,10 @@ namespace CoreWCF
         public void WriteTo(int sectionIndex, XmlWriter writer)
         {
             if (_bufferState != BufferState.Reading)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(CreateInvalidStateException());
+            }
+
             XmlDictionaryReader reader = GetReader(sectionIndex);
             try
             {

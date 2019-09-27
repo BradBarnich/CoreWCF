@@ -36,7 +36,10 @@ namespace CoreWCF.Channels
         {
             int r = Read(_oneByteArray, 0, 1);
             if (r == 0)
+            {
                 return -1;
+            }
+
             return _oneByteArray[0];
         }
 

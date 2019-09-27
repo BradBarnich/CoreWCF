@@ -5,16 +5,16 @@ using CoreWCF.Collections.Generic;
 
 namespace CoreWCF.Channels
 {
-    static class DnsCache
+    internal static class DnsCache
     {
-        const int mruWatermark = 64;
-        static MruCache<string, DnsCacheEntry> resolveCache = new MruCache<string, DnsCacheEntry>(mruWatermark);
-        static readonly TimeSpan cacheTimeout = TimeSpan.FromSeconds(2);
+        private const int mruWatermark = 64;
+        private static MruCache<string, DnsCacheEntry> resolveCache = new MruCache<string, DnsCacheEntry>(mruWatermark);
+        private static readonly TimeSpan cacheTimeout = TimeSpan.FromSeconds(2);
 
         // Double-checked locking pattern requires volatile for read/write synchronization
-        static volatile string machineName;
+        private static volatile string machineName;
 
-        static object ThisLock
+        private static object ThisLock
         {
             get
             {
@@ -98,10 +98,10 @@ namespace CoreWCF.Channels
             return hostEntry;
         }
 
-        class DnsCacheEntry
+        private class DnsCacheEntry
         {
-            IPHostEntry hostEntry;
-            DateTime timeStamp;
+            private IPHostEntry hostEntry;
+            private DateTime timeStamp;
 
             public DnsCacheEntry(IPHostEntry hostEntry, DateTime timeStamp)
             {

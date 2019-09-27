@@ -19,21 +19,23 @@ namespace CoreWCF
     {
         internal static readonly Uri EmptyUri = new Uri(string.Empty, UriKind.RelativeOrAbsolute);
 
-        bool initializeDescriptionHasFinished;
-        UriSchemeKeyedCollection baseAddresses;
-        ChannelDispatcherCollection channelDispatchers;
-        TimeSpan closeTimeout = ServiceDefaults.ServiceHostCloseTimeout;
-        ServiceDescription description;
-        ExtensionCollection<ServiceHostBase> extensions;
-        ReadOnlyCollection<Uri> externalBaseAddresses;
-        IDictionary<string, ContractDescription> implementedContracts;
-        IInstanceContextManager instances;
-        TimeSpan openTimeout = ServiceDefaults.OpenTimeout;
-        ServiceCredentials readOnlyCredentials;
-        ServiceAuthorizationBehavior readOnlyAuthorization;
+        private bool initializeDescriptionHasFinished;
+        private UriSchemeKeyedCollection baseAddresses;
+        private ChannelDispatcherCollection channelDispatchers;
+        private TimeSpan closeTimeout = ServiceDefaults.ServiceHostCloseTimeout;
+        private ServiceDescription description;
+        private ExtensionCollection<ServiceHostBase> extensions;
+        private ReadOnlyCollection<Uri> externalBaseAddresses;
+        private IDictionary<string, ContractDescription> implementedContracts;
+        private IInstanceContextManager instances;
+        private TimeSpan openTimeout = ServiceDefaults.OpenTimeout;
+        private ServiceCredentials readOnlyCredentials;
+
+        private ServiceAuthorizationBehavior readOnlyAuthorization;
         //ServiceAuthenticationBehavior readOnlyAuthentication;
-        Dictionary<DispatcherBuilder.ListenUriInfo, Collection<ServiceEndpoint>> endpointsByListenUriInfo;
-        int busyCount;
+        private Dictionary<DispatcherBuilder.ListenUriInfo, Collection<ServiceEndpoint>> endpointsByListenUriInfo;
+
+        private int busyCount;
         //EventTraceActivity eventTraceActivity;
 
         public event EventHandler<UnknownMessageReceivedEventArgs> UnknownMessageReceived;
@@ -264,7 +266,7 @@ namespace CoreWCF
             throw new PlatformNotSupportedException();
         }
 
-        ServiceAuthorizationBehavior EnsureAuthorization(ServiceDescription description)
+        private ServiceAuthorizationBehavior EnsureAuthorization(ServiceDescription description)
         {
             Fx.Assert(State == CommunicationState.Created || State == CommunicationState.Opening, "");
             ServiceAuthorizationBehavior a = description.Behaviors.Find<ServiceAuthorizationBehavior>();
@@ -349,9 +351,9 @@ namespace CoreWCF
             throw new PlatformNotSupportedException();
         }
 
-        class ImplementedContractsContractResolver : IContractResolver
+        private class ImplementedContractsContractResolver : IContractResolver
         {
-            IDictionary<string, ContractDescription> implementedContracts;
+            private IDictionary<string, ContractDescription> implementedContracts;
 
             public ImplementedContractsContractResolver(IDictionary<string, ContractDescription> implementedContracts)
             {
@@ -366,8 +368,8 @@ namespace CoreWCF
 
         internal class ServiceAndBehaviorsContractResolver : IContractResolver
         {
-            IContractResolver serviceResolver;
-            Dictionary<string, ContractDescription> behaviorContracts;
+            private IContractResolver serviceResolver;
+            private Dictionary<string, ContractDescription> behaviorContracts;
 
             public Dictionary<string, ContractDescription> BehaviorContracts
             {

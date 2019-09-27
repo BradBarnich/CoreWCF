@@ -13,40 +13,46 @@ namespace CoreWCF.Dispatcher
     {
         internal static readonly string NsXsi = "http://www.w3.org/2001/XMLSchema-instance";
 
-        OperationDescription operation;
-        MessageDescription responseMessage;
-        MessageDescription requestMessage;
-        XmlDictionaryString action;
-        XmlDictionaryString replyAction;
-        ActionHeader actionHeaderNone;
-        ActionHeader actionHeader10;
-        ActionHeader replyActionHeaderNone;
-        ActionHeader replyActionHeader10;
-        XmlDictionaryString requestWrapperName;
-        XmlDictionaryString requestWrapperNamespace;
-        XmlDictionaryString responseWrapperName;
-        XmlDictionaryString responseWrapperNamespace;
-        PartInfo[] requestParts;
-        PartInfo[] responseParts;
-        PartInfo returnPart;
-        XmlDictionaryString xsiNilLocalName;
-        XmlDictionaryString xsiNilNamespace;
+        private OperationDescription operation;
+        private MessageDescription responseMessage;
+        private MessageDescription requestMessage;
+        private XmlDictionaryString action;
+        private XmlDictionaryString replyAction;
+        private ActionHeader actionHeaderNone;
+        private ActionHeader actionHeader10;
+        private ActionHeader replyActionHeaderNone;
+        private ActionHeader replyActionHeader10;
+        private XmlDictionaryString requestWrapperName;
+        private XmlDictionaryString requestWrapperNamespace;
+        private XmlDictionaryString responseWrapperName;
+        private XmlDictionaryString responseWrapperNamespace;
+        private PartInfo[] requestParts;
+        private PartInfo[] responseParts;
+        private PartInfo returnPart;
+        private XmlDictionaryString xsiNilLocalName;
+        private XmlDictionaryString xsiNilNamespace;
 
         public PrimitiveOperationFormatter(OperationDescription description, bool isRpc)
         {
             if (description == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(description));
+            }
 
             OperationFormatter.Validate(description, isRpc, false/*isEncoded*/);
 
             operation = description;
             requestMessage = description.Messages[0];
             if (description.Messages.Count == 2)
+            {
                 responseMessage = description.Messages[1];
+            }
 
             int stringCount = 3 + requestMessage.Body.Parts.Count;
             if (responseMessage != null)
+            {
                 stringCount += 2 + responseMessage.Body.Parts.Count;
+            }
 
             XmlDictionary dictionary = new XmlDictionary(stringCount * 2);
 
@@ -80,7 +86,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        ActionHeader ActionHeaderNone
+        private ActionHeader ActionHeaderNone
         {
             get
             {
@@ -94,7 +100,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        ActionHeader ActionHeader10
+        private ActionHeader ActionHeader10
         {
             get
             {
@@ -122,7 +128,7 @@ namespace CoreWCF.Dispatcher
         //    }
         //}
 
-        ActionHeader ReplyActionHeaderNone
+        private ActionHeader ReplyActionHeaderNone
         {
             get
             {
@@ -136,7 +142,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        ActionHeader ReplyActionHeader10
+        private ActionHeader ReplyActionHeader10
         {
             get
             {
@@ -164,7 +170,7 @@ namespace CoreWCF.Dispatcher
         //    }
         //}
 
-        static XmlDictionaryString AddToDictionary(XmlDictionary dictionary, string s)
+        private static XmlDictionaryString AddToDictionary(XmlDictionary dictionary, string s)
         {
             XmlDictionaryString dictionaryString;
             if (!dictionary.TryLookup(s, out dictionaryString))
@@ -174,7 +180,7 @@ namespace CoreWCF.Dispatcher
             return dictionaryString;
         }
 
-        static PartInfo[] AddToDictionary(XmlDictionary dictionary, MessagePartDescriptionCollection parts, bool isRpc)
+        private static PartInfo[] AddToDictionary(XmlDictionary dictionary, MessagePartDescriptionCollection parts, bool isRpc)
         {
             PartInfo[] partInfos = new PartInfo[parts.Count];
             for (int i = 0; i < parts.Count; i++)
@@ -184,7 +190,7 @@ namespace CoreWCF.Dispatcher
             return partInfos;
         }
 
-        ActionHeader GetActionHeader(AddressingVersion addressing)
+        private ActionHeader GetActionHeader(AddressingVersion addressing)
         {
             if (action == null)
             {
@@ -211,7 +217,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        ActionHeader GetReplyActionHeader(AddressingVersion addressing)
+        private ActionHeader GetReplyActionHeader(AddressingVersion addressing)
         {
             if (replyAction == null)
             {
@@ -238,7 +244,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        static string GetArrayItemName(Type type)
+        private static string GetArrayItemName(Type type)
         {
             switch (type.GetTypeCode())
             {
@@ -261,7 +267,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        static PartInfo AddToDictionary(XmlDictionary dictionary, MessagePartDescription part, bool isRpc)
+        private static PartInfo AddToDictionary(XmlDictionary dictionary, MessagePartDescription part, bool isRpc)
         {
             Type type = part.Type;
             XmlDictionaryString itemName = null;
@@ -282,63 +288,107 @@ namespace CoreWCF.Dispatcher
         public static bool IsContractSupported(OperationDescription description)
         {
             if (description == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(description));
+            }
 
             OperationDescription operation = description;
             MessageDescription requestMessage = description.Messages[0];
             MessageDescription responseMessage = null;
             if (description.Messages.Count == 2)
+            {
                 responseMessage = description.Messages[1];
+            }
 
             if (requestMessage.Headers.Count > 0)
+            {
                 return false;
+            }
+
             if (requestMessage.Properties.Count > 0)
+            {
                 return false;
+            }
+
             if (requestMessage.IsTypedMessage)
+            {
                 return false;
+            }
+
             if (responseMessage != null)
             {
                 if (responseMessage.Headers.Count > 0)
+                {
                     return false;
+                }
+
                 if (responseMessage.Properties.Count > 0)
+                {
                     return false;
+                }
+
                 if (responseMessage.IsTypedMessage)
+                {
                     return false;
+                }
             }
             if (!AreTypesSupported(requestMessage.Body.Parts))
+            {
                 return false;
+            }
+
             if (responseMessage != null)
             {
                 if (!AreTypesSupported(responseMessage.Body.Parts))
+                {
                     return false;
+                }
+
                 if (responseMessage.Body.ReturnValue != null && !IsTypeSupported(responseMessage.Body.ReturnValue))
+                {
                     return false;
+                }
             }
             return true;
         }
 
-        static bool AreTypesSupported(MessagePartDescriptionCollection bodyDescriptions)
+        private static bool AreTypesSupported(MessagePartDescriptionCollection bodyDescriptions)
         {
             for (int i = 0; i < bodyDescriptions.Count; i++)
+            {
                 if (!IsTypeSupported(bodyDescriptions[i]))
+                {
                     return false;
+                }
+            }
+
             return true;
         }
 
-        static bool IsTypeSupported(MessagePartDescription bodyDescription)
+        private static bool IsTypeSupported(MessagePartDescription bodyDescription)
         {
             Fx.Assert(bodyDescription != null, "");
             Type type = bodyDescription.Type;
             if (type == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.Format(SR.SFxMessagePartDescriptionMissingType, bodyDescription.Name, bodyDescription.Namespace)));
+            }
 
             if (bodyDescription.Multiple)
+            {
                 return false;
+            }
 
             if (type == typeof(void))
+            {
                 return true;
+            }
+
             if (type.GetTypeInfo().IsEnum)
+            {
                 return false;
+            }
+
             switch (type.GetTypeCode())
             {
                 case TypeCode.Boolean:
@@ -352,7 +402,10 @@ namespace CoreWCF.Dispatcher
                     return true;
                 case TypeCode.Object:
                     if (type.IsArray && type.GetArrayRank() == 1 && IsArrayTypeSupported(type.GetElementType()))
+                    {
                         return true;
+                    }
+
                     break;
                 default:
                     break;
@@ -360,10 +413,13 @@ namespace CoreWCF.Dispatcher
             return false;
         }
 
-        static bool IsArrayTypeSupported(Type type)
+        private static bool IsArrayTypeSupported(Type type)
         {
             if (type.GetTypeInfo().IsEnum)
+            {
                 return false;
+            }
+
             switch (type.GetTypeCode())
             {
                 case TypeCode.Byte:
@@ -383,10 +439,14 @@ namespace CoreWCF.Dispatcher
         public Message SerializeRequest(MessageVersion messageVersion, object[] parameters)
         {
             if (messageVersion == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(messageVersion));
+            }
 
             if (parameters == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(parameters));
+            }
 
             return Message.CreateMessage(messageVersion, GetActionHeader(messageVersion.Addressing), new PrimitiveRequestBodyWriter(parameters, this));
         }
@@ -394,10 +454,14 @@ namespace CoreWCF.Dispatcher
         public Message SerializeReply(MessageVersion messageVersion, object[] parameters, object result)
         {
             if (messageVersion == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(messageVersion));
+            }
 
             if (parameters == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(parameters));
+            }
 
             return Message.CreateMessage(messageVersion, GetReplyActionHeader(messageVersion.Addressing), new PrimitiveResponseBodyWriter(parameters, result, this));
         }
@@ -405,15 +469,24 @@ namespace CoreWCF.Dispatcher
         public object DeserializeReply(Message message, object[] parameters)
         {
             if (message == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(message)));
+            }
+
             if (parameters == null)
+            {
                 throw TraceUtility.ThrowHelperError(new ArgumentNullException(nameof(parameters)), message);
+            }
+
             try
             {
                 if (message.IsEmpty)
                 {
                     if (responseWrapperName == null)
+                    {
                         return null;
+                    }
+
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new SerializationException(SR.SFxInvalidMessageBodyEmptyMessage));
                 }
 
@@ -445,15 +518,24 @@ namespace CoreWCF.Dispatcher
         public void DeserializeRequest(Message message, object[] parameters)
         {
             if (message == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(message)));
+            }
+
             if (parameters == null)
+            {
                 throw TraceUtility.ThrowHelperError(new ArgumentNullException(nameof(parameters)), message);
+            }
+
             try
             {
                 if (message.IsEmpty)
                 {
                     if (requestWrapperName == null)
+                    {
                         return;
+                    }
+
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new SerializationException(SR.SFxInvalidMessageBodyEmptyMessage));
                 }
 
@@ -486,12 +568,15 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        void DeserializeRequest(XmlDictionaryReader reader, object[] parameters)
+        private void DeserializeRequest(XmlDictionaryReader reader, object[] parameters)
         {
             if (requestWrapperName != null)
             {
                 if (!reader.IsStartElement(requestWrapperName, requestWrapperNamespace))
+                {
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new SerializationException(SR.Format(SR.SFxInvalidMessageBody, requestWrapperName, requestWrapperNamespace, reader.NodeType, reader.Name, reader.NamespaceURI)));
+                }
+
                 bool isEmptyElement = reader.IsEmptyElement;
                 reader.Read();
                 if (isEmptyElement)
@@ -508,12 +593,15 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        object DeserializeResponse(XmlDictionaryReader reader, object[] parameters)
+        private object DeserializeResponse(XmlDictionaryReader reader, object[] parameters)
         {
             if (responseWrapperName != null)
             {
                 if (!reader.IsStartElement(responseWrapperName, responseWrapperNamespace))
+                {
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new SerializationException(SR.Format(SR.SFxInvalidMessageBody, responseWrapperName, responseWrapperNamespace, reader.NodeType, reader.Name, reader.NamespaceURI)));
+                }
+
                 bool isEmptyElement = reader.IsEmptyElement;
                 reader.Read();
                 if (isEmptyElement)
@@ -533,9 +621,15 @@ namespace CoreWCF.Dispatcher
                         break;
                     }
                     if (!reader.IsStartElement())
+                    {
                         break;
+                    }
+
                     if (IsPartElements(reader, responseParts))
+                    {
                         break;
+                    }
+
                     OperationFormatter.TraceAndSkipElement(reader);
                 }
             }
@@ -550,11 +644,13 @@ namespace CoreWCF.Dispatcher
         }
 
 
-        void DeserializeParameters(XmlDictionaryReader reader, PartInfo[] parts, object[] parameters)
+        private void DeserializeParameters(XmlDictionaryReader reader, PartInfo[] parts, object[] parameters)
         {
             if (parts.Length != parameters.Length)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(
                     new ArgumentException(SR.Format(SR.SFxParameterCountMismatch, "parts", parts.Length, "parameters", parameters.Length), nameof(parameters)));
+            }
 
             int nextPartIndex = 0;
             while (reader.IsStartElement())
@@ -568,28 +664,37 @@ namespace CoreWCF.Dispatcher
                         nextPartIndex = i + 1;
                     }
                     else
+                    {
                         parameters[part.Description.Index] = null;
+                    }
                 }
 
                 if (reader.IsStartElement())
+                {
                     OperationFormatter.TraceAndSkipElement(reader);
+                }
             }
         }
 
         private bool IsPartElements(XmlDictionaryReader reader, PartInfo[] parts)
         {
             foreach (PartInfo part in parts)
+            {
                 if (IsPartElement(reader, part))
+                {
                     return true;
+                }
+            }
+
             return false;
         }
 
-        bool IsPartElement(XmlDictionaryReader reader, PartInfo part)
+        private bool IsPartElement(XmlDictionaryReader reader, PartInfo part)
         {
             return reader.IsStartElement(part.DictionaryName, part.DictionaryNamespace);
         }
 
-        object DeserializeParameter(XmlDictionaryReader reader, PartInfo part)
+        private object DeserializeParameter(XmlDictionaryReader reader, PartInfo part)
         {
             if (reader.AttributeCount > 0 &&
                 reader.MoveToAttribute(xsiNilLocalName.Value, xsiNilNamespace.Value) &&
@@ -601,7 +706,7 @@ namespace CoreWCF.Dispatcher
             return part.ReadValue(reader);
         }
 
-        void SerializeParameter(XmlDictionaryWriter writer, PartInfo part, object graph)
+        private void SerializeParameter(XmlDictionaryWriter writer, PartInfo part, object graph)
         {
 
             writer.WriteStartElement(part.DictionaryName, part.DictionaryNamespace);
@@ -612,15 +717,20 @@ namespace CoreWCF.Dispatcher
                 writer.WriteEndAttribute();
             }
             else
+            {
                 part.WriteValue(writer, graph);
+            }
+
             writer.WriteEndElement();
         }
 
-        void SerializeParameters(XmlDictionaryWriter writer, PartInfo[] parts, object[] parameters)
+        private void SerializeParameters(XmlDictionaryWriter writer, PartInfo[] parts, object[] parameters)
         {
             if (parts.Length != parameters.Length)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(
                     new ArgumentException(SR.Format(SR.SFxParameterCountMismatch, "parts", parts.Length, "parameters", parameters.Length), nameof(parameters)));
+            }
 
 
             for (int i = 0; i < parts.Length; i++)
@@ -630,40 +740,50 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        void SerializeRequest(XmlDictionaryWriter writer, object[] parameters)
+        private void SerializeRequest(XmlDictionaryWriter writer, object[] parameters)
         {
             if (requestWrapperName != null)
+            {
                 writer.WriteStartElement(requestWrapperName, requestWrapperNamespace);
+            }
 
             SerializeParameters(writer, requestParts, parameters);
 
             if (requestWrapperName != null)
+            {
                 writer.WriteEndElement();
+            }
         }
 
-        void SerializeResponse(XmlDictionaryWriter writer, object returnValue, object[] parameters)
+        private void SerializeResponse(XmlDictionaryWriter writer, object returnValue, object[] parameters)
         {
             if (responseWrapperName != null)
+            {
                 writer.WriteStartElement(responseWrapperName, responseWrapperNamespace);
+            }
 
             if (returnPart != null)
+            {
                 SerializeParameter(writer, returnPart, returnValue);
+            }
 
             SerializeParameters(writer, responseParts, parameters);
 
             if (responseWrapperName != null)
+            {
                 writer.WriteEndElement();
+            }
         }
 
-        class PartInfo
+        private class PartInfo
         {
-            XmlDictionaryString dictionaryName;
-            XmlDictionaryString dictionaryNamespace;
-            XmlDictionaryString itemName;
-            XmlDictionaryString itemNamespace;
-            MessagePartDescription description;
-            TypeCode typeCode;
-            bool isArray;
+            private XmlDictionaryString dictionaryName;
+            private XmlDictionaryString dictionaryNamespace;
+            private XmlDictionaryString itemName;
+            private XmlDictionaryString itemNamespace;
+            private MessagePartDescription description;
+            private TypeCode typeCode;
+            private bool isArray;
 
             public PartInfo(MessagePartDescription description, XmlDictionaryString dictionaryName, XmlDictionaryString dictionaryNamespace, XmlDictionaryString itemName, XmlDictionaryString itemNamespace)
             {
@@ -931,10 +1051,10 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        class PrimitiveRequestBodyWriter : BodyWriter
+        private class PrimitiveRequestBodyWriter : BodyWriter
         {
-            object[] parameters;
-            PrimitiveOperationFormatter primitiveOperationFormatter;
+            private object[] parameters;
+            private PrimitiveOperationFormatter primitiveOperationFormatter;
 
             public PrimitiveRequestBodyWriter(object[] parameters, PrimitiveOperationFormatter primitiveOperationFormatter)
                 : base(true)
@@ -949,11 +1069,11 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        class PrimitiveResponseBodyWriter : BodyWriter
+        private class PrimitiveResponseBodyWriter : BodyWriter
         {
-            object[] parameters;
-            object returnValue;
-            PrimitiveOperationFormatter primitiveOperationFormatter;
+            private object[] parameters;
+            private object returnValue;
+            private PrimitiveOperationFormatter primitiveOperationFormatter;
 
             public PrimitiveResponseBodyWriter(object[] parameters, object returnValue,
                 PrimitiveOperationFormatter primitiveOperationFormatter)

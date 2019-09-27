@@ -2,7 +2,7 @@
 
 namespace CoreWCF.Channels
 {
-    class SecurityCapabilities : ISecurityCapabilities
+    internal class SecurityCapabilities : ISecurityCapabilities
     {
         internal bool supportsServerAuth;
         internal bool supportsClientAuth;
@@ -26,7 +26,7 @@ namespace CoreWCF.Channels
         public bool SupportsClientWindowsIdentity { get { return supportsClientWindowsIdentity; } }
         public bool SupportsServerAuthentication { get { return supportsServerAuth; } }
 
-        static SecurityCapabilities None
+        private static SecurityCapabilities None
         {
             get { return new SecurityCapabilities(false, false, false, ProtectionLevel.None, ProtectionLevel.None); }
         }

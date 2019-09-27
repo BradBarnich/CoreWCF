@@ -9,14 +9,14 @@ namespace CoreWCF.Channels
     internal sealed class UriPrefixTable<TItem>
         where TItem : class
     {
-        int count;
-        const int HopperSize = 128;
-        volatile HopperCache lookupCache; // cache matches, for lookup speed
-        AsyncLock _asyncLock = new AsyncLock();
+        private int count;
+        private const int HopperSize = 128;
+        private volatile HopperCache lookupCache; // cache matches, for lookup speed
+        private AsyncLock _asyncLock = new AsyncLock();
 
-        SegmentHierarchyNode<TItem> root;
-        bool useWeakReferences;
-        bool includePortInComparison;
+        private SegmentHierarchyNode<TItem> root;
+        private bool useWeakReferences;
+        private bool includePortInComparison;
 
         public UriPrefixTable()
             : this(false)
@@ -48,7 +48,7 @@ namespace CoreWCF.Channels
             }
         }
 
-        object ThisLock
+        private object ThisLock
         {
             get
             {
@@ -95,7 +95,7 @@ namespace CoreWCF.Channels
             }
         }
 
-        bool TryCacheLookup(BaseUriWithWildcard key, out TItem item)
+        private bool TryCacheLookup(BaseUriWithWildcard key, out TItem item)
         {
             object value = lookupCache.GetValue(ThisLock, key);
 
@@ -105,7 +105,7 @@ namespace CoreWCF.Channels
             return value != null;
         }
 
-        void AddToCache(BaseUriWithWildcard key, TItem item)
+        private void AddToCache(BaseUriWithWildcard key, TItem item)
         {
             // Don't allow explicitly adding DBNulls.
             Fx.Assert(item != DBNull.Value, "Can't add DBNull to UriPrefixTable.");
@@ -114,7 +114,7 @@ namespace CoreWCF.Channels
             lookupCache.Add(key, item ?? (object)DBNull.Value);
         }
 
-        void ClearCache()
+        private void ClearCache()
         {
             lookupCache = new HopperCache(HopperSize, useWeakReferences);
         }
@@ -186,7 +186,7 @@ namespace CoreWCF.Channels
             }
         }
 
-        SegmentHierarchyNode<TItem> FindDataNode(string[] path, out bool exactMatch)
+        private SegmentHierarchyNode<TItem> FindDataNode(string[] path, out bool exactMatch)
         {
             Fx.Assert(path != null, "FindDataNode: path is null");
 
@@ -210,7 +210,7 @@ namespace CoreWCF.Channels
             return result;
         }
 
-        SegmentHierarchyNode<TItem> FindOrCreateNode(BaseUriWithWildcard baseUri)
+        private SegmentHierarchyNode<TItem> FindOrCreateNode(BaseUriWithWildcard baseUri)
         {
             Fx.Assert(baseUri != null, "FindOrCreateNode: baseUri is null");
 
@@ -229,7 +229,7 @@ namespace CoreWCF.Channels
             return current;
         }
 
-        static class UriSegmenter
+        private static class UriSegmenter
         {
             internal static string[] ToPath(Uri uriPath, HostNameComparisonMode hostNameComparisonMode,
                 bool includePortInComparison)
@@ -242,13 +242,13 @@ namespace CoreWCF.Channels
                 return segmentEnum.GetSegments(hostNameComparisonMode, includePortInComparison);
             }
 
-            struct UriSegmentEnum
+            private struct UriSegmentEnum
             {
-                string segment;
-                int segmentStartAt;
-                int segmentLength;
-                UriSegmentType type;
-                Uri uri;
+                private string segment;
+                private int segmentStartAt;
+                private int segmentLength;
+                private UriSegmentType type;
+                private Uri uri;
 
                 internal UriSegmentEnum(Uri uri)
                 {
@@ -260,7 +260,7 @@ namespace CoreWCF.Channels
                     segmentLength = 0;
                 }
 
-                void ClearSegment()
+                private void ClearSegment()
                 {
                     type = UriSegmentType.None;
                     segment = string.Empty;
@@ -391,14 +391,14 @@ namespace CoreWCF.Channels
                     return false;
                 }
 
-                void SetSegment(string segment)
+                private void SetSegment(string segment)
                 {
                     this.segment = segment;
                     segmentStartAt = 0;
                     segmentLength = segment.Length;
                 }
 
-                enum UriSegmentType
+                private enum UriSegmentType
                 {
                     Unknown,
                     Scheme,
@@ -411,15 +411,15 @@ namespace CoreWCF.Channels
         }
     }
 
-    class SegmentHierarchyNode<TData>
+    internal class SegmentHierarchyNode<TData>
         where TData : class
     {
-        BaseUriWithWildcard path;
-        TData data;
-        string name;
-        Dictionary<string, SegmentHierarchyNode<TData>> children;
-        WeakReference weakData;
-        bool useWeakReferences;
+        private BaseUriWithWildcard path;
+        private TData data;
+        private string name;
+        private Dictionary<string, SegmentHierarchyNode<TData>> children;
+        private WeakReference weakData;
+        private bool useWeakReferences;
 
         public SegmentHierarchyNode(string name, bool useWeakReferences)
         {

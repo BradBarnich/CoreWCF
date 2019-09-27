@@ -9,7 +9,7 @@ namespace CoreWCF
         NotAllowed,
     }
 
-    static class SessionModeHelper
+    internal static class SessionModeHelper
     {
         public static bool IsDefined(SessionMode sessionMode)
         {

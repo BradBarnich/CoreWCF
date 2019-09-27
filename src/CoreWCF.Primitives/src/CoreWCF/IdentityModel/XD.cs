@@ -4,11 +4,11 @@ using System.Text;
 
 namespace CoreWCF.IdentityModel
 {
-    static class XD
+    internal static class XD
     {
     }
 
-    static class SecurityAlgorithmStrings
+    internal static class SecurityAlgorithmStrings
     {
         // Main dictionary strings
         public const string Aes128Encryption = IdentityModelStringsVersion1.String95;
@@ -40,7 +40,7 @@ namespace CoreWCF.IdentityModel
         public const string StrTransform = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#STR-Transform";
     }
 
-    static class SecurityAlgorithmDec2005Strings
+    internal static class SecurityAlgorithmDec2005Strings
     {
         // Main dictionary strings
         public const string Psha1KeyDerivationDec2005 = IdentityModelStringsVersion1.String267;

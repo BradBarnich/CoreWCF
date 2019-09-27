@@ -208,7 +208,7 @@ namespace CoreWCF.IdentityModel.Selectors
 
         internal abstract class TokenEntry
         {
-            Type[] tokenTypes = null;
+            private Type[] tokenTypes = null;
 
             protected abstract XmlDictionaryString LocalName { get; }
             protected abstract XmlDictionaryString NamespaceUri { get; }
@@ -222,7 +222,9 @@ namespace CoreWCF.IdentityModel.Selectors
                 for (int i = 0; i < tokenTypes.Length; ++i)
                 {
                     if (tokenTypes[i].IsAssignableFrom(tokenType))
+                    {
                         return true;
+                    }
                 }
                 return false;
             }
@@ -232,7 +234,10 @@ namespace CoreWCF.IdentityModel.Selectors
             public Type[] GetTokenTypes()
             {
                 if (tokenTypes == null)
+                {
                     tokenTypes = GetTokenTypesCore();
+                }
+
                 return tokenTypes;
             }
 

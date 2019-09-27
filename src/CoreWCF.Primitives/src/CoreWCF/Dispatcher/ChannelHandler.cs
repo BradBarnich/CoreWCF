@@ -18,7 +18,7 @@ namespace CoreWCF.Dispatcher
     {
         public static readonly TimeSpan CloseAfterFaultTimeout = TimeSpan.FromSeconds(10);
         public const string MessageBufferPropertyName = "_RequestMessageBuffer_";
-        ServiceChannel _channel;
+        private ServiceChannel _channel;
         private ServiceDispatcher _serviceDispatcher;
         private MessageVersion _messageVersion;
         private bool _isManualAddressing;
@@ -93,12 +93,12 @@ namespace CoreWCF.Dispatcher
 
         internal ServiceThrottle InstanceContextServiceThrottle { get; set; }
 
-        bool IsOpen
+        private bool IsOpen
         {
             get { return _binder.Channel.State == CommunicationState.Opened; }
         }
 
-        object ThisLock
+        private object ThisLock
         {
             get { return this; }
         }
@@ -309,7 +309,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        ServiceChannel GetDatagramChannel(Message message, out EndpointDispatcher endpoint, out bool addressMatched)
+        private ServiceChannel GetDatagramChannel(Message message, out EndpointDispatcher endpoint, out bool addressMatched)
         {
             addressMatched = false;
             endpoint = GetEndpointDispatcher(message, out addressMatched);
@@ -335,7 +335,7 @@ namespace CoreWCF.Dispatcher
             return endpoint.DatagramChannel;
         }
 
-        ServiceChannel GetSessionChannel(Message message, out EndpointDispatcher endpoint, out bool addressMatched)
+        private ServiceChannel GetSessionChannel(Message message, out EndpointDispatcher endpoint, out bool addressMatched)
         {
             addressMatched = false;
 
@@ -367,7 +367,7 @@ namespace CoreWCF.Dispatcher
             return _channel;
         }
 
-        Task InitializeServiceChannel(ServiceChannel channel)
+        private Task InitializeServiceChannel(ServiceChannel channel)
         {
             if (_wasChannelThrottled)
             {
@@ -415,7 +415,7 @@ namespace CoreWCF.Dispatcher
         }
 
 
-        void ProvideFault(Exception e, ref ErrorHandlerFaultInfo faultInfo)
+        private void ProvideFault(Exception e, ref ErrorHandlerFaultInfo faultInfo)
         {
             if (_serviceDispatcher != null)
             {
@@ -435,7 +435,7 @@ namespace CoreWCF.Dispatcher
             return HandleError(e, ref dummy);
         }
 
-        bool HandleError(Exception e, ref ErrorHandlerFaultInfo faultInfo)
+        private bool HandleError(Exception e, ref ErrorHandlerFaultInfo faultInfo)
         {
             if (e == null)
             {
@@ -463,7 +463,7 @@ namespace CoreWCF.Dispatcher
             return ProvideFaultAndReplyFailureAsync(request, e, faultInfo);
         }
 
-        Task ReplyAddressFilterDidNotMatchAsync(RequestContext request)
+        private Task ReplyAddressFilterDidNotMatchAsync(RequestContext request)
         {
             FaultCode code = FaultCode.CreateSenderFaultCode(AddressingStrings.DestinationUnreachable,
                 _messageVersion.Addressing.Namespace);
@@ -472,7 +472,7 @@ namespace CoreWCF.Dispatcher
             return ReplyFailureAsync(request, code, reason);
         }
 
-        Task ReplyContractFilterDidNotMatchAsync(RequestContext request)
+        private Task ReplyContractFilterDidNotMatchAsync(RequestContext request)
         {
             // By default, the contract filter is just a filter over the set of initiating actions in 
             // the contract, so we do error messages accordingly
@@ -504,13 +504,13 @@ namespace CoreWCF.Dispatcher
             return ReplyFailureAsync(request, fault, action, reason, code);
         }
 
-        Task ReplyFailureAsync(RequestContext request, FaultCode code, string reason)
+        private Task ReplyFailureAsync(RequestContext request, FaultCode code, string reason)
         {
             string action = _messageVersion.Addressing.DefaultFaultAction;
             return ReplyFailureAsync(request, code, reason, action);
         }
 
-        Task ReplyFailureAsync(RequestContext request, FaultCode code, string reason, string action)
+        private Task ReplyFailureAsync(RequestContext request, FaultCode code, string reason, string action)
         {
             Message fault = Message.CreateMessage(_messageVersion, code, reason, action);
             return ReplyFailureAsync(request, fault, action, reason, code);
@@ -593,7 +593,7 @@ namespace CoreWCF.Dispatcher
         /// <param name="request">The request context to prepare</param>
         /// <param name="reply">The reply to prepare</param>
         /// <returns>True if channel is open and prepared reply should be sent; otherwise false.</returns>
-        bool PrepareReply(RequestContext request, Message reply)
+        private bool PrepareReply(RequestContext request, Message reply)
         {
             // Ensure we only reply once (we may hit the same error multiple times)
             if (_replied == request)
@@ -653,12 +653,12 @@ namespace CoreWCF.Dispatcher
             return IsOpen && canSendReply;
         }
 
-        EndpointDispatcher GetEndpointDispatcher(Message message, out bool addressMatched)
+        private EndpointDispatcher GetEndpointDispatcher(Message message, out bool addressMatched)
         {
             return _serviceDispatcher.Endpoints.Lookup(message, out addressMatched);
         }
 
-        Task TryAcquireThrottleAsync(RequestContext request, bool acquireInstanceContextThrottle)
+        private Task TryAcquireThrottleAsync(RequestContext request, bool acquireInstanceContextThrottle)
         {
             ServiceThrottle throttle = _throttle;
             if ((throttle != null) && (throttle.IsActive))
@@ -669,7 +669,7 @@ namespace CoreWCF.Dispatcher
             return Task.CompletedTask;
         }
 
-        Task TryAcquireCallThrottleAsync(RequestContext request)
+        private Task TryAcquireCallThrottleAsync(RequestContext request)
         {
             ServiceThrottle throttle = _throttle;
             if ((throttle != null) && (throttle.IsActive))
@@ -785,7 +785,7 @@ namespace CoreWCF.Dispatcher
             return true;
         }
 
-        struct RequestInfo
+        private struct RequestInfo
         {
             public EndpointDispatcher Endpoint;
             public InstanceContext ExistingInstanceContext;

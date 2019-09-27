@@ -8,10 +8,10 @@ namespace CoreWCF.IdentityModel.Tokens
 {
     internal class UserNameSecurityToken : SecurityToken
     {
-        string id;
-        string password;
-        string userName;
-        DateTime effectiveTime;
+        private string id;
+        private string password;
+        private string userName;
+        private DateTime effectiveTime;
 
         public UserNameSecurityToken(string userName, string password)
             : this(userName, password, SecurityUniqueId.Create().Value)
@@ -21,9 +21,14 @@ namespace CoreWCF.IdentityModel.Tokens
         public UserNameSecurityToken(string userName, string password, string id)
         {
             if (userName == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(userName));
+            }
+
             if (userName == string.Empty)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgument(SR.UserNameCannotBeEmpty);
+            }
 
             this.userName = userName;
             this.password = password;

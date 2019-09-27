@@ -19,8 +19,8 @@ namespace CoreWCF.Dispatcher
 
     internal class InstanceContextManager : LifetimeManager, IInstanceContextManager
     {
-        int firstFreeIndex;
-        Item[] items;
+        private int firstFreeIndex;
+        private Item[] items;
 
         public InstanceContextManager(object mutex)
             : base(mutex)
@@ -36,9 +36,15 @@ namespace CoreWCF.Dispatcher
                 if (State == LifetimeState.Opened)
                 {
                     if (instanceContext.InstanceContextManagerIndex != 0)
+                    {
                         return;
+                    }
+
                     if (firstFreeIndex == 0)
+                    {
                         GrowItems();
+                    }
+
                     AddItem(instanceContext);
                     base.IncrementBusyCountWithoutLock();
                     added = true;
@@ -52,7 +58,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        void AddItem(InstanceContext instanceContext)
+        private void AddItem(InstanceContext instanceContext)
         {
             int index = firstFreeIndex;
             firstFreeIndex = items[index].nextFreeIndex;
@@ -111,7 +117,9 @@ namespace CoreWCF.Dispatcher
         {
             InstanceContext[] instances = ToArray();
             for (int index = 0; index < instances.Length; index++)
+            {
                 await instances[index].CloseInputAsync(token);
+            }
         }
 
         private static async void ContinueCloseInstanceContext(Task result)
@@ -142,14 +150,16 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        void GrowItems()
+        private void GrowItems()
         {
             Item[] existingItems = items;
             if (existingItems != null)
             {
                 InitItems(existingItems.Length * 2);
                 for (int i = 1; i < existingItems.Length; i++)
+                {
                     AddItem(existingItems[i].instanceContext);
+                }
             }
             else
             {
@@ -157,7 +167,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        void InitItems(int count)
+        private void InitItems(int count)
         {
             items = new Item[count];
             for (int i = count - 2; i > 0; i--)
@@ -187,13 +197,18 @@ namespace CoreWCF.Dispatcher
         public bool Remove(InstanceContext instanceContext)
         {
             if (instanceContext == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(instanceContext));
+            }
 
             lock (ThisLock)
             {
                 int index = instanceContext.InstanceContextManagerIndex;
                 if (index == 0)
+                {
                     return false;
+                }
+
                 instanceContext.InstanceContextManagerIndex = 0;
                 items[index].nextFreeIndex = firstFreeIndex;
                 items[index].instanceContext = null;
@@ -215,11 +230,17 @@ namespace CoreWCF.Dispatcher
             {
                 int count = 0;
                 for (int i = 1; i < items.Length; i++)
+                {
                     if (items[i].instanceContext != null)
+                    {
                         count++;
+                    }
+                }
 
                 if (count == 0)
+                {
                     return Array.Empty<InstanceContext>();
+                }
 
                 InstanceContext[] array = new InstanceContext[count];
                 count = 0;
@@ -236,7 +257,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        struct Item
+        private struct Item
         {
             public int nextFreeIndex;
             public InstanceContext instanceContext;

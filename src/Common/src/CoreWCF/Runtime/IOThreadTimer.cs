@@ -27,14 +27,14 @@ namespace CoreWCF.Runtime
 
     internal class IOThreadTimer
     {
-        const int maxSkewInMillisecondsDefault = 100;
-        Action<object> callback;
-        object callbackState;
-        long dueTime;
+        private const int maxSkewInMillisecondsDefault = 100;
+        private Action<object> callback;
+        private object callbackState;
+        private long dueTime;
 
-        int index;
-        long maxSkew;
-        TimerGroup timerGroup;
+        private int index;
+        private long maxSkew;
+        private TimerGroup timerGroup;
 
         public IOThreadTimer(Action<object> callback, object callbackState, bool isTypicallyCanceledShortlyAfterBeingSet)
             : this(callback, callbackState, isTypicallyCanceledShortlyAfterBeingSet, maxSkewInMillisecondsDefault)
@@ -84,18 +84,18 @@ namespace CoreWCF.Runtime
             TimerManager.Value.Kill();
         }
 
-        class TimerManager
+        private class TimerManager
         {
-            const long maxTimeToWaitForMoreTimers = 1000 * TimeSpan.TicksPerMillisecond;
+            private const long maxTimeToWaitForMoreTimers = 1000 * TimeSpan.TicksPerMillisecond;
 
-            static TimerManager value = new TimerManager();
+            private static TimerManager value = new TimerManager();
 
-            Action<object> onWaitCallback;
-            TimerGroup stableTimerGroup;
-            TimerGroup volatileTimerGroup;
-            WaitableTimer[] waitableTimers;
+            private Action<object> onWaitCallback;
+            private TimerGroup stableTimerGroup;
+            private TimerGroup volatileTimerGroup;
+            private WaitableTimer[] waitableTimers;
 
-            bool waitScheduled;
+            private bool waitScheduled;
 
             public TimerManager()
             {
@@ -105,7 +105,7 @@ namespace CoreWCF.Runtime
                 waitableTimers = new WaitableTimer[] { stableTimerGroup.WaitableTimer, volatileTimerGroup.WaitableTimer };
             }
 
-            object ThisLock
+            private object ThisLock
             {
                 get { return this; }
             }
@@ -217,7 +217,7 @@ namespace CoreWCF.Runtime
                 }
             }
 
-            void EnsureWaitScheduled()
+            private void EnsureWaitScheduled()
             {
                 if (!waitScheduled)
                 {
@@ -225,7 +225,7 @@ namespace CoreWCF.Runtime
                 }
             }
 
-            TimerGroup GetOtherTimerGroup(TimerGroup timerGroup)
+            private TimerGroup GetOtherTimerGroup(TimerGroup timerGroup)
             {
                 if (object.ReferenceEquals(timerGroup, volatileTimerGroup))
                 {
@@ -237,7 +237,7 @@ namespace CoreWCF.Runtime
                 }
             }
 
-            void OnWaitCallback(object state)
+            private void OnWaitCallback(object state)
             {
                 WaitableTimer.WaitAny(waitableTimers);
                 long now = Ticks.Now;
@@ -250,18 +250,20 @@ namespace CoreWCF.Runtime
                 }
             }
 
-            void ReactivateWaitableTimers()
+            private void ReactivateWaitableTimers()
             {
                 ReactivateWaitableTimer(stableTimerGroup);
                 ReactivateWaitableTimer(volatileTimerGroup);
             }
 
-            void ReactivateWaitableTimer(TimerGroup timerGroup)
+            private void ReactivateWaitableTimer(TimerGroup timerGroup)
             {
                 TimerQueue timerQueue = timerGroup.TimerQueue;
 
                 if (timerGroup.WaitableTimer.dead)
+                {
                     return;
+                }
 
                 if (timerQueue.Count > 0)
                 {
@@ -273,13 +275,13 @@ namespace CoreWCF.Runtime
                 }
             }
 
-            void ScheduleElapsedTimers(long now)
+            private void ScheduleElapsedTimers(long now)
             {
                 ScheduleElapsedTimers(stableTimerGroup, now);
                 ScheduleElapsedTimers(volatileTimerGroup, now);
             }
 
-            void ScheduleElapsedTimers(TimerGroup timerGroup, long now)
+            private void ScheduleElapsedTimers(TimerGroup timerGroup, long now)
             {
                 TimerQueue timerQueue = timerGroup.TimerQueue;
                 while (timerQueue.Count > 0)
@@ -298,17 +300,19 @@ namespace CoreWCF.Runtime
                 }
             }
 
-            void ScheduleWait()
+            private void ScheduleWait()
             {
                 ActionItem.Schedule(onWaitCallback, null);
                 waitScheduled = true;
             }
 
-            void ScheduleWaitIfAnyTimersLeft()
+            private void ScheduleWaitIfAnyTimersLeft()
             {
                 if (this.stableTimerGroup.WaitableTimer.dead &&
                     this.volatileTimerGroup.WaitableTimer.dead)
+                {
                     return;
+                }
 
                 if (this.stableTimerGroup.TimerQueue.Count > 0 ||
                     this.volatileTimerGroup.TimerQueue.Count > 0)
@@ -317,7 +321,7 @@ namespace CoreWCF.Runtime
                 }
             }
 
-            void UpdateWaitableTimer(TimerGroup timerGroup)
+            private void UpdateWaitableTimer(TimerGroup timerGroup)
             {
                 WaitableTimer waitableTimer = timerGroup.WaitableTimer;
                 IOThreadTimer minTimer = timerGroup.TimerQueue.MinTimer;
@@ -333,10 +337,10 @@ namespace CoreWCF.Runtime
             }
         }
 
-        class TimerGroup
+        private class TimerGroup
         {
-            TimerQueue timerQueue;
-            WaitableTimer waitableTimer;
+            private TimerQueue timerQueue;
+            private WaitableTimer waitableTimer;
 
             public TimerGroup()
             {
@@ -360,10 +364,10 @@ namespace CoreWCF.Runtime
             }
         }
 
-        class TimerQueue
+        private class TimerQueue
         {
-            int count;
-            IOThreadTimer[] timers;
+            private int count;
+            private IOThreadTimer[] timers;
 
             public TimerQueue()
             {
@@ -504,7 +508,7 @@ namespace CoreWCF.Runtime
                 return true;
             }
 
-            void DeleteMinTimerCore()
+            private void DeleteMinTimerCore()
             {
                 int count = this.count;
 
@@ -582,7 +586,7 @@ namespace CoreWCF.Runtime
 
         public class WaitableTimer : EventWaitHandle
         {
-            long dueTime; // Ticks
+            private long dueTime; // Ticks
             public bool dead;
 
             public WaitableTimer() : base(false, EventResetMode.AutoReset)
@@ -621,15 +625,23 @@ namespace CoreWCF.Runtime
                     for (int i = 1; i < waitableTimers.Length; i++)
                     {
                         if (waitableTimers[i].dead)
+                        {
                             return 0;
+                        }
+
                         if (waitableTimers[i].dueTime < earliestDueTime)
+                        {
                             earliestDueTime = waitableTimers[i].dueTime;
+                        }
+
                         waitableTimers[i].Reset();
                     }
 
                     var waitDurationInMillis = (earliestDueTime - DateTime.UtcNow.Ticks) / TimeSpan.TicksPerMillisecond;
                     if (waitDurationInMillis < 0) // Already passed the due time
+                    {
                         return 0;
+                    }
 
                     Contract.Assert(waitDurationInMillis < int.MaxValue, "Waiting for longer than is possible");
                     WaitHandle.WaitAny(waitableTimers, (int)waitDurationInMillis);

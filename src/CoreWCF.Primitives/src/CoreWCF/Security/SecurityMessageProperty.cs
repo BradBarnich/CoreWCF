@@ -12,15 +12,15 @@ namespace CoreWCF.Security
         //// This is the list of outgoing supporting tokens
         //Collection<SupportingTokenSpecification> outgoingSupportingTokens;
         //Collection<SupportingTokenSpecification> incomingSupportingTokens;
-        SecurityTokenSpecification transportToken;
+        private SecurityTokenSpecification transportToken;
         //SecurityTokenSpecification protectionToken;
         //SecurityTokenSpecification initiatorToken;
         //SecurityTokenSpecification recipientToken;
 
-        ServiceSecurityContext securityContext;
+        private ServiceSecurityContext securityContext;
 
         //string senderIdPrefix = "_";
-        bool disposed = false;
+        private bool disposed = false;
 
         public SecurityMessageProperty()
         {
@@ -191,11 +191,15 @@ namespace CoreWCF.Security
         public static SecurityMessageProperty GetOrCreate(Message message)
         {
             if (message == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(message));
+            }
 
             SecurityMessageProperty result = null;
             if (message.Properties != null)
+            {
                 result = message.Properties.Security;
+            }
 
             if (result == null)
             {
@@ -296,7 +300,7 @@ namespace CoreWCF.Security
             }
         }
 
-        void ThrowIfDisposed()
+        private void ThrowIfDisposed()
         {
             if (disposed)
             {

@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace CoreWCF.Dispatcher
 {
-    sealed class FlowThrottle
+    internal sealed class FlowThrottle
     {
         private int _capacity;
         private int _count;
@@ -23,7 +23,9 @@ namespace CoreWCF.Dispatcher
         internal FlowThrottle(int capacity, string propertyName, string configName)
         {
             if (capacity <= 0)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.SFxThrottleLimitMustBeGreaterThanZero0));
+            }
 
             _count = 0;
             _capacity = capacity;
@@ -40,7 +42,10 @@ namespace CoreWCF.Dispatcher
             set
             {
                 if (value <= 0)
+                {
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.SFxThrottleLimitMustBeGreaterThanZero0));
+                }
+
                 _capacity = value;
             }
         }
@@ -115,7 +120,9 @@ namespace CoreWCF.Dispatcher
                 {
                     next = _waiters.Dequeue();
                     if (_waiters.Count == 0)
+                    {
                         _waiters.TrimExcess();
+                    }
                 }
                 else
                 {
@@ -132,7 +139,9 @@ namespace CoreWCF.Dispatcher
             }
 
             if (next != null)
+            {
                 next.TrySetResult(null);
+            }
 
             _released?.Invoke();
             _ratio?.Invoke(_count);

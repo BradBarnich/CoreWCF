@@ -5,12 +5,12 @@ namespace CoreWCF.Channels
 {
     public sealed class RemoteEndpointMessageProperty
     {
-        string address;
-        int port;
-        IPEndPoint remoteEndPoint;
-        IRemoteEndpointProvider remoteEndpointProvider;
-        InitializationState state;
-        object thisLock = new object();
+        private string address;
+        private int port;
+        private IPEndPoint remoteEndPoint;
+        private IRemoteEndpointProvider remoteEndpointProvider;
+        private InitializationState state;
+        private object thisLock = new object();
 
         public RemoteEndpointMessageProperty(string address, int port)
         {
@@ -81,12 +81,12 @@ namespace CoreWCF.Channels
             }
         }
 
-        object ThisLock
+        private object ThisLock
         {
             get { return thisLock; }
         }
 
-        void Initialize(bool getHostedPort)
+        private void Initialize(bool getHostedPort)
         {
             if (remoteEndPoint != null)
             {
@@ -119,7 +119,7 @@ namespace CoreWCF.Channels
         }
 
         [Flags]
-        enum InitializationState
+        private enum InitializationState
         {
             None = 0,
             Address = 1,

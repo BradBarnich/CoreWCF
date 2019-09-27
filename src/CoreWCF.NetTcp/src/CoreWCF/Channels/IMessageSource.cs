@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace CoreWCF.Channels
 {
-    enum AsyncReceiveResult
+    internal enum AsyncReceiveResult
     {
         Completed,
         Pending,
     }
 
-    interface IMessageSource
+    internal interface IMessageSource
     {
         Task<Message> ReceiveAsync(CancellationToken token);
         Task<bool> WaitForMessageAsync(CancellationToken token);

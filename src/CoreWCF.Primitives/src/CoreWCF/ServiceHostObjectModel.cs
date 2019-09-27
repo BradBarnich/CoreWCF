@@ -123,7 +123,9 @@ namespace CoreWCF
             protected override Type GetKeyForItem(ContractDescription item)
             {
                 if (item == null)
+                {
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(item));
+                }
 
                 return item.ContractType;
             }
@@ -144,10 +146,10 @@ namespace CoreWCF
             }
         }
 
-        class ReflectedAndBehaviorContractCollection
+        private class ReflectedAndBehaviorContractCollection
         {
-            ReflectedContractCollection reflectedContracts;
-            KeyedByTypeCollection<IServiceBehavior> behaviors;
+            private ReflectedContractCollection reflectedContracts;
+            private KeyedByTypeCollection<IServiceBehavior> behaviors;
             public ReflectedAndBehaviorContractCollection(ReflectedContractCollection reflectedContracts, KeyedByTypeCollection<IServiceBehavior> behaviors)
             {
                 this.reflectedContracts = reflectedContracts;
@@ -257,7 +259,9 @@ namespace CoreWCF
 
             // new Uri(Uri, string.Empty) is broken
             if (path.Length == 0)
+            {
                 return baseUri;
+            }
 
             if (!baseUri.AbsoluteUri.EndsWith("/", StringComparison.Ordinal))
             {

@@ -3,7 +3,7 @@
 namespace CoreWCF.Runtime
 {
     //[Serializable]
-    class CallbackException : FatalException
+    internal class CallbackException : FatalException
     {
         public CallbackException()
         {

@@ -8,14 +8,14 @@ using System.Runtime.CompilerServices;
 
 namespace CoreWCF.Dispatcher
 {
-    sealed class AuthorizationBehavior
+    internal sealed class AuthorizationBehavior
     {
-        static ServiceAuthorizationManager DefaultServiceAuthorizationManager = new ServiceAuthorizationManager();
+        private static ServiceAuthorizationManager DefaultServiceAuthorizationManager = new ServiceAuthorizationManager();
 
-        ReadOnlyCollection<IAuthorizationPolicy> externalAuthorizationPolicies;
-        ServiceAuthorizationManager serviceAuthorizationManager;
+        private ReadOnlyCollection<IAuthorizationPolicy> externalAuthorizationPolicies;
+        private ServiceAuthorizationManager serviceAuthorizationManager;
 
-        AuthorizationBehavior() { }
+        private AuthorizationBehavior() { }
 
         public void Authorize(ref MessageRpc rpc)
         {
@@ -46,7 +46,7 @@ namespace CoreWCF.Dispatcher
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        static AuthorizationBehavior CreateAuthorizationBehavior(DispatchRuntime dispatch)
+        private static AuthorizationBehavior CreateAuthorizationBehavior(DispatchRuntime dispatch)
         {
             AuthorizationBehavior behavior = new AuthorizationBehavior();
             behavior.externalAuthorizationPolicies = dispatch.ExternalAuthorizationPolicies;
@@ -57,10 +57,14 @@ namespace CoreWCF.Dispatcher
         public static AuthorizationBehavior TryCreate(DispatchRuntime dispatch)
         {
             if (dispatch == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(dispatch)));
+            }
 
             if (!dispatch.RequiresAuthorization)
+            {
                 return null;
+            }
 
             return CreateAuthorizationBehavior(dispatch);
         }

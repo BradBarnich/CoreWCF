@@ -1,6 +1,6 @@
 ﻿namespace CoreWCF.Channels
 {
-    interface IHttpTransportFactorySettings : ITransportFactorySettings
+    internal interface IHttpTransportFactorySettings : ITransportFactorySettings
     {
         int MaxBufferSize { get; }
         TransferMode TransferMode { get; }

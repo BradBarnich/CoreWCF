@@ -7,19 +7,19 @@ namespace CoreWCF.Channels
     // TODO: Consider moving to primitives
     public abstract class ConnectionOrientedTransportBindingElement : TransportBindingElement
     {
-        int connectionBufferSize;
-        bool exposeConnectionProperty;
-        HostNameComparisonMode hostNameComparisonMode;
-        bool inheritBaseAddressSettings;
-        TimeSpan channelInitializationTimeout;
-        int maxBufferSize;
-        bool maxBufferSizeInitialized;
-        int maxPendingConnections;
-        TimeSpan maxOutputDelay;
-        int maxPendingAccepts;
-        TransferMode transferMode;
-        bool isMaxPendingConnectionsSet;
-        bool isMaxPendingAcceptsSet;
+        private int connectionBufferSize;
+        private bool exposeConnectionProperty;
+        private HostNameComparisonMode hostNameComparisonMode;
+        private bool inheritBaseAddressSettings;
+        private TimeSpan channelInitializationTimeout;
+        private int maxBufferSize;
+        private bool maxBufferSizeInitialized;
+        private int maxPendingConnections;
+        private TimeSpan maxOutputDelay;
+        private int maxPendingAccepts;
+        private TransferMode transferMode;
+        private bool isMaxPendingConnectionsSet;
+        private bool isMaxPendingAcceptsSet;
 
         internal ConnectionOrientedTransportBindingElement()
             : base()
@@ -128,8 +128,10 @@ namespace CoreWCF.Channels
             set
             {
                 if (value <= 0)
+                {
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException("value", value,
                         SR.ValueMustBePositive));
+                }
 
                 maxPendingConnections = value;
                 isMaxPendingConnectionsSet = true;
@@ -263,32 +265,59 @@ namespace CoreWCF.Channels
         protected override bool IsMatch(BindingElement b)
         {
             if (!base.IsMatch(b))
+            {
                 return false;
+            }
 
             ConnectionOrientedTransportBindingElement connection = b as ConnectionOrientedTransportBindingElement;
             if (connection == null)
+            {
                 return false;
+            }
 
             if (connectionBufferSize != connection.connectionBufferSize)
+            {
                 return false;
+            }
+
             if (hostNameComparisonMode != connection.hostNameComparisonMode)
+            {
                 return false;
+            }
+
             if (inheritBaseAddressSettings != connection.inheritBaseAddressSettings)
+            {
                 return false;
+            }
+
             if (channelInitializationTimeout != connection.channelInitializationTimeout)
             {
                 return false;
             }
             if (maxBufferSize != connection.maxBufferSize)
+            {
                 return false;
+            }
+
             if (maxPendingConnections != connection.maxPendingConnections)
+            {
                 return false;
+            }
+
             if (maxOutputDelay != connection.maxOutputDelay)
+            {
                 return false;
+            }
+
             if (maxPendingAccepts != connection.maxPendingAccepts)
+            {
                 return false;
+            }
+
             if (transferMode != connection.transferMode)
+            {
                 return false;
+            }
 
             return true;
         }

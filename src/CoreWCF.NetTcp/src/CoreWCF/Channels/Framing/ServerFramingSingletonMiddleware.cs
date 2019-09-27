@@ -112,7 +112,9 @@ namespace CoreWCF.Channels.Framing
                                         catch (Exception exception)
                                         {
                                             if (Fx.IsFatal(exception))
+                                            {
                                                 throw;
+                                            }
 
                                             throw;
                                         }
@@ -175,7 +177,7 @@ namespace CoreWCF.Channels.Framing
                 || upgradeState == UpgradeState.UpgradeComplete;
         }
 
-        void ChangeUpgradeState(ref UpgradeState currentState, UpgradeState newState)
+        private void ChangeUpgradeState(ref UpgradeState currentState, UpgradeState newState)
         {
             switch (newState)
             {
@@ -275,7 +277,7 @@ namespace CoreWCF.Channels.Framing
             }
         }
 
-        enum UpgradeState
+        private enum UpgradeState
         {
             None,
             VerifyingUpgradeRequest,

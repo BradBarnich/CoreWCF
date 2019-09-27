@@ -9,15 +9,15 @@ namespace CoreWCF
     {
         internal const SecurityMode DefaultMode = SecurityMode.Transport;
 
-        SecurityMode mode;
-        TcpTransportSecurity transportSecurity;
+        private SecurityMode mode;
+        private TcpTransportSecurity transportSecurity;
 
         public NetTcpSecurity()
             : this(DefaultMode, new TcpTransportSecurity())
         {
         }
 
-        NetTcpSecurity(SecurityMode mode, TcpTransportSecurity transportSecurity)
+        private NetTcpSecurity(SecurityMode mode, TcpTransportSecurity transportSecurity)
         {
             Fx.Assert(SecurityModeHelper.IsDefined(mode), string.Format("Invalid SecurityMode value: {0}.", mode.ToString()));
 

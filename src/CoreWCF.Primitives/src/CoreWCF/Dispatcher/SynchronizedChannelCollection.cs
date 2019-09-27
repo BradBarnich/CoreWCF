@@ -5,11 +5,11 @@ using CoreWCF.Channels;
 
 namespace CoreWCF.Dispatcher
 {
-    class SynchronizedChannelCollection<TChannel> : SynchronizedCollection<TChannel>
+    internal class SynchronizedChannelCollection<TChannel> : SynchronizedCollection<TChannel>
         where TChannel : IChannel
     {
-        EventHandler onChannelClosed;
-        EventHandler onChannelFaulted;
+        private EventHandler onChannelClosed;
+        private EventHandler onChannelFaulted;
 
         internal SynchronizedChannelCollection(object syncRoot)
             : base(syncRoot)
@@ -18,25 +18,25 @@ namespace CoreWCF.Dispatcher
             onChannelFaulted = new EventHandler(OnChannelFaulted);
         }
 
-        void AddingChannel(TChannel channel)
+        private void AddingChannel(TChannel channel)
         {
             channel.Faulted += onChannelFaulted;
             channel.Closed += onChannelClosed;
         }
 
-        void RemovingChannel(TChannel channel)
+        private void RemovingChannel(TChannel channel)
         {
             channel.Faulted -= onChannelFaulted;
             channel.Closed -= onChannelClosed;
         }
 
-        void OnChannelClosed(object sender, EventArgs args)
+        private void OnChannelClosed(object sender, EventArgs args)
         {
             TChannel channel = (TChannel)sender;
             Remove(channel);
         }
 
-        void OnChannelFaulted(object sender, EventArgs args)
+        private void OnChannelFaulted(object sender, EventArgs args)
         {
             TChannel channel = (TChannel)sender;
             Remove(channel);

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace CoreWCF.Channels
 {
-    static class DecoderHelper
+    internal static class DecoderHelper
     {
         public static void ValidateSize(int size)
         {
@@ -16,19 +16,22 @@ namespace CoreWCF.Channels
         }
     }
 
-    struct IntDecoder
+    internal struct IntDecoder
     {
-        int value;
-        short index;
-        bool isValueDecoded;
-        const int LastIndex = 4;
+        private int value;
+        private short index;
+        private bool isValueDecoded;
+        private const int LastIndex = 4;
 
         public int Value
         {
             get
             {
                 if (!isValueDecoded)
+                {
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.FramingValueNotAvailable));
+                }
+
                 return value;
             }
         }

@@ -9,12 +9,14 @@ namespace CoreWCF
 {
     public class X509CertificateEndpointIdentity : EndpointIdentity
     {
-        X509Certificate2Collection certificateCollection = new X509Certificate2Collection();
+        private X509Certificate2Collection certificateCollection = new X509Certificate2Collection();
 
         public X509CertificateEndpointIdentity(X509Certificate2 certificate)
         {
             if (certificate == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(certificate));
+            }
 
             base.Initialize(new Claim(ClaimTypes.Thumbprint, certificate.GetCertHash(), Rights.PossessProperty));
 
@@ -24,10 +26,14 @@ namespace CoreWCF
         public X509CertificateEndpointIdentity(X509Certificate2 primaryCertificate, X509Certificate2Collection supportingCertificates)
         {
             if (primaryCertificate == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(primaryCertificate));
+            }
 
             if (supportingCertificates == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(supportingCertificates));
+            }
 
             base.Initialize(new Claim(ClaimTypes.Thumbprint, primaryCertificate.GetCertHash(), Rights.PossessProperty));
 
@@ -42,11 +48,15 @@ namespace CoreWCF
         internal X509CertificateEndpointIdentity(XmlDictionaryReader reader)
         {
             if (reader == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(reader));
+            }
 
             reader.MoveToContent();
             if (reader.IsEmptyElement)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new XmlException(SR.Format(SR.UnexpectedEmptyElementExpectingClaim, XD.AddressingDictionary.X509v3Certificate.Value, XD.AddressingDictionary.IdentityExtensionNamespace.Value)));
+            }
 
             reader.ReadStartElement(XD.XmlSignatureDictionary.X509Data, XD.XmlSignatureDictionary.Namespace);
             while (reader.IsStartElement(XD.XmlSignatureDictionary.X509Certificate, XD.XmlSignatureDictionary.Namespace))
@@ -65,7 +75,9 @@ namespace CoreWCF
             reader.ReadEndElement();
 
             if (certificateCollection.Count == 0)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new XmlException(SR.Format(SR.UnexpectedEmptyElementExpectingClaim, XD.AddressingDictionary.X509v3Certificate.Value, XD.AddressingDictionary.IdentityExtensionNamespace.Value)));
+            }
         }
 
         public X509Certificate2Collection Certificates
@@ -76,7 +88,9 @@ namespace CoreWCF
         internal override void WriteContentsTo(XmlDictionaryWriter writer)
         {
             if (writer == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(writer));
+            }
 
             writer.WriteStartElement(XD.XmlSignatureDictionary.Prefix.Value, XD.XmlSignatureDictionary.KeyInfo, XD.XmlSignatureDictionary.Namespace);
             writer.WriteStartElement(XD.XmlSignatureDictionary.Prefix.Value, XD.XmlSignatureDictionary.X509Data, XD.XmlSignatureDictionary.Namespace);

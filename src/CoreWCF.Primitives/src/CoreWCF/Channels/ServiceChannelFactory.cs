@@ -46,9 +46,13 @@ namespace CoreWCF.Channels
             ServiceChannelProxy proxy = transparentProxy as ServiceChannelProxy;
 
             if (proxy != null)
+            {
                 return proxy.GetServiceChannel();
+            }
             else
+            {
                 return null;
+            }
         }
     }
 }

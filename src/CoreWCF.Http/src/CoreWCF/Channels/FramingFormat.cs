@@ -4,7 +4,7 @@ using System.Text;
 
 namespace CoreWCF.Channels
 {
-    static class FramingEncodingString
+    internal static class FramingEncodingString
     {
         public const string Binary = "application/soap+msbin1";
         public const string BinarySession = "application/soap+msbinsession1";

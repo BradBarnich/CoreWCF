@@ -146,25 +146,38 @@ namespace CoreWCF.Description
         {
             Uri uri;
             if (!Uri.TryCreate(ns, UriKind.RelativeOrAbsolute, out uri))
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgument(SR.Format(SR.SFXUnvalidNamespaceValue, ns, propName));
+            }
         }
 
         internal static void CheckUriParameter(string ns, string paramName)
         {
             Uri uri;
             if (!Uri.TryCreate(ns, UriKind.RelativeOrAbsolute, out uri))
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgument(paramName, SR.Format(SR.SFXUnvalidNamespaceParam, ns));
+            }
         }
 
         // Converts names that contain characters that are not permitted in XML names to valid names.
         internal static string XmlName(string name)
         {
             if (string.IsNullOrEmpty(name))
+            {
                 return name;
+            }
+
             if (IsAsciiLocalName(name))
+            {
                 return name;
+            }
+
             if (IsValidNCName(name))
+            {
                 return name;
+            }
+
             return XmlConvert.EncodeLocalName(name);
         }
 
@@ -174,26 +187,31 @@ namespace CoreWCF.Description
             return XmlConvert.DecodeName(name);
         }
 
-        static bool IsAlpha(char ch)
+        private static bool IsAlpha(char ch)
         {
             return (ch >= 'A' && ch <= 'Z' || ch >= 'a' && ch <= 'z');
         }
 
-        static bool IsDigit(char ch)
+        private static bool IsDigit(char ch)
         {
             return (ch >= '0' && ch <= '9');
         }
 
-        static bool IsAsciiLocalName(string localName)
+        private static bool IsAsciiLocalName(string localName)
         {
             Fx.Assert(null != localName, "");
             if (!IsAlpha(localName[0]))
+            {
                 return false;
+            }
+
             for (int i = 1; i < localName.Length; i++)
             {
                 char ch = localName[i];
                 if (!IsAlpha(ch) && !IsDigit(ch))
+                {
                     return false;
+                }
             }
             return true;
         }
@@ -215,8 +233,8 @@ namespace CoreWCF.Description
     [DebuggerDisplay("{_encoded ?? _decoded}")]
     internal class XmlName
     {
-            string _decoded;
-            string _encoded;
+        private string _decoded;
+        private string _encoded;
 
         internal XmlName(string name)
             : this(name, false)
@@ -241,7 +259,10 @@ namespace CoreWCF.Description
             get
             {
                 if (_encoded == null)
+                {
                     _encoded = NamingHelper.XmlName(_decoded);
+                }
+
                 return _encoded;
             }
         }
@@ -251,15 +272,20 @@ namespace CoreWCF.Description
             get
             {
                 if (_decoded == null)
+                {
                     _decoded = NamingHelper.CodeName(_encoded);
+                }
+
                 return _decoded;
             }
         }
 
-        static void ValidateEncodedName(string name, bool allowNull)
+        private static void ValidateEncodedName(string name, bool allowNull)
         {
             if (allowNull && name == null)
+            {
                 return;
+            }
 
             try
             {
@@ -271,7 +297,7 @@ namespace CoreWCF.Description
             }
         }
 
-        bool IsEmpty { get { return string.IsNullOrEmpty(_encoded) && string.IsNullOrEmpty(_decoded); } }
+        private bool IsEmpty { get { return string.IsNullOrEmpty(_encoded) && string.IsNullOrEmpty(_decoded); } }
 
         internal static bool IsNullOrEmpty(XmlName xmlName)
         {
@@ -347,10 +373,10 @@ namespace CoreWCF.Description
                 internal static readonly Type taskTResultType = typeof(Task<>);
                 internal static readonly Type CancellationTokenType = typeof(CancellationToken);
                 internal static readonly Type IProgressType = typeof(IProgress<>);
-                static readonly Type asyncCallbackType = typeof(AsyncCallback);
-                static readonly Type asyncResultType = typeof(IAsyncResult);
-                static readonly Type objectType = typeof(object);
-                static readonly Type OperationContractAttributeType = typeof(OperationContractAttribute);
+                private static readonly Type asyncCallbackType = typeof(AsyncCallback);
+                private static readonly Type asyncResultType = typeof(IAsyncResult);
+                private static readonly Type objectType = typeof(object);
+                private static readonly Type OperationContractAttributeType = typeof(OperationContractAttribute);
 
 
 
@@ -413,7 +439,7 @@ namespace CoreWCF.Description
             return types;
         }
 
-        static Type GetAncestorImplicitContractClass<TService>() where TService : class
+        private static Type GetAncestorImplicitContractClass<TService>() where TService : class
         {
             for (var service = typeof(TService).BaseType; service != null; service = service.BaseType)
             {
@@ -665,7 +691,7 @@ namespace CoreWCF.Description
                 SR.Format(SR.SFxNoMostDerivedContract, interfaceType.Name)));
         }
 
-        static List<MethodInfo> GetMethodsInternal<TService>() where TService : class
+        private static List<MethodInfo> GetMethodsInternal<TService>() where TService : class
         {
             List<MethodInfo> methods = new List<MethodInfo>();
             foreach (MethodInfo mi in typeof(TService).GetMethods(ServiceModelBindingFlags))
@@ -824,7 +850,7 @@ namespace CoreWCF.Description
             return false;
         }
 
-        static MethodInfo GetEndMethodInternal(MethodInfo beginMethod)
+        private static MethodInfo GetEndMethodInternal(MethodInfo beginMethod)
         {
             string logicalName = GetLogicalName(beginMethod);
             string endMethodName = EndMethodNamePrefix + logicalName;
@@ -950,7 +976,10 @@ namespace CoreWCF.Description
         {
             OperationContractAttribute opSettings = GetOperationContractAttribute(method);
             if (opSettings == null)
+            {
                 return false;
+            }
+
             return IsBegin(opSettings, method);
         }
 

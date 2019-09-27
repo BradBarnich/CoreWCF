@@ -37,7 +37,10 @@ namespace CoreWCF.Dispatcher
             get
             {
                 if (_methodName == null)
+                {
                     _methodName = _method.Name;
+                }
+
                 return _methodName;
             }
         }
@@ -79,14 +82,21 @@ namespace CoreWCF.Dispatcher
             EnsureIsInitialized();
 
             if (instance == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.SFxNoServiceObject));
+            }
+
             if (inputs == null)
             {
                 if (_inputParameterCount > 0)
+                {
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.Format(SR.SFxInputParametersToServiceNull, _inputParameterCount)));
+                }
             }
             else if (inputs.Length != _inputParameterCount)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.Format(SR.SFxInputParametersToServiceInvalid, _inputParameterCount, inputs.Length)));
+            }
 
             var outputs = EmptyArray<object>.Allocate(_outputParameterCount);
 

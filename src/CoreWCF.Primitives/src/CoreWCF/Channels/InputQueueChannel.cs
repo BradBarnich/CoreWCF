@@ -9,7 +9,7 @@ namespace CoreWCF.Channels
     public abstract class InputQueueChannel<TDisposable> : ChannelBase
         where TDisposable : class, IDisposable
     {
-        InputQueue<TDisposable> inputQueue;
+        private InputQueue<TDisposable> inputQueue;
 
         protected InputQueueChannel(ChannelManagerBase channelManager)
             : base(channelManager)

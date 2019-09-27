@@ -9,11 +9,11 @@ using System;
 
 namespace CoreWCF.Dispatcher
 {
-    sealed class AuthenticationBehavior
+    internal sealed class AuthenticationBehavior
     {
-        ServiceAuthenticationManager _serviceAuthenticationManager;
+        private ServiceAuthenticationManager _serviceAuthenticationManager;
 
-        AuthenticationBehavior(ServiceAuthenticationManager authenticationManager)
+        private AuthenticationBehavior(ServiceAuthenticationManager authenticationManager)
         {
             _serviceAuthenticationManager = authenticationManager;
         }
@@ -46,7 +46,7 @@ namespace CoreWCF.Dispatcher
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        static AuthenticationBehavior CreateAuthenticationBehavior(DispatchRuntime dispatch)
+        private static AuthenticationBehavior CreateAuthenticationBehavior(DispatchRuntime dispatch)
         {
             AuthenticationBehavior authenticationBehavior = new AuthenticationBehavior(dispatch.ServiceAuthenticationManager);
             return authenticationBehavior;
@@ -55,10 +55,14 @@ namespace CoreWCF.Dispatcher
         public static AuthenticationBehavior TryCreate(DispatchRuntime dispatch)
         {
             if (dispatch == null)
+            {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(dispatch));
+            }
 
             if (!dispatch.RequiresAuthentication)
+            {
                 return null;
+            }
 
             return CreateAuthenticationBehavior(dispatch);
         }
