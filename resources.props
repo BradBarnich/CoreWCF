@@ -7,18 +7,18 @@
     <IntermediateResOutputFileFullPath Condition="'$(OmitResources)'!='true'">$(IntermediateOutputPath)SR.cs</IntermediateResOutputFileFullPath>
     <DefineConstants Condition="'$(OmitResources)'!='true' And '$(ConfigurationGroup)' == 'Debug'">$(DefineConstants);DEBUGRESOURCES</DefineConstants>
   </PropertyGroup>
-  
+
   <ItemGroup Condition="'$(StringResourcesPath)' != '' AND '$(OmitResources)' != 'true'">
     <EmbeddedResource Include="$(StringResourcesPath)">
       <Visible>true</Visible>
       <LogicalName>FxResources.$(AssemblyName).SR.resources</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
-  
-  <ItemGroup Condition="Exists('$(StringResourcesPath)') AND '$(OmitResources)' != 'true'">
+
+  <!-- <ItemGroup Condition="Exists('$(StringResourcesPath)') AND '$(OmitResources)' != 'true'">
     <Compile Include="$(CommonPath)/CoreWCF/SR.cs">
       <Visible>true</Visible>
       <Link>Resources/Common/SR.cs</Link>
     </Compile>
-  </ItemGroup>
+  </ItemGroup> -->
 </Project>
