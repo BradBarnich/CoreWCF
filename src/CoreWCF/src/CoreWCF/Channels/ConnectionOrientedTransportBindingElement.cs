@@ -4,7 +4,6 @@ using System.ComponentModel;
 
 namespace CoreWCF.Channels
 {
-    // TODO: Consider moving to primitives
     public abstract class ConnectionOrientedTransportBindingElement : TransportBindingElement
     {
         private int connectionBufferSize;

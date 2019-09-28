@@ -22,86 +22,6 @@ using System.Collections.Generic;
 
 namespace CoreWCF.Security
 {
-    internal static class ProtectionLevelHelper
-    {
-        internal static bool IsDefined(ProtectionLevel value)
-        {
-            return (value == ProtectionLevel.None
-                || value == ProtectionLevel.Sign
-                || value == ProtectionLevel.EncryptAndSign);
-        }
-
-        internal static void Validate(ProtectionLevel value)
-        {
-            if (!IsDefined(value))
-            {
-                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidEnumArgumentException("value", (int)value,
-                    typeof(ProtectionLevel)));
-            }
-        }
-
-        internal static bool IsStronger(ProtectionLevel v1, ProtectionLevel v2)
-        {
-            return ((v1 == ProtectionLevel.EncryptAndSign && v2 != ProtectionLevel.EncryptAndSign)
-                    || (v1 == ProtectionLevel.Sign && v2 == ProtectionLevel.None));
-        }
-
-        internal static bool IsStrongerOrEqual(ProtectionLevel v1, ProtectionLevel v2)
-        {
-            return (v1 == ProtectionLevel.EncryptAndSign
-                    || (v1 == ProtectionLevel.Sign && v2 != ProtectionLevel.EncryptAndSign));
-        }
-
-        internal static ProtectionLevel Max(ProtectionLevel v1, ProtectionLevel v2)
-        {
-            return IsStronger(v1, v2) ? v1 : v2;
-        }
-
-        internal static int GetOrdinal(Nullable<ProtectionLevel> p)
-        {
-            if (p.HasValue)
-            {
-                switch ((ProtectionLevel)p)
-                {
-                    default:
-                        throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidEnumArgumentException("p", (int)p, typeof(ProtectionLevel)));
-                    case ProtectionLevel.None:
-                        return 2;
-                    case ProtectionLevel.Sign:
-                        return 3;
-                    case ProtectionLevel.EncryptAndSign:
-                        return 4;
-                }
-            }
-            else
-            {
-                return 1;
-            }
-        }
-    }
-
-    internal static class SslProtocolsHelper
-    {
-        internal static bool IsDefined(SslProtocols value)
-        {
-            SslProtocols allValues = SslProtocols.None;
-            foreach (var protocol in Enum.GetValues(typeof(SslProtocols)))
-            {
-                allValues |= (SslProtocols)protocol;
-            }
-            return (value & allValues) == value;
-        }
-
-        internal static void Validate(SslProtocols value)
-        {
-            if (!IsDefined(value))
-            {
-                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidEnumArgumentException("value", (int)value,
-                    typeof(SslProtocols)));
-            }
-        }
-    }
-
     internal class SecurityUtils
     {
         public const string Principal = "Principal";
@@ -342,7 +262,7 @@ namespace CoreWCF.Security
             // No KeyUsage extension means most usages are permitted including key exchange.
             // See RFC 5280 section 4.2.1.3 (Key Usage) for details. If the extension is non-critical
             // then it's non-enforcing and meant as an aid in choosing the best certificate when
-            // there are multiple certificates to choose from. 
+            // there are multiple certificates to choose from.
             if (keyUsageExtension == null || !keyUsageExtension.Critical)
             {
                 return true;

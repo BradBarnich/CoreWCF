@@ -1,4 +1,5 @@
 ﻿using CoreWCF.Channels;
+using CoreWCF.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.Text;

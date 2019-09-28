@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using CoreWCF.Channels.Framing;
+using CoreWCF.Diagnostics;
 
 namespace CoreWCF.Channels
 {
@@ -646,7 +647,7 @@ namespace CoreWCF.Channels
             if (_toHeader != null)
             {
                 // TODO: Removed performance enhancement to avoid exposing another internal method.
-                // Evaluate whether we should do something to bring this back. My thoughts are we 
+                // Evaluate whether we should do something to bring this back. My thoughts are we
                 // remove the SetToHeader method as we should be using the same mechanism as third
                 // parties transports have to use.
                 message.Headers.To = _toHeader.To;
