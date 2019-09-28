@@ -60,6 +60,11 @@ namespace CoreWCF.Channels
         {
             OnWriteBodyContents(writer);
         }
+
+        internal Exception CreateMessageDisposedException()
+        {
+            return new ObjectDisposedException("", SR.MessageClosed);
+        }
     }
 
     internal class StringMessage : ContentOnlyMessage

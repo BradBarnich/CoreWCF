@@ -1,6 +1,9 @@
-﻿using System.Globalization;
+﻿using CoreWCF.Channels;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Text;
 using System.Xml;
-using CoreWCF.Channels;
 
 namespace CoreWCF
 {
@@ -31,7 +34,7 @@ namespace CoreWCF
                                   AddressingVersion.WSAddressing10.Namespace));
             }
 
-            reason = new FaultReason(e.Message, CultureInfo.CurrentCulture);
+            reason = new FaultReason(new FaultReasonText(e.Message, CultureInfo.CurrentCulture.Name));
             actor = "";
             node = "";
         }
@@ -41,7 +44,7 @@ namespace CoreWCF
             invalidHeaderName = AddressingStrings.Action;
             code = FaultCode.CreateSenderFaultCode(
                 new FaultCode(Addressing10Strings.ActionMismatch, AddressingVersion.WSAddressing10.Namespace));
-            reason = new FaultReason(e.Message, CultureInfo.CurrentCulture);
+            reason = new FaultReason(new FaultReasonText(e.Message, CultureInfo.CurrentCulture.Name));
             actor = "";
             node = "";
         }
@@ -143,5 +146,4 @@ namespace CoreWCF
             }
         }
     }
-
 }

@@ -8,8 +8,7 @@ using System.Collections.Concurrent;
 
 namespace CoreWCF.Runtime
 {
-    // TODO: Make internal again. I had to expose this for cross assembly usage
-    public abstract class ActionItem
+    internal abstract class ActionItem
     {
         //SecurityContext context;
         private bool isScheduled;

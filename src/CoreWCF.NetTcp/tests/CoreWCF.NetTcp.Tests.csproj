@@ -20,8 +20,7 @@
     <PackageReference Include="System.ServiceModel.NetTcp" Version="4.5.3" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\src\CoreWCF.NetTcp.csproj" />
-    <ProjectReference Include="..\..\CoreWCF.Primitives\src\CoreWCF.Primitives.csproj" />
+    <ProjectReference Include="..\..\CoreWCF\src\CoreWCF.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Service Include="{82a7f48d-3b50-4b1e-b82e-3ada8210c358}" />

@@ -95,7 +95,7 @@ namespace CoreWCF
 
         internal Exception ThrowHelperFatal(string message, Exception innerException)
         {
-            return ThrowHelperError(new FatalException(message, innerException));
+           return ThrowHelperError(new FatalException(message, innerException));
         }
 
         internal Exception ThrowHelperError(Exception exception)

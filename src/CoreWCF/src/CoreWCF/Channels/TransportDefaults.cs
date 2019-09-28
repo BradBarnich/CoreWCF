@@ -146,7 +146,7 @@ namespace CoreWCF.Channels
         internal const bool ExtractGroupsForWindowsAccounts = SspiSecurityTokenProvider.DefaultExtractWindowsGroupClaims;
         internal const bool ManualAddressing = false;
         internal const long MaxReceivedMessageSize = 65536;
-        internal const int MaxBufferSize = (int) MaxReceivedMessageSize;
+        internal const int MaxBufferSize = (int)MaxReceivedMessageSize;
         internal const HostNameComparisonMode HostNameComparisonMode = CoreWCF.HostNameComparisonMode.Exact;
         internal const int MaxDrainSize = (int)MaxReceivedMessageSize;
         internal const long MaxBufferPoolSize = 512 * 1024;
@@ -206,5 +206,16 @@ namespace CoreWCF.Channels
         {
             return 12 * Environment.ProcessorCount;
         }
+    }
+
+    public static class BasicHttpBindingDefaults
+    {
+        public const WSMessageEncoding MessageEncoding = WSMessageEncoding.Text;
+    }
+
+    internal static class HttpTransportDefaults
+    {
+        internal const TransferMode TransferMode = CoreWCF.TransferMode.Buffered;
+        internal const bool KeepAliveEnabled = true;
     }
 }

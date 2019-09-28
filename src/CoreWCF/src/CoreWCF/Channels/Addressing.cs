@@ -4,8 +4,7 @@ using CoreWCF.Runtime;
 
 namespace CoreWCF.Channels
 {
-    // TODO: This needed to be made public for NetTcp, investigate making it internal again
-    public abstract class AddressingHeader : DictionaryHeader, IMessageHeaderWithSharedNamespace
+    internal abstract class AddressingHeader : DictionaryHeader, IMessageHeaderWithSharedNamespace
     {
         private AddressingVersion version;
 
@@ -367,8 +366,7 @@ namespace CoreWCF.Channels
         }
     }
 
-    // TODO: This needed to be made public for NetTcp, investigate making it internal again
-    public class ToHeader : AddressingHeader
+    internal class ToHeader : AddressingHeader
     {
         private Uri to;
         private const bool mustUnderstandValue = true;

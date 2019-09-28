@@ -1,9 +1,11 @@
 ﻿using CoreWCF.Runtime;
 using CoreWCF.Channels;
+using System;
+using System.Runtime.Serialization;
 
 namespace CoreWCF
 {
-    //[Serializable]
+    [Serializable]
     internal class ActionMismatchAddressingException : ProtocolException
     {
         private string httpActionHeader;
@@ -16,10 +18,10 @@ namespace CoreWCF
             this.soapActionHeader = soapActionHeader;
         }
 
-        //protected ActionMismatchAddressingException(SerializationInfo info, StreamingContext context)
-        //    : base(info, context)
-        //{
-        //}
+        protected ActionMismatchAddressingException(SerializationInfo info, StreamingContext context)
+            : base(info, context)
+        {
+        }
 
         public string HttpActionHeader
         {
@@ -46,5 +48,4 @@ namespace CoreWCF
             return message;
         }
     }
-
 }
