@@ -1,14 +1,28 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+
+using System;
 
 namespace CoreWCF.Channels
 {
     public interface IReplyChannel : IChannel
     {
         EndpointAddress LocalAddress { get; }
-        Task<RequestContext> ReceiveRequestAsync();
-        Task<RequestContext> ReceiveRequestAsync(CancellationToken token);
-        Task<TryAsyncResult<RequestContext>> TryReceiveRequestAsync(CancellationToken token);
-        Task<bool> WaitForRequestAsync(CancellationToken token);
+
+        RequestContext ReceiveRequest();
+        RequestContext ReceiveRequest(TimeSpan timeout);
+        IAsyncResult BeginReceiveRequest(AsyncCallback callback, object state);
+        IAsyncResult BeginReceiveRequest(TimeSpan timeout, AsyncCallback callback, object state);
+        RequestContext EndReceiveRequest(IAsyncResult result);
+
+        bool TryReceiveRequest(TimeSpan timeout, out RequestContext context);
+        IAsyncResult BeginTryReceiveRequest(TimeSpan timeout, AsyncCallback callback, object state);
+        bool EndTryReceiveRequest(IAsyncResult result, out RequestContext context);
+
+        bool WaitForRequest(TimeSpan timeout);
+        IAsyncResult BeginWaitForRequest(TimeSpan timeout, AsyncCallback callback, object state);
+        bool EndWaitForRequest(IAsyncResult result);
     }
 }

@@ -1,11 +1,17 @@
-﻿using System;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+
 using System.IO;
-using System.Threading;
+using CoreWCF.Runtime;
 using System.Threading.Tasks;
+using System.Threading;
+using System;
 
 namespace CoreWCF.Channels
 {
-    internal class MaxMessageSizeStream : DelegatingStream
+    public class MaxMessageSizeStream : DelegatingStream
     {
         private long _maxMessageSize;
         private long _totalBytesRead;
@@ -65,6 +71,11 @@ namespace CoreWCF.Channels
             string message = SR.Format(SR.MaxReceivedMessageSizeExceeded, maxMessageSize);
             Exception inner = new QuotaExceededException(message);
 
+            if (WcfEventSource.Instance.MaxReceivedMessageSizeExceededIsEnabled())
+            {
+                WcfEventSource.Instance.MaxReceivedMessageSizeExceeded(message);
+            }
+
             return new CommunicationException(message, inner);
         }
 
@@ -72,6 +83,11 @@ namespace CoreWCF.Channels
         {
             string message = SR.Format(SR.MaxSentMessageSizeExceeded, maxMessageSize);
             Exception inner = new QuotaExceededException(message);
+
+            if (WcfEventSource.Instance.MaxSentMessageSizeExceededIsEnabled())
+            {
+                WcfEventSource.Instance.MaxSentMessageSizeExceeded(message);
+            }
 
             return new CommunicationException(message, inner);
         }

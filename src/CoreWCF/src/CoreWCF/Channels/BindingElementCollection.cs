@@ -1,3 +1,8 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -20,7 +25,7 @@ namespace CoreWCF.Channels
 
             foreach (BindingElement element in elements)
             {
-                Add(element);
+                base.Add(element);
             }
         }
 
@@ -33,7 +38,7 @@ namespace CoreWCF.Channels
 
             for (int i = 0; i < elements.Length; i++)
             {
-                Add(elements[i]);
+                base.Add(elements[i]);
             }
         }
 
@@ -57,7 +62,7 @@ namespace CoreWCF.Channels
 
             for (int i = 0; i < elements.Length; i++)
             {
-                Add(elements[i]);
+                base.Add(elements[i]);
             }
         }
 
@@ -70,7 +75,7 @@ namespace CoreWCF.Channels
 
             for (int i = 0; i < Count; i++)
             {
-                if (bindingElementType.IsInstanceOfType(this[i]))
+                if (bindingElementType.GetTypeInfo().IsAssignableFrom(this[i].GetType().GetTypeInfo()))
                 {
                     return true;
                 }
@@ -136,6 +141,7 @@ namespace CoreWCF.Channels
 
             return collection;
         }
+
         protected override void InsertItem(int index, BindingElement item)
         {
             if (item == null)

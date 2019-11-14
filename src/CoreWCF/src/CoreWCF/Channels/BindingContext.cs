@@ -1,91 +1,71 @@
-using System;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+
 using System.Globalization;
-using System.Text;
 using CoreWCF.Description;
+using System.Text;
+using System;
 
 namespace CoreWCF.Channels
 {
     public class BindingContext
     {
-        private CustomBinding _binding;
-        private BindingParameterCollection _bindingParameters;
-        private Uri _listenUriBaseAddress;
-        private ListenUriMode _listenUriMode;
-        private string _listenUriRelativeAddress;
         private BindingElementCollection _remainingBindingElements;  // kept to ensure each BE builds itself once
 
         public BindingContext(CustomBinding binding, BindingParameterCollection parameters)
-            : this(binding, parameters, null, string.Empty, ListenUriMode.Explicit)
-        {
-        }
-
-        public BindingContext(CustomBinding binding, BindingParameterCollection parameters, Uri listenUriBaseAddress, string listenUriRelativeAddress, ListenUriMode listenUriMode)
         {
             if (binding == null)
             {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(binding));
             }
-            if (listenUriRelativeAddress == null)
-            {
-                listenUriRelativeAddress = string.Empty;
-            }
-            if (!ListenUriModeHelper.IsDefined(listenUriMode))
-            {
-                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(listenUriMode)));
-            }
 
-            Initialize(binding, binding.Elements, parameters, listenUriBaseAddress, listenUriRelativeAddress, listenUriMode);
+            Initialize(binding, binding.Elements, parameters);
         }
 
         private BindingContext(CustomBinding binding,
-               BindingElementCollection remainingBindingElements,
-               BindingParameterCollection parameters,
-               Uri listenUriBaseAddress,
-               string listenUriRelativeAddress,
-               ListenUriMode listenUriMode)
+                       BindingElementCollection remainingBindingElements,
+                       BindingParameterCollection parameters)
         {
-            Initialize(binding, remainingBindingElements, parameters, listenUriBaseAddress, listenUriRelativeAddress, listenUriMode);
+            Initialize(binding, remainingBindingElements, parameters);
         }
 
         private void Initialize(CustomBinding binding,
-                BindingElementCollection remainingBindingElements,
-                BindingParameterCollection parameters,
-                Uri listenUriBaseAddress,
-                string listenUriRelativeAddress,
-                ListenUriMode listenUriMode)
+                        BindingElementCollection remainingBindingElements,
+                        BindingParameterCollection parameters)
         {
-            _binding = binding;
+            Binding = binding;
 
             _remainingBindingElements = new BindingElementCollection(remainingBindingElements);
-            _bindingParameters = new BindingParameterCollection(parameters);
-            _listenUriBaseAddress = listenUriBaseAddress;
-            _listenUriRelativeAddress = listenUriRelativeAddress;
-            _listenUriMode = listenUriMode;
+            BindingParameters = new BindingParameterCollection(parameters);
         }
 
-        public CustomBinding Binding => _binding;
+        public CustomBinding Binding { get; private set; }
 
-        public BindingParameterCollection BindingParameters => _bindingParameters;
+        public BindingParameterCollection BindingParameters { get; private set; }
 
-        public Uri ListenUriBaseAddress
+        public Uri ListenUriBaseAddress { get; set; }
+
+        public ListenUriMode ListenUriMode { get; set; }
+
+        public string ListenUriRelativeAddress { get; set; }
+
+        public BindingElementCollection RemainingBindingElements
         {
-            get { return _listenUriBaseAddress; }
-            set { _listenUriBaseAddress = value; }
+            get { return _remainingBindingElements; }
         }
 
-        public ListenUriMode ListenUriMode
+        public IChannelFactory<TChannel> BuildInnerChannelFactory<TChannel>()
         {
-            get { return _listenUriMode; }
-            set { _listenUriMode = value; }
+            return RemoveNextElement().BuildChannelFactory<TChannel>(this);
         }
 
-        public string ListenUriRelativeAddress
+        public bool CanBuildInnerChannelFactory<TChannel>()
         {
-            get { return _listenUriRelativeAddress; }
-            set { _listenUriRelativeAddress = value; }
+            BindingContext clone = Clone();
+            return clone.RemoveNextElement().CanBuildChannelFactory<TChannel>(clone);
         }
-
-        public BindingElementCollection RemainingBindingElements => _remainingBindingElements;
 
         public T GetInnerProperty<T>()
             where T : class
@@ -100,10 +80,10 @@ namespace CoreWCF.Channels
                 return clone.RemoveNextElement().GetProperty<T>(clone);
             }
         }
+
         public BindingContext Clone()
         {
-            return new BindingContext(_binding, _remainingBindingElements, _bindingParameters,
-                _listenUriBaseAddress, _listenUriRelativeAddress, _listenUriMode);
+            return new BindingContext(Binding, _remainingBindingElements, BindingParameters);
         }
 
         private BindingElement RemoveNextElement()
@@ -115,7 +95,7 @@ namespace CoreWCF.Channels
             }
 
             throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.Format(
-                SR.NoChannelBuilderAvailable, _binding.Name, _binding.Namespace)));
+                SR.NoChannelBuilderAvailable, Binding.Name, Binding.Namespace)));
         }
 
         internal void ValidateBindingElementsConsumed()

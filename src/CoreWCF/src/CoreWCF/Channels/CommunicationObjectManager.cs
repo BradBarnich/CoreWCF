@@ -1,20 +1,24 @@
-﻿using System;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+
 using System.Collections.Generic;
 
 namespace CoreWCF.Channels
 {
-    internal class CommunicationObjectManager<TItemType> : LifetimeManager where TItemType : class, ICommunicationObject
+    internal class CommunicationObjectManager<ItemType> : LifetimeManager where ItemType : class, ICommunicationObject
     {
         private bool _inputClosed;
-        private readonly ISet<TItemType> _itemsSet;
+        private HashSet<ItemType> _table;
 
         public CommunicationObjectManager(object mutex)
             : base(mutex)
         {
-            _itemsSet = new HashSet<TItemType>();
+            _table = new HashSet<ItemType>();
         }
 
-        public void Add(TItemType item)
+        public void Add(ItemType item)
         {
             bool added = false;
 
@@ -22,13 +26,13 @@ namespace CoreWCF.Channels
             {
                 if (State == LifetimeState.Opened && !_inputClosed)
                 {
-                    if (_itemsSet.Contains(item))
+                    if (_table.Contains(item))
                     {
                         return;
                     }
 
-                    _itemsSet.Add(item);
-                    IncrementBusyCountWithoutLock();
+                    _table.Add(item);
+                    base.IncrementBusyCountWithoutLock();
                     item.Closed += OnItemClosed;
                     added = true;
                 }
@@ -43,7 +47,7 @@ namespace CoreWCF.Channels
 
         public void CloseInput()
         {
-            //Abort can reenter this call as a result of 
+            //Abort can reenter this call as a result of
             //close timeout, Closing input twice is not a
             //FailFast case.
             _inputClosed = true;
@@ -61,32 +65,32 @@ namespace CoreWCF.Channels
 
         private void OnItemClosed(object sender, EventArgs args)
         {
-            Remove((TItemType)sender);
+            Remove((ItemType)sender);
         }
 
-        public void Remove(TItemType item)
+        public void Remove(ItemType item)
         {
             lock (ThisLock)
             {
-                if (!_itemsSet.Contains(item))
+                if (!_table.Contains(item))
                 {
                     return;
                 }
 
-                _itemsSet.Remove(item);
+                _table.Remove(item);
             }
 
             item.Closed -= OnItemClosed;
-            DecrementBusyCount();
+            base.DecrementBusyCount();
         }
 
-        public TItemType[] ToArray()
+        public ItemType[] ToArray()
         {
             lock (ThisLock)
             {
                 int index = 0;
-                TItemType[] items = new TItemType[_itemsSet.Count];
-                foreach (TItemType item in _itemsSet)
+                ItemType[] items = new ItemType[_table.Count];
+                foreach (ItemType item in _table)
                 {
                     items[index++] = item;
                 }
@@ -95,5 +99,4 @@ namespace CoreWCF.Channels
             }
         }
     }
-
 }

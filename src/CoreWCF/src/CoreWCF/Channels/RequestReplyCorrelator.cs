@@ -1,18 +1,23 @@
-﻿using System;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+
 using System.Collections.Generic;
-using System.Xml;
+using System.Diagnostics.CodeAnalysis;
 using CoreWCF.Runtime;
 using CoreWCF.Diagnostics;
+using System.Xml;
 
 namespace CoreWCF.Channels
 {
     internal class RequestReplyCorrelator : IRequestReplyCorrelator
     {
-        private IDictionary<Key,object>  states;
+        private Dictionary<Key, object> _states;
 
         internal RequestReplyCorrelator()
         {
-            states = new Dictionary<Key, object>();
+            _states = new Dictionary<Key, object>();
         }
 
         void IRequestReplyCorrelator.Add<T>(Message request, T state)
@@ -21,7 +26,7 @@ namespace CoreWCF.Channels
             Type stateType = typeof(T);
             Key key = new Key(messageId, stateType);
 
-            // add the correlator key to the request, this will be needed for cleaning up the correlator table in case of 
+            // add the correlator key to the request, this will be needed for cleaning up the correlator table in case of
             // channel aborting or faulting while there are pending requests
             ICorrelatorKey value = state as ICorrelatorKey;
             if (value != null)
@@ -29,9 +34,9 @@ namespace CoreWCF.Channels
                 value.RequestCorrelatorKey = key;
             }
 
-            lock (states)
+            lock (_states)
             {
-                states.Add(key, state);
+                _states.Add(key, state);
             }
         }
 
@@ -42,13 +47,13 @@ namespace CoreWCF.Channels
             Key key = new Key(relatesTo, stateType);
             T value;
 
-            lock (states)
+            lock (_states)
             {
-                value = (T)states[key];
+                value = (T)_states[key];
 
                 if (remove)
                 {
-                    states.Remove(key);
+                    _states.Remove(key);
                 }
             }
 
@@ -56,16 +61,16 @@ namespace CoreWCF.Channels
         }
 
         // This method is used to remove the request from the correlator table when the
-        // reply is lost. This will avoid leaking the correlator table in cases where the 
+        // reply is lost. This will avoid leaking the correlator table in cases where the
         // channel faults or aborts while there are pending requests.
         internal void RemoveRequest(ICorrelatorKey request)
         {
             Fx.Assert(request != null, "request cannot be null");
             if (request.RequestCorrelatorKey != null)
             {
-                lock (states)
+                lock (_states)
                 {
-                    states.Remove(request.RequestCorrelatorKey);
+                    _states.Remove(request.RequestCorrelatorKey);
                 }
             }
         }
@@ -99,6 +104,17 @@ namespace CoreWCF.Channels
             {
                 destination = info.ReplyTo;
             }
+            else if (reply.Version.Addressing == AddressingVersion.WSAddressingAugust2004)
+            {
+                if (info.HasFrom)
+                {
+                    destination = info.From;
+                }
+                else
+                {
+                    destination = EndpointAddress.AnonymousAddress;
+                }
+            }
 
             if (destination != null)
             {
@@ -126,10 +142,10 @@ namespace CoreWCF.Channels
             }
 
             request.Properties.AllowOutputBatching = false;
-            //if (TraceUtility.PropagateUserActivity || TraceUtility.ShouldPropagateActivity)
-            //{
-            //    TraceUtility.AddAmbientActivityToMessage(request);
-            //}
+            if (TraceUtility.PropagateUserActivity || TraceUtility.ShouldPropagateActivity)
+            {
+                TraceUtility.AddAmbientActivityToMessage(request);
+            }
         }
 
         internal static void PrepareReply(Message reply, UniqueId messageId)
@@ -146,10 +162,10 @@ namespace CoreWCF.Channels
                 replyHeaders.RelatesTo = messageId;
             }
 
-            //if (TraceUtility.PropagateUserActivity || TraceUtility.ShouldPropagateActivity)
-            //{
-            //    TraceUtility.AddAmbientActivityToMessage(reply);
-            //}
+            if (TraceUtility.PropagateUserActivity || TraceUtility.ShouldPropagateActivity)
+            {
+                TraceUtility.AddAmbientActivityToMessage(reply);
+            }
         }
 
         internal static void PrepareReply(Message reply, Message request)
@@ -166,21 +182,23 @@ namespace CoreWCF.Channels
                 }
             }
 
-            //if (TraceUtility.PropagateUserActivity || TraceUtility.ShouldPropagateActivity)
-            //{
-            //    TraceUtility.AddAmbientActivityToMessage(reply);
-            //}
+            if (TraceUtility.PropagateUserActivity || TraceUtility.ShouldPropagateActivity)
+            {
+                TraceUtility.AddAmbientActivityToMessage(reply);
+            }
         }
 
         internal struct ReplyToInfo
         {
+            private readonly EndpointAddress _replyTo;
+
             internal ReplyToInfo(Message message)
             {
                 FaultTo = message.Headers.FaultTo;
-                ReplyTo = message.Headers.ReplyTo;
+                _replyTo = message.Headers.ReplyTo;
                 if (message.Version.Addressing == AddressingVersion.WSAddressingAugust2004)
                 {
-                    this.From = message.Headers.From;
+                    From = message.Headers.From;
                 }
                 else
                 {
@@ -207,7 +225,10 @@ namespace CoreWCF.Channels
                 get { return !IsTrivial(ReplyTo); }
             }
 
-            internal EndpointAddress ReplyTo { get; }
+            internal EndpointAddress ReplyTo
+            {
+                get { return _replyTo; }
+            }
 
             private bool IsTrivial(EndpointAddress address)
             {
@@ -238,6 +259,7 @@ namespace CoreWCF.Channels
                 return other.MessageId == MessageId && other.StateType == StateType;
             }
 
+            [SuppressMessage(FxCop.Category.Usage, "CA2303:FlagTypeGetHashCode", Justification = "The hashcode is not used for identity purposes for embedded types.")]
             public override int GetHashCode()
             {
                 return MessageId.GetHashCode() ^ StateType.GetHashCode();

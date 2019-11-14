@@ -1,11 +1,15 @@
-using System;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+
 using System.Globalization;
 using System.IO;
-using System.Runtime.Serialization;
-using System.Xml;
 using CoreWCF.Runtime;
+using System.Runtime.Serialization;
 using CoreWCF.Description;
 using CoreWCF.Dispatcher;
+using System.Xml;
 
 namespace CoreWCF.Channels
 {
@@ -48,6 +52,7 @@ namespace CoreWCF.Channels
         public override string ToString()
         {
             XmlWriterSettings xmlSettings = new XmlWriterSettings() { Indent = true };
+
             using (StringWriter stringWriter = new StringWriter(CultureInfo.InvariantCulture))
             {
                 using (XmlWriter textWriter = XmlWriter.Create(stringWriter, xmlSettings))
@@ -58,22 +63,22 @@ namespace CoreWCF.Channels
                         {
                             WriteHeader(writer, MessageVersion.Soap12WSAddressing10);
                         }
-                        //else if (IsMessageVersionSupported(MessageVersion.Soap12WSAddressingAugust2004))
-                        //{
-                        //    WriteHeader(writer, MessageVersion.Soap12WSAddressingAugust2004);
-                        //}
-                        //else if (IsMessageVersionSupported(MessageVersion.Soap11WSAddressing10))
-                        //{
-                        //    WriteHeader(writer, MessageVersion.Soap11WSAddressing10);
-                        //}
-                        //else if (IsMessageVersionSupported(MessageVersion.Soap11WSAddressingAugust2004))
-                        //{
-                        //    WriteHeader(writer, MessageVersion.Soap11WSAddressingAugust2004);
-                        //}
-                        //else if (IsMessageVersionSupported(MessageVersion.Soap12))
-                        //{
-                        //    WriteHeader(writer, MessageVersion.Soap12);
-                        //}
+                        else if (IsMessageVersionSupported(MessageVersion.Soap12WSAddressingAugust2004))
+                        {
+                            WriteHeader(writer, MessageVersion.Soap12WSAddressingAugust2004);
+                        }
+                        else if (IsMessageVersionSupported(MessageVersion.Soap11WSAddressing10))
+                        {
+                            WriteHeader(writer, MessageVersion.Soap11WSAddressing10);
+                        }
+                        else if (IsMessageVersionSupported(MessageVersion.Soap11WSAddressingAugust2004))
+                        {
+                            WriteHeader(writer, MessageVersion.Soap11WSAddressingAugust2004);
+                        }
+                        else if (IsMessageVersionSupported(MessageVersion.Soap12))
+                        {
+                            WriteHeader(writer, MessageVersion.Soap12);
+                        }
                         else if (IsMessageVersionSupported(MessageVersion.Soap11))
                         {
                             WriteHeader(writer, MessageVersion.Soap11);
@@ -99,12 +104,12 @@ namespace CoreWCF.Channels
         {
             if (writer == null)
             {
-                throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(writer));
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(writer)));
             }
 
             if (messageVersion == null)
             {
-                throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(messageVersion));
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(messageVersion)));
             }
 
             OnWriteStartHeader(writer, messageVersion);
@@ -116,12 +121,12 @@ namespace CoreWCF.Channels
         {
             if (writer == null)
             {
-                throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(writer));
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(writer)));
             }
 
             if (messageVersion == null)
             {
-                throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(messageVersion));
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(messageVersion)));
             }
 
             OnWriteStartHeader(writer, messageVersion);
@@ -137,12 +142,12 @@ namespace CoreWCF.Channels
         {
             if (writer == null)
             {
-                throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(writer));
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(writer)));
             }
 
             if (messageVersion == null)
             {
-                throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(messageVersion));
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(messageVersion)));
             }
 
             OnWriteHeaderContents(writer, messageVersion);
@@ -208,7 +213,7 @@ namespace CoreWCF.Channels
         {
             if (serializer == null)
             {
-                throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(serializer));
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(serializer)));
             }
 
             return new XmlObjectSerializerHeader(name, ns, value, serializer, mustUnderstand, actor, relay);
@@ -317,8 +322,7 @@ namespace CoreWCF.Channels
         }
     }
 
-    // TODO: This needed to be made public for NetTcp, investigate making it internal again
-    public abstract class DictionaryHeader : MessageHeader
+    internal abstract class DictionaryHeader : MessageHeader
     {
         public override string Name
         {
@@ -342,49 +346,44 @@ namespace CoreWCF.Channels
 
     internal class XmlObjectSerializerHeader : MessageHeader
     {
-        private XmlObjectSerializer serializer;
-        private bool mustUnderstand;
-        private bool relay;
-        private bool isOneTwoSupported;
-        private bool isOneOneSupported;
-        private bool isNoneSupported;
-        private object objectToSerialize;
-        private string name;
-        private string ns;
-        private string actor;
-        private object syncRoot = new object();
+        private XmlObjectSerializer _serializer;
+        private bool _mustUnderstand;
+        private bool _relay;
+        private bool _isOneTwoSupported;
+        private bool _isOneOneSupported;
+        private bool _isNoneSupported;
+        private object _objectToSerialize;
+        private string _name;
+        private string _ns;
+        private string _actor;
+        private object _syncRoot = new object();
 
         private XmlObjectSerializerHeader(XmlObjectSerializer serializer, bool mustUnderstand, string actor, bool relay)
         {
-            if (actor == null)
-            {
-                throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(actor));
-            }
-
-            this.mustUnderstand = mustUnderstand;
-            this.relay = relay;
-            this.serializer = serializer;
-            this.actor = actor;
+            _mustUnderstand = mustUnderstand;
+            _relay = relay;
+            _serializer = serializer;
+            _actor = actor ?? throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(actor));
             if (actor == EnvelopeVersion.Soap12.UltimateDestinationActor)
             {
-                isOneOneSupported = false;
-                isOneTwoSupported = true;
+                _isOneOneSupported = false;
+                _isOneTwoSupported = true;
             }
             else if (actor == EnvelopeVersion.Soap12.NextDestinationActorValue)
             {
-                isOneOneSupported = false;
-                isOneTwoSupported = true;
+                _isOneOneSupported = false;
+                _isOneTwoSupported = true;
             }
             else if (actor == EnvelopeVersion.Soap11.NextDestinationActorValue)
             {
-                isOneOneSupported = true;
-                isOneTwoSupported = false;
+                _isOneOneSupported = true;
+                _isOneTwoSupported = false;
             }
             else
             {
-                isOneOneSupported = true;
-                isOneTwoSupported = true;
-                isNoneSupported = true;
+                _isOneOneSupported = true;
+                _isOneTwoSupported = true;
+                _isNoneSupported = true;
             }
         }
 
@@ -393,12 +392,12 @@ namespace CoreWCF.Channels
         {
             if (null == name)
             {
-                throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(name));
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(name)));
             }
 
             if (name.Length == 0)
             {
-                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentException(SR.SFXHeaderNameCannotBeNullOrEmpty, nameof(name)));
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentException(SR.SFXHeaderNameCannotBeNullOrEmpty, "name"));
             }
 
             if (ns == null)
@@ -409,9 +408,9 @@ namespace CoreWCF.Channels
             {
                 NamingHelper.CheckUriParameter(ns, "ns");
             }
-            this.objectToSerialize = objectToSerialize;
-            this.name = name;
-            this.ns = ns;
+            _objectToSerialize = objectToSerialize;
+            _name = name;
+            _ns = ns;
         }
 
         public override bool IsMessageVersionSupported(MessageVersion messageVersion)
@@ -423,15 +422,15 @@ namespace CoreWCF.Channels
 
             if (messageVersion.Envelope == EnvelopeVersion.Soap12)
             {
-                return isOneTwoSupported;
+                return _isOneTwoSupported;
             }
             else if (messageVersion.Envelope == EnvelopeVersion.Soap11)
             {
-                return isOneOneSupported;
+                return _isOneOneSupported;
             }
             else if (messageVersion.Envelope == EnvelopeVersion.None)
             {
-                return isNoneSupported;
+                return _isNoneSupported;
             }
             else
             {
@@ -441,40 +440,40 @@ namespace CoreWCF.Channels
 
         public override string Name
         {
-            get { return name; }
+            get { return _name; }
         }
 
         public override string Namespace
         {
-            get { return ns; }
+            get { return _ns; }
         }
 
         public override bool MustUnderstand
         {
-            get { return mustUnderstand; }
+            get { return _mustUnderstand; }
         }
 
         public override bool Relay
         {
-            get { return relay; }
+            get { return _relay; }
         }
 
         public override string Actor
         {
-            get { return actor; }
+            get { return _actor; }
         }
 
         protected override void OnWriteHeaderContents(XmlDictionaryWriter writer, MessageVersion messageVersion)
         {
-            lock (syncRoot)
+            lock (_syncRoot)
             {
-                if (serializer == null)
+                if (_serializer == null)
                 {
-                    serializer = DataContractSerializerDefaults.CreateSerializer(
-                        (objectToSerialize == null ? typeof(object) : objectToSerialize.GetType()), Name, Namespace, int.MaxValue/*maxItems*/);
+                    _serializer = DataContractSerializerDefaults.CreateSerializer(
+                        (_objectToSerialize == null ? typeof(object) : _objectToSerialize.GetType()), Name, Namespace, int.MaxValue/*maxItems*/);
                 }
 
-                serializer.WriteObjectContent(writer, objectToSerialize);
+                _serializer.WriteObjectContent(writer, _objectToSerialize);
             }
         }
     }
@@ -518,54 +517,54 @@ namespace CoreWCF.Channels
 
     internal class BufferedHeader : ReadableMessageHeader
     {
-        private MessageVersion version;
-        private XmlBuffer buffer;
-        private int bufferIndex;
-        private string actor;
-        private bool relay;
-        private bool mustUnderstand;
-        private string name;
-        private string ns;
-        private bool streamed;
-        private bool isRefParam;
+        private MessageVersion _version;
+        private XmlBuffer _buffer;
+        private int _bufferIndex;
+        private string _actor;
+        private bool _relay;
+        private bool _mustUnderstand;
+        private string _name;
+        private string _ns;
+        private bool _streamed;
+        private bool _isRefParam;
 
         public BufferedHeader(MessageVersion version, XmlBuffer buffer, int bufferIndex, string name, string ns, bool mustUnderstand, string actor, bool relay, bool isRefParam)
         {
-            this.version = version;
-            this.buffer = buffer;
-            this.bufferIndex = bufferIndex;
-            this.name = name;
-            this.ns = ns;
-            this.mustUnderstand = mustUnderstand;
-            this.actor = actor;
-            this.relay = relay;
-            this.isRefParam = isRefParam;
+            _version = version;
+            _buffer = buffer;
+            _bufferIndex = bufferIndex;
+            _name = name;
+            _ns = ns;
+            _mustUnderstand = mustUnderstand;
+            _actor = actor;
+            _relay = relay;
+            _isRefParam = isRefParam;
         }
 
         public BufferedHeader(MessageVersion version, XmlBuffer buffer, int bufferIndex, MessageHeaderInfo headerInfo)
         {
-            this.version = version;
-            this.buffer = buffer;
-            this.bufferIndex = bufferIndex;
-            actor = headerInfo.Actor;
-            relay = headerInfo.Relay;
-            name = headerInfo.Name;
-            ns = headerInfo.Namespace;
-            isRefParam = headerInfo.IsReferenceParameter;
-            mustUnderstand = headerInfo.MustUnderstand;
+            _version = version;
+            _buffer = buffer;
+            _bufferIndex = bufferIndex;
+            _actor = headerInfo.Actor;
+            _relay = headerInfo.Relay;
+            _name = headerInfo.Name;
+            _ns = headerInfo.Namespace;
+            _isRefParam = headerInfo.IsReferenceParameter;
+            _mustUnderstand = headerInfo.MustUnderstand;
         }
 
         public BufferedHeader(MessageVersion version, XmlBuffer buffer, XmlDictionaryReader reader, XmlAttributeHolder[] envelopeAttributes, XmlAttributeHolder[] headerAttributes)
         {
-            streamed = true;
-            this.buffer = buffer;
-            this.version = version;
-            GetHeaderAttributes(reader, version, out actor, out mustUnderstand, out relay, out isRefParam);
-            name = reader.LocalName;
-            ns = reader.NamespaceURI;
-            Fx.Assert(name != null, "");
-            Fx.Assert(ns != null, "");
-            bufferIndex = buffer.SectionCount;
+            _streamed = true;
+            _buffer = buffer;
+            _version = version;
+            GetHeaderAttributes(reader, version, out _actor, out _mustUnderstand, out _relay, out _isRefParam);
+            _name = reader.LocalName;
+            _ns = reader.NamespaceURI;
+            Fx.Assert(_name != null, "");
+            Fx.Assert(_ns != null, "");
+            _bufferIndex = buffer.SectionCount;
             XmlDictionaryWriter writer = buffer.OpenSection(reader.Quotas);
 
             // Write an enclosing Envelope tag
@@ -592,49 +591,49 @@ namespace CoreWCF.Channels
 
         public override string Actor
         {
-            get { return actor; }
+            get { return _actor; }
         }
 
         public override bool IsReferenceParameter
         {
-            get { return isRefParam; }
+            get { return _isRefParam; }
         }
 
         public override string Name
         {
-            get { return name; }
+            get { return _name; }
         }
 
         public override string Namespace
         {
-            get { return ns; }
+            get { return _ns; }
         }
 
         public override bool MustUnderstand
         {
-            get { return mustUnderstand; }
+            get { return _mustUnderstand; }
         }
 
         public override bool Relay
         {
-            get { return relay; }
+            get { return _relay; }
         }
 
         public override bool IsMessageVersionSupported(MessageVersion messageVersion)
         {
             if (messageVersion == null)
             {
-                throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(messageVersion));
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(messageVersion)));
             }
 
-            return messageVersion == version;
+            return messageVersion == _version;
         }
 
         public override XmlDictionaryReader GetHeaderReader()
         {
-            XmlDictionaryReader reader = buffer.GetReader(bufferIndex);
+            XmlDictionaryReader reader = _buffer.GetReader(_bufferIndex);
             // See if we need to move past the enclosing envelope/header
-            if (streamed)
+            if (_streamed)
             {
                 reader.MoveToContent();
                 reader.Read(); // Envelope
@@ -644,5 +643,4 @@ namespace CoreWCF.Channels
             return reader;
         }
     }
-
 }

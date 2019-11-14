@@ -1,8 +1,15 @@
-using System;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+
 using System.IO;
 using System.Net.Http.Headers;
-using System.Threading.Tasks;
 using CoreWCF.Diagnostics;
+using CoreWCF.Runtime;
+using System.Threading;
+using System.Threading.Tasks;
+using System;
 
 namespace CoreWCF.Channels
 {
@@ -16,9 +23,9 @@ namespace CoreWCF.Channels
 
         public virtual T GetProperty<T>() where T : class
         {
-            if (typeof (T) == typeof (FaultConverter))
+            if (typeof(T) == typeof(FaultConverter))
             {
-                return (T) (object) FaultConverter.GetDefaultFaultConverter(MessageVersion);
+                return (T)(object)FaultConverter.GetDefaultFaultConverter(MessageVersion);
             }
 
             return null;
@@ -27,6 +34,16 @@ namespace CoreWCF.Channels
         public Message ReadMessage(Stream stream, int maxSizeOfHeaders)
         {
             return ReadMessage(stream, maxSizeOfHeaders, null);
+        }
+
+        public virtual Task<Message> ReadMessageAsync(Stream stream, int maxSizeOfHeaders, string contentType)
+        {
+            return Task.FromResult(ReadMessage(stream, maxSizeOfHeaders, contentType));
+        }
+
+        public virtual Task<Message> ReadMessageAsync(ArraySegment<byte> buffer, BufferManager bufferManager, string contentType)
+        {
+            return Task.FromResult(ReadMessage(buffer, bufferManager, contentType));
         }
 
         public abstract Message ReadMessage(Stream stream, int maxSizeOfHeaders, string contentType);
@@ -40,7 +57,7 @@ namespace CoreWCF.Channels
         public abstract Message ReadMessage(ArraySegment<byte> buffer, BufferManager bufferManager, string contentType);
 
         // used for buffered streaming
-        internal ArraySegment<byte> BufferMessageStream(Stream stream, BufferManager bufferManager, int maxBufferSize)
+        internal async Task<ArraySegment<byte>> BufferMessageStreamAsync(Stream stream, BufferManager bufferManager, int maxBufferSize, CancellationToken cancellationToken)
         {
             byte[] buffer = bufferManager.TakeBuffer(ConnectionOrientedTransportDefaults.ConnectionBufferSize);
             int offset = 0;
@@ -48,7 +65,7 @@ namespace CoreWCF.Channels
 
             while (offset < currentBufferSize)
             {
-                int count = stream.Read(buffer, offset, currentBufferSize - offset);
+                int count = await stream.ReadAsync(buffer, offset, currentBufferSize - offset, cancellationToken);
                 if (count == 0)
                 {
                     stream.Dispose();
@@ -60,11 +77,10 @@ namespace CoreWCF.Channels
                 {
                     if (currentBufferSize >= maxBufferSize)
                     {
-                        throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(
-                            MaxMessageSizeStream.CreateMaxReceivedMessageSizeExceededException(maxBufferSize));
+                        throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(MaxMessageSizeStream.CreateMaxReceivedMessageSizeExceededException(maxBufferSize));
                     }
 
-                    currentBufferSize = Math.Min(currentBufferSize*2, maxBufferSize);
+                    currentBufferSize = Math.Min(currentBufferSize * 2, maxBufferSize);
                     byte[] temp = bufferManager.TakeBuffer(currentBufferSize);
                     Buffer.BlockCopy(buffer, 0, temp, 0, offset);
                     bufferManager.ReturnBuffer(buffer);
@@ -76,10 +92,9 @@ namespace CoreWCF.Channels
         }
 
         // used for buffered streaming
-        internal virtual Message ReadMessage(Stream stream, BufferManager bufferManager, int maxBufferSize,
-            string contentType)
+        internal virtual async Task<Message> ReadMessageAsync(Stream stream, BufferManager bufferManager, int maxBufferSize, string contentType, CancellationToken cancellationToken)
         {
-            return ReadMessage(BufferMessageStream(stream, bufferManager, maxBufferSize), bufferManager, contentType);
+            return ReadMessage(await BufferMessageStreamAsync(stream, bufferManager, maxBufferSize, cancellationToken), bufferManager, contentType);
         }
 
         public override string ToString()
@@ -89,26 +104,41 @@ namespace CoreWCF.Channels
 
         public abstract void WriteMessage(Message message, Stream stream);
 
-        // TODO: Work out what to do about the async message writing, add to contract
-        public virtual Task WriteMessageAsync(Message message, Stream stream)
+        public virtual IAsyncResult BeginWriteMessage(Message message, Stream stream, AsyncCallback callback, object state)
         {
-            return Task.Run(() => WriteMessage(message, stream));
+            return WriteMessageAsync(message, stream).ToApm(callback, state);
+        }
+
+        public virtual void EndWriteMessage(IAsyncResult result)
+        {
+            result.ToApmEnd();
         }
 
         public ArraySegment<byte> WriteMessage(Message message, int maxMessageSize, BufferManager bufferManager)
         {
-            ArraySegment<byte> arraySegment = WriteMessage(message, maxMessageSize, bufferManager, 0);
-            return arraySegment;
+            return WriteMessage(message, maxMessageSize, bufferManager, 0);
         }
 
         public abstract ArraySegment<byte> WriteMessage(Message message, int maxMessageSize,
             BufferManager bufferManager, int messageOffset);
 
+        public virtual Task WriteMessageAsync(Message message, Stream stream)
+        {
+            WriteMessage(message, stream);
+            return TaskHelpers.CompletedTask();
+        }
+
+        public virtual Task<ArraySegment<byte>> WriteMessageAsync(Message message, int maxMessageSize,
+            BufferManager bufferManager, int messageOffset)
+        {
+            return Task.FromResult(WriteMessage(message, maxMessageSize, bufferManager, messageOffset));
+        }
+
         public virtual bool IsContentTypeSupported(string contentType)
         {
             if (contentType == null)
             {
-                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException("contentType"));
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(contentType)));
             }
 
             return IsContentTypeSupported(contentType, ContentType, MediaType);

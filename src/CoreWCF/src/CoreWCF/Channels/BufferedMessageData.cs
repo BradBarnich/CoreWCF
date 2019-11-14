@@ -1,33 +1,30 @@
-﻿using System;
-using System.Xml;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+
 using CoreWCF.Runtime;
+using System;
+using System.Xml;
 
 namespace CoreWCF.Channels
 {
     internal abstract class BufferedMessageData : IBufferedMessageData
     {
-        private ArraySegment<byte> buffer;
-        private BufferManager bufferManager;
-        private int refCount;
-        private int outstandingReaders;
-        private bool multipleUsers;
-        private RecycledMessageState messageState;
-        private SynchronizedPool<RecycledMessageState> messageStatePool;
+        private int _refCount;
+        private int _outstandingReaders;
+        private bool _multipleUsers;
+        private RecycledMessageState _messageState;
+        private SynchronizedPool<RecycledMessageState> _messageStatePool;
 
         public BufferedMessageData(SynchronizedPool<RecycledMessageState> messageStatePool)
         {
-            this.messageStatePool = messageStatePool;
+            _messageStatePool = messageStatePool;
         }
 
-        public ArraySegment<byte> Buffer
-        {
-            get { return buffer; }
-        }
+        public ArraySegment<byte> Buffer { get; private set; }
 
-        public BufferManager BufferManager
-        {
-            get { return bufferManager; }
-        }
+        public BufferManager BufferManager { get; private set; }
 
         public virtual XmlDictionaryReaderQuotas Quotas
         {
@@ -43,16 +40,16 @@ namespace CoreWCF.Channels
 
         public void EnableMultipleUsers()
         {
-            multipleUsers = true;
+            _multipleUsers = true;
         }
 
         public void Close()
         {
-            if (multipleUsers)
+            if (_multipleUsers)
             {
                 lock (ThisLock)
                 {
-                    if (--refCount == 0)
+                    if (--_refCount == 0)
                     {
                         DoClose();
                     }
@@ -66,57 +63,57 @@ namespace CoreWCF.Channels
 
         private void DoClose()
         {
-            bufferManager.ReturnBuffer(buffer.Array);
-            if (outstandingReaders == 0)
+            BufferManager.ReturnBuffer(Buffer.Array);
+            if (_outstandingReaders == 0)
             {
-                bufferManager = null;
-                buffer = new ArraySegment<byte>();
+                BufferManager = null;
+                Buffer = new ArraySegment<byte>();
                 OnClosed();
             }
         }
 
         public void DoReturnMessageState(RecycledMessageState messageState)
         {
-            if (this.messageState == null)
+            if (_messageState == null)
             {
-                this.messageState = messageState;
+                _messageState = messageState;
             }
             else
             {
-                messageStatePool.Return(messageState);
+                _messageStatePool.Return(messageState);
             }
         }
 
         private void DoReturnXmlReader(XmlDictionaryReader reader)
         {
             ReturnXmlReader(reader);
-            outstandingReaders--;
+            _outstandingReaders--;
         }
 
         public RecycledMessageState DoTakeMessageState()
         {
-            RecycledMessageState messageState = this.messageState;
+            RecycledMessageState messageState = _messageState;
             if (messageState != null)
             {
-                this.messageState = null;
+                _messageState = null;
                 return messageState;
             }
             else
             {
-                return messageStatePool.Take();
+                return _messageStatePool.Take();
             }
         }
 
         private XmlDictionaryReader DoTakeXmlReader()
         {
             XmlDictionaryReader reader = TakeXmlReader();
-            outstandingReaders++;
+            _outstandingReaders++;
             return reader;
         }
 
         public XmlDictionaryReader GetMessageReader()
         {
-            if (multipleUsers)
+            if (_multipleUsers)
             {
                 lock (ThisLock)
                 {
@@ -131,7 +128,7 @@ namespace CoreWCF.Channels
 
         public void OnXmlReaderClosed(XmlDictionaryReader reader)
         {
-            if (multipleUsers)
+            if (_multipleUsers)
             {
                 lock (ThisLock)
                 {
@@ -150,7 +147,7 @@ namespace CoreWCF.Channels
 
         public RecycledMessageState TakeMessageState()
         {
-            if (multipleUsers)
+            if (_multipleUsers)
             {
                 lock (ThisLock)
                 {
@@ -169,23 +166,23 @@ namespace CoreWCF.Channels
         {
             lock (ThisLock)
             {
-                refCount++;
+                _refCount++;
             }
         }
 
         public void Open(ArraySegment<byte> buffer, BufferManager bufferManager)
         {
-            refCount = 1;
-            this.bufferManager = bufferManager;
-            this.buffer = buffer;
-            multipleUsers = false;
+            _refCount = 1;
+            BufferManager = bufferManager;
+            Buffer = buffer;
+            _multipleUsers = false;
         }
 
         protected abstract void ReturnXmlReader(XmlDictionaryReader xmlReader);
 
         public void ReturnMessageState(RecycledMessageState messageState)
         {
-            if (multipleUsers)
+            if (_multipleUsers)
             {
                 lock (ThisLock)
                 {
@@ -198,5 +195,4 @@ namespace CoreWCF.Channels
             }
         }
     }
-
 }

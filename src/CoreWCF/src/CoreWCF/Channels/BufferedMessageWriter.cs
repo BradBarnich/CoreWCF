@@ -1,4 +1,8 @@
-﻿using System;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+
 using System.IO;
 using System.Xml;
 
@@ -6,16 +10,16 @@ namespace CoreWCF.Channels
 {
     internal abstract class BufferedMessageWriter
     {
-        private int[] sizeHistory;
-        private int sizeHistoryIndex;
+        private int[] _sizeHistory;
+        private int _sizeHistoryIndex;
         private const int sizeHistoryCount = 4;
         private const int expectedSizeVariance = 256;
-        private BufferManagerOutputStream stream;
+        private BufferManagerOutputStream _stream;
 
         public BufferedMessageWriter()
         {
-            stream = new BufferManagerOutputStream(SR.MaxSentMessageSizeExceeded);
-            InitMessagePredictor();
+            _stream = new BufferManagerOutputStream(SR.MaxSentMessageSizeExceeded);
+            InitMessagePredicter();
         }
 
         protected abstract XmlDictionaryWriter TakeXmlWriter(Stream stream);
@@ -48,23 +52,23 @@ namespace CoreWCF.Channels
 
             try
             {
-                stream.Init(predictedMessageSize, maxSizeQuota, effectiveMaxSize, bufferManager);
-                stream.Skip(initialOffset);
+                _stream.Init(predictedMessageSize, maxSizeQuota, effectiveMaxSize, bufferManager);
+                _stream.Skip(initialOffset);
 
-                XmlDictionaryWriter writer = TakeXmlWriter(stream);
+                XmlDictionaryWriter writer = TakeXmlWriter(_stream);
                 OnWriteStartMessage(writer);
                 message.WriteMessage(writer);
                 OnWriteEndMessage(writer);
                 writer.Flush();
                 ReturnXmlWriter(writer);
                 int size;
-                byte[] buffer = stream.ToArray(out size);
+                byte[] buffer = _stream.ToArray(out size);
                 RecordActualMessageSize(size);
                 return new ArraySegment<byte>(buffer, initialOffset, size - initialOffset);
             }
             finally
             {
-                stream.Clear();
+                _stream.Clear();
             }
         }
 
@@ -76,12 +80,12 @@ namespace CoreWCF.Channels
         {
         }
 
-        private void InitMessagePredictor()
+        private void InitMessagePredicter()
         {
-            sizeHistory = new int[4];
+            _sizeHistory = new int[4];
             for (int i = 0; i < sizeHistoryCount; i++)
             {
-                sizeHistory[i] = 256;
+                _sizeHistory[i] = 256;
             }
         }
 
@@ -90,9 +94,9 @@ namespace CoreWCF.Channels
             int max = 0;
             for (int i = 0; i < sizeHistoryCount; i++)
             {
-                if (sizeHistory[i] > max)
+                if (_sizeHistory[i] > max)
                 {
-                    max = sizeHistory[i];
+                    max = _sizeHistory[i];
                 }
             }
 
@@ -101,9 +105,8 @@ namespace CoreWCF.Channels
 
         private void RecordActualMessageSize(int size)
         {
-            sizeHistory[sizeHistoryIndex] = size;
-            sizeHistoryIndex = (sizeHistoryIndex + 1) % sizeHistoryCount;
+            _sizeHistory[_sizeHistoryIndex] = size;
+            _sizeHistoryIndex = (_sizeHistoryIndex + 1) % sizeHistoryCount;
         }
     }
-
 }

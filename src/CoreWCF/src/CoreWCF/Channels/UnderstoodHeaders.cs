@@ -1,34 +1,34 @@
-﻿using System.Collections;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+
+using System.Collections;
 using System.Collections.Generic;
 
 namespace CoreWCF.Channels
 {
-    internal sealed class UnderstoodHeaders : IEnumerable<MessageHeaderInfo>
+    public sealed class UnderstoodHeaders : IEnumerable<MessageHeaderInfo>
     {
-        private MessageHeaders messageHeaders;
-        private bool modified;
+        private MessageHeaders _messageHeaders;
 
         internal UnderstoodHeaders(MessageHeaders messageHeaders, bool modified)
         {
-            this.messageHeaders = messageHeaders;
-            this.modified = modified;
+            _messageHeaders = messageHeaders;
+            Modified = modified;
         }
 
-        internal bool Modified
-        {
-            get { return modified; }
-            set { modified = value; }
-        }
+        internal bool Modified { get; set; }
 
         public void Add(MessageHeaderInfo headerInfo)
         {
-            messageHeaders.AddUnderstood(headerInfo);
-            modified = true;
+            _messageHeaders.AddUnderstood(headerInfo);
+            Modified = true;
         }
 
         public bool Contains(MessageHeaderInfo headerInfo)
         {
-            return messageHeaders.IsUnderstood(headerInfo);
+            return _messageHeaders.IsUnderstood(headerInfo);
         }
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -38,13 +38,13 @@ namespace CoreWCF.Channels
 
         public IEnumerator<MessageHeaderInfo> GetEnumerator()
         {
-            return messageHeaders.GetUnderstoodEnumerator();
+            return _messageHeaders.GetUnderstoodEnumerator();
         }
 
         public void Remove(MessageHeaderInfo headerInfo)
         {
-            messageHeaders.RemoveUnderstood(headerInfo);
-            modified = true;
+            _messageHeaders.RemoveUnderstood(headerInfo);
+            Modified = true;
         }
     }
 }

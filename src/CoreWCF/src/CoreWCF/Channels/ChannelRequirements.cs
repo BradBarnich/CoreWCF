@@ -1,8 +1,13 @@
-﻿using System;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+
 using System.Collections.Generic;
+using CoreWCF.Description;
 using System.Globalization;
 using System.Text;
-using CoreWCF.Description;
+using System;
 
 namespace CoreWCF.Channels
 {
@@ -61,18 +66,18 @@ namespace CoreWCF.Channels
                 switch (requirements.sessionMode)
                 {
                     case SessionMode.Allowed:
-                        return new[] {
+                        return new Type[] {
                             typeof(IDuplexChannel),
                             typeof(IDuplexSessionChannel),
                         };
 
                     case SessionMode.Required:
-                        return new[] {
+                        return new Type[] {
                             typeof(IDuplexSessionChannel),
                         };
 
                     case SessionMode.NotAllowed:
-                        return new[] {
+                        return new Type[] {
                             typeof(IDuplexChannel),
                         };
                 }
@@ -82,7 +87,7 @@ namespace CoreWCF.Channels
                 switch (requirements.sessionMode)
                 {
                     case SessionMode.Allowed:
-                        return new[] {
+                        return new Type[] {
                             typeof(IRequestChannel),
                             typeof(IRequestSessionChannel),
                             typeof(IDuplexChannel),
@@ -90,15 +95,14 @@ namespace CoreWCF.Channels
                         };
 
                     case SessionMode.Required:
-                        return new[] {
+                        return new Type[] {
                             typeof(IRequestSessionChannel),
                             typeof(IDuplexSessionChannel),
                         };
 
                     case SessionMode.NotAllowed:
-                        return new[] {
+                        return new Type[] {
                             typeof(IRequestChannel),
-                            typeof(IDuplexChannel),
                         };
                 }
             }
@@ -107,7 +111,7 @@ namespace CoreWCF.Channels
                 switch (requirements.sessionMode)
                 {
                     case SessionMode.Allowed:
-                        return new[] {
+                        return new Type[] {
                             typeof(IOutputChannel),
                             typeof(IOutputSessionChannel),
                             typeof(IRequestChannel),
@@ -117,14 +121,14 @@ namespace CoreWCF.Channels
                         };
 
                     case SessionMode.Required:
-                        return new[] {
+                        return new Type[] {
                             typeof(IOutputSessionChannel),
                             typeof(IRequestSessionChannel),
                             typeof(IDuplexSessionChannel),
                         };
 
                     case SessionMode.NotAllowed:
-                        return new[] {
+                        return new Type[] {
                             typeof(IOutputChannel),
                             typeof(IRequestChannel),
                             typeof(IDuplexChannel),
@@ -136,7 +140,7 @@ namespace CoreWCF.Channels
                 switch (requirements.sessionMode)
                 {
                     case SessionMode.Allowed:
-                        return new[] {
+                        return new Type[] {
                             typeof(IRequestChannel),
                             typeof(IRequestSessionChannel),
                             typeof(IDuplexChannel),
@@ -144,13 +148,13 @@ namespace CoreWCF.Channels
                         };
 
                     case SessionMode.Required:
-                        return new[] {
+                        return new Type[] {
                             typeof(IRequestSessionChannel),
                             typeof(IDuplexSessionChannel),
                         };
 
                     case SessionMode.NotAllowed:
-                        return new[] {
+                        return new Type[] {
                             typeof(IRequestChannel),
                             typeof(IDuplexChannel),
                         };
@@ -161,7 +165,7 @@ namespace CoreWCF.Channels
                 switch (requirements.sessionMode)
                 {
                     case SessionMode.Allowed:
-                        return new[] {
+                        return new Type[] {
                             typeof(IOutputSessionChannel),
                             typeof(IOutputChannel),
                             typeof(IRequestSessionChannel),
@@ -171,14 +175,14 @@ namespace CoreWCF.Channels
                         };
 
                     case SessionMode.Required:
-                        return new[] {
+                        return new Type[] {
                             typeof(IOutputSessionChannel),
                             typeof(IRequestSessionChannel),
                             typeof(IDuplexSessionChannel),
                         };
 
                     case SessionMode.NotAllowed:
-                        return new[] {
+                        return new Type[] {
                             typeof(IOutputChannel),
                             typeof(IRequestChannel),
                             typeof(IDuplexChannel),
@@ -219,12 +223,30 @@ namespace CoreWCF.Channels
                     channelType == typeof(IDuplexSessionChannel));
         }
 
+        public static Exception CantCreateListenerException(IEnumerable<Type> supportedChannels, IEnumerable<Type> requiredChannels, string bindingName)
+        {
+            string contractChannelTypesString = "";
+            string bindingChannelTypesString = "";
+
+            Exception exception = ChannelRequirements.BindingContractMismatchException(supportedChannels, requiredChannels, bindingName,
+                ref contractChannelTypesString, ref bindingChannelTypesString);
+
+            if (exception == null)
+            {
+                // none of the obvious speculations about the failure holds, so we fall back to the generic error message
+                exception = new InvalidOperationException(SR.Format(SR.EndpointListenerRequirementsCannotBeMetBy3,
+                        bindingName, contractChannelTypesString, bindingChannelTypesString));
+            }
+
+            return exception;
+        }
+
         public static Exception CantCreateChannelException(IEnumerable<Type> supportedChannels, IEnumerable<Type> requiredChannels, string bindingName)
         {
             string contractChannelTypesString = "";
             string bindingChannelTypesString = "";
 
-            Exception exception = BindingContractMismatchException(supportedChannels, requiredChannels, bindingName,
+            Exception exception = ChannelRequirements.BindingContractMismatchException(supportedChannels, requiredChannels, bindingName,
                 ref contractChannelTypesString, ref bindingChannelTypesString);
 
             if (exception == null)
@@ -256,23 +278,23 @@ namespace CoreWCF.Channels
                 string typeString = channelType.ToString();
                 contractChannelTypes.Append(typeString.Substring(typeString.LastIndexOf('.') + 1));
 
-                if (!IsOneWay(channelType))
+                if (!ChannelRequirements.IsOneWay(channelType))
                 {
                     contractRequiresOneWay = false;
                 }
-                if (!IsRequestReply(channelType))
+                if (!ChannelRequirements.IsRequestReply(channelType))
                 {
                     contractRequiresRequestReply = false;
                 }
-                if (!IsDuplex(channelType))
+                if (!ChannelRequirements.IsDuplex(channelType))
                 {
                     contractRequiresDuplex = false;
                 }
-                if (!(IsRequestReply(channelType) || IsDuplex(channelType)))
+                if (!(ChannelRequirements.IsRequestReply(channelType) || ChannelRequirements.IsDuplex(channelType)))
                 {
                     contractRequiresTwoWay = false;
                 }
-                if (!IsSessionful(channelType))
+                if (!ChannelRequirements.IsSessionful(channelType))
                 {
                     contractRequiresSession = false;
                 }
@@ -300,19 +322,19 @@ namespace CoreWCF.Channels
                 string typeString = channelType.ToString();
                 bindingChannelTypes.Append(typeString.Substring(typeString.LastIndexOf('.') + 1));
 
-                if (IsOneWay(channelType))
+                if (ChannelRequirements.IsOneWay(channelType))
                 {
                     bindingSupportsOneWay = true;
                 }
-                if (IsRequestReply(channelType))
+                if (ChannelRequirements.IsRequestReply(channelType))
                 {
                     bindingSupportsRequestReply = true;
                 }
-                if (IsDuplex(channelType))
+                if (ChannelRequirements.IsDuplex(channelType))
                 {
                     bindingSupportsDuplex = true;
                 }
-                if (IsSessionful(channelType))
+                if (ChannelRequirements.IsSessionful(channelType))
                 {
                     bindingSupportsSession = true;
                 }
@@ -357,6 +379,5 @@ namespace CoreWCF.Channels
 
             return null;
         }
-
     }
 }

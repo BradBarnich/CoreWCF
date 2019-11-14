@@ -1,50 +1,73 @@
-﻿using System;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+
+using System.Xml;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
-using System.Xml;
 using CoreWCF.Diagnostics;
 using CoreWCF.Dispatcher;
+using System.Globalization;
+using System;
 
 namespace CoreWCF.Channels
 {
     public abstract class MessageFault
     {
-        internal static MessageFault CreateFault(FaultCode code, string reason)
+        private static MessageFault s_defaultMessageFault;
+
+        public static MessageFault CreateFault(FaultCode code, string reason)
         {
             return CreateFault(code, new FaultReason(reason));
         }
 
-        internal static MessageFault CreateFault(FaultCode code, FaultReason reason)
+        public static MessageFault CreateFault(FaultCode code, FaultReason reason)
         {
             return CreateFault(code, reason, null, null, "", "");
         }
 
-        internal static MessageFault CreateFault(FaultCode code, FaultReason reason, object detail)
+        public static MessageFault CreateFault(FaultCode code, FaultReason reason, object detail)
         {
             return CreateFault(code, reason, detail, DataContractSerializerDefaults.CreateSerializer(
                 (detail == null ? typeof(object) : detail.GetType()), int.MaxValue/*maxItems*/), "", "");
+        }
+
+        public static MessageFault CreateFault(FaultCode code, FaultReason reason, object detail, XmlObjectSerializer serializer)
+        {
+            return CreateFault(code, reason, detail, serializer, "", "");
+        }
+
+        public static MessageFault CreateFault(FaultCode code, FaultReason reason, object detail, XmlObjectSerializer serializer, string actor)
+        {
+            if (serializer == null)
+            {
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(serializer)));
+            }
+
+            return CreateFault(code, reason, detail, serializer, actor, actor);
         }
 
         public static MessageFault CreateFault(FaultCode code, FaultReason reason, object detail, XmlObjectSerializer serializer, string actor, string node)
         {
             if (code == null)
             {
-                throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(code));
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(code)));
             }
 
             if (reason == null)
             {
-                throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(reason));
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(reason)));
             }
 
             if (actor == null)
             {
-                throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(actor));
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(actor)));
             }
 
             if (node == null)
             {
-                throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(node));
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(node)));
             }
 
             return new XmlObjectSerializerFault(code, reason, detail, serializer, actor, node);
@@ -54,7 +77,7 @@ namespace CoreWCF.Channels
         {
             if (message == null)
             {
-                throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(message));
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(message)));
             }
 
             XmlDictionaryReader reader = message.GetReaderAtBodyContents();
@@ -101,6 +124,18 @@ namespace CoreWCF.Channels
             }
         }
 
+        internal static MessageFault Default
+        {
+            get
+            {
+                if (s_defaultMessageFault == null)
+                {
+                    s_defaultMessageFault = MessageFault.CreateFault(new FaultCode("Default"), new FaultReason("", CultureInfo.CurrentCulture));
+                }
+                return s_defaultMessageFault;
+            }
+        }
+
         public virtual string Actor
         {
             get
@@ -110,6 +145,27 @@ namespace CoreWCF.Channels
         }
 
         public abstract FaultCode Code { get; }
+
+        public bool IsMustUnderstandFault
+        {
+            get
+            {
+                FaultCode code = Code;
+                if (String.Compare(code.Name, MessageStrings.MustUnderstandFault, StringComparison.Ordinal) != 0)
+                {
+                    return false;
+                }
+
+                if ((String.Compare(code.Namespace, EnvelopeVersion.Soap11.Namespace, StringComparison.Ordinal) != 0) &&
+                    (String.Compare(code.Namespace, EnvelopeVersion.Soap12.Namespace, StringComparison.Ordinal) != 0))
+                {
+                    return false;
+                }
+
+                return true;
+            }
+        }
+
         public virtual string Node
         {
             get
@@ -131,7 +187,7 @@ namespace CoreWCF.Channels
         {
             if (serializer == null)
             {
-                throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(serializer));
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(serializer)));
             }
 
             XmlDictionaryReader reader = GetReaderAtDetailContents();
@@ -194,12 +250,47 @@ namespace CoreWCF.Channels
             return reader;
         }
 
-        internal void WriteTo(XmlWriter writer, EnvelopeVersion version)
+        public static bool WasHeaderNotUnderstood(MessageHeaders headers, string name, string ns)
+        {
+            if (headers == null)
+            {
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(headers));
+            }
+
+            for (int i = 0; i < headers.Count; i++)
+            {
+                MessageHeaderInfo headerInfo = headers[i];
+                if ((String.Compare(headerInfo.Name, Message12Strings.NotUnderstood, StringComparison.Ordinal) == 0) &&
+                    (String.Compare(headerInfo.Namespace, Message12Strings.Namespace, StringComparison.Ordinal) == 0))
+                {
+                    using (XmlDictionaryReader reader = headers.GetReaderAtHeader(i))
+                    {
+                        reader.MoveToAttribute(Message12Strings.QName, Message12Strings.Namespace);
+
+                        string actualName;
+                        string actualNamespace;
+                        reader.ReadContentAsQualifiedName(out actualName, out actualNamespace);
+
+                        if ((actualName != null) &&
+                            (actualNamespace != null) &&
+                            (String.Compare(name, actualName, StringComparison.Ordinal) == 0) &&
+                            (String.Compare(ns, actualNamespace, StringComparison.Ordinal) == 0))
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        public void WriteTo(XmlWriter writer, EnvelopeVersion version)
         {
             WriteTo(XmlDictionaryWriter.CreateDictionaryWriter(writer), version);
         }
 
-        internal void WriteTo(XmlDictionaryWriter writer, EnvelopeVersion version)
+        public void WriteTo(XmlDictionaryWriter writer, EnvelopeVersion version)
         {
             if (writer == null)
             {
@@ -380,33 +471,35 @@ namespace CoreWCF.Channels
             }
             writer.WriteEndElement();
         }
-
     }
 
-    internal class XmlObjectSerializerFault : MessageFault
+    /*
+    This class is not exposed on the contract as we only need it public for reflection purpose on .Net Native.
+    */
+    public class XmlObjectSerializerFault : MessageFault
     {
-        private FaultCode code;
-        private FaultReason reason;
-        private string actor;
-        private string node;
-        private object detail;
-        private XmlObjectSerializer serializer;
+        private FaultCode _code;
+        private FaultReason _reason;
+        private string _actor;
+        private string _node;
+        private object _detail;
+        private XmlObjectSerializer _serializer;
 
         public XmlObjectSerializerFault(FaultCode code, FaultReason reason, object detail, XmlObjectSerializer serializer, string actor, string node)
         {
-            this.code = code;
-            this.reason = reason;
-            this.detail = detail;
-            this.serializer = serializer;
-            this.actor = actor;
-            this.node = node;
+            _code = code;
+            _reason = reason;
+            _detail = detail;
+            _serializer = serializer;
+            _actor = actor;
+            _node = node;
         }
 
         public override string Actor
         {
             get
             {
-                return actor;
+                return _actor;
             }
         }
 
@@ -414,7 +507,7 @@ namespace CoreWCF.Channels
         {
             get
             {
-                return code;
+                return _code;
             }
         }
 
@@ -422,7 +515,7 @@ namespace CoreWCF.Channels
         {
             get
             {
-                return serializer != null;
+                return _serializer != null;
             }
         }
 
@@ -430,7 +523,7 @@ namespace CoreWCF.Channels
         {
             get
             {
-                return node;
+                return _node;
             }
         }
 
@@ -438,7 +531,7 @@ namespace CoreWCF.Channels
         {
             get
             {
-                return reason;
+                return _reason;
             }
         }
 
@@ -446,17 +539,17 @@ namespace CoreWCF.Channels
         {
             get
             {
-                return code;
+                return _code;
             }
         }
 
         protected override void OnWriteDetailContents(XmlDictionaryWriter writer)
         {
-            if (serializer != null)
+            if (_serializer != null)
             {
                 lock (ThisLock)
                 {
-                    serializer.WriteObject(writer, detail);
+                    _serializer.WriteObject(writer, _detail);
                 }
             }
         }
@@ -464,30 +557,30 @@ namespace CoreWCF.Channels
 
     internal class ReceivedFault : MessageFault
     {
-        private FaultCode code;
-        private FaultReason reason;
-        private string actor;
-        private string node;
-        private XmlBuffer detail;
-        private bool hasDetail;
-        private EnvelopeVersion receivedVersion;
+        private FaultCode _code;
+        private FaultReason _reason;
+        private string _actor;
+        private string _node;
+        private XmlBuffer _detail;
+        private bool _hasDetail;
+        private EnvelopeVersion _receivedVersion;
 
         private ReceivedFault(FaultCode code, FaultReason reason, string actor, string node, XmlBuffer detail, EnvelopeVersion version)
         {
-            this.code = code;
-            this.reason = reason;
-            this.actor = actor;
-            this.node = node;
-            receivedVersion = version;
-            hasDetail = InferHasDetail(detail);
-            this.detail = hasDetail ? detail : null;
+            _code = code;
+            _reason = reason;
+            _actor = actor;
+            _node = node;
+            _receivedVersion = version;
+            _hasDetail = InferHasDetail(detail);
+            _detail = _hasDetail ? detail : null;
         }
 
         public override string Actor
         {
             get
             {
-                return actor;
+                return _actor;
             }
         }
 
@@ -495,7 +588,7 @@ namespace CoreWCF.Channels
         {
             get
             {
-                return code;
+                return _code;
             }
         }
 
@@ -503,7 +596,7 @@ namespace CoreWCF.Channels
         {
             get
             {
-                return hasDetail;
+                return _hasDetail;
             }
         }
 
@@ -511,7 +604,7 @@ namespace CoreWCF.Channels
         {
             get
             {
-                return node;
+                return _node;
             }
         }
 
@@ -519,7 +612,7 @@ namespace CoreWCF.Channels
         {
             get
             {
-                return reason;
+                return _reason;
             }
         }
 
@@ -541,7 +634,7 @@ namespace CoreWCF.Channels
 
         protected override void OnWriteDetail(XmlDictionaryWriter writer, EnvelopeVersion version)
         {
-            using (XmlReader r = detail.GetReader(0))
+            using (XmlReader r = _detail.GetReader(0))
             {
                 // Start the element
                 base.OnWriteStartDetail(writer, version);
@@ -571,7 +664,7 @@ namespace CoreWCF.Channels
 
         protected override void OnWriteStartDetail(XmlDictionaryWriter writer, EnvelopeVersion version)
         {
-            using (XmlReader r = detail.GetReader(0))
+            using (XmlReader r = _detail.GetReader(0))
             {
                 // Start the element
                 base.OnWriteStartDetail(writer, version);
@@ -589,7 +682,7 @@ namespace CoreWCF.Channels
 
         protected override void OnWriteDetailContents(XmlDictionaryWriter writer)
         {
-            using (XmlReader r = detail.GetReader(0))
+            using (XmlReader r = _detail.GetReader(0))
             {
                 r.Read();
                 while (r.NodeType != XmlNodeType.EndElement)
@@ -601,7 +694,7 @@ namespace CoreWCF.Channels
 
         protected override XmlDictionaryReader OnGetReaderAtDetailContents()
         {
-            XmlDictionaryReader reader = detail.GetReader(0);
+            XmlDictionaryReader reader = _detail.GetReader(0);
             reader.Read(); // Skip the detail element
             return reader;
         }
@@ -609,10 +702,10 @@ namespace CoreWCF.Channels
         private bool ShouldWriteDetailAttribute(EnvelopeVersion targetVersion, string prefix, string localName, string attributeValue)
         {
             // Handle fault detail version conversion from Soap12 to Soap11 -- scope tightly to only conversion from Soap12 -> Soap11
-            // SOAP 1.1 specifications allow an arbitrary element within <fault>, hence: 
-            // transform this IFF the SOAP namespace specified will affect the namespace of the <detail> element, 
-            // AND the namespace specified is exactly the Soap12 Namespace. 
-            bool shouldSkip = receivedVersion == EnvelopeVersion.Soap12    // original incoming version
+            // SOAP 1.1 specifications allow an arbitrary element within <fault>, hence:
+            // transform this IFF the SOAP namespace specified will affect the namespace of the <detail> element,
+            // AND the namespace specified is exactly the Soap12 Namespace.
+            bool shouldSkip = _receivedVersion == EnvelopeVersion.Soap12    // original incoming version
                                 && targetVersion == EnvelopeVersion.Soap11      // version to serialize to
                                 && string.IsNullOrEmpty(prefix)                 // attribute prefix
                                 && localName == "xmlns"                         // only transform namespace attributes, don't care about others

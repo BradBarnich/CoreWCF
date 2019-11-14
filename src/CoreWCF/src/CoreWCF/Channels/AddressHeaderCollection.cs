@@ -1,14 +1,18 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Text;
 using System.Xml;
 
 namespace CoreWCF.Channels
 {
-    public sealed class AddressHeaderCollection : System.Collections.ObjectModel.ReadOnlyCollection<AddressHeader>
+    public sealed class AddressHeaderCollection : ReadOnlyCollection<AddressHeader>
     {
-        private static AddressHeaderCollection emptyHeaderCollection = new AddressHeaderCollection();
-
         public AddressHeaderCollection()
             : base(new List<AddressHeader>())
         {
@@ -25,8 +29,7 @@ namespace CoreWCF.Channels
                 {
                     if (collection[i] == null)
                     {
-                        throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(
-                            new ArgumentException(SR.MessageHeaderIsNull0));
+                        throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentException(SR.MessageHeaderIsNull0));
                     }
                 }
             }
@@ -36,18 +39,19 @@ namespace CoreWCF.Channels
                 {
                     if (addressHeader == null)
                     {
-                        throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(
-                            new ArgumentException(SR.MessageHeaderIsNull0));
+                        throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentException(SR.MessageHeaderIsNull0));
                     }
                 }
             }
         }
 
+        internal static AddressHeaderCollection EmptyHeaderCollection { get; } = new AddressHeaderCollection();
+
         private int InternalCount
         {
             get
             {
-                if (this == (object)emptyHeaderCollection)
+                if (this == (object)EmptyHeaderCollection)
                 {
                     return 0;
                 }
@@ -73,12 +77,12 @@ namespace CoreWCF.Channels
         {
             if (name == null)
             {
-                throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(name));
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(name)));
             }
 
             if (ns == null)
             {
-                throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(ns));
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(ns)));
             }
 
             List<AddressHeader> results = new List<AddressHeader>();
@@ -98,12 +102,12 @@ namespace CoreWCF.Channels
         {
             if (name == null)
             {
-                throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(name));
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(name)));
             }
 
             if (ns == null)
             {
-                throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(ns));
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(ns)));
             }
 
             AddressHeader matchingHeader = null;
@@ -204,6 +208,60 @@ namespace CoreWCF.Channels
                 }
                 reader.ReadEndElement();
                 return new AddressHeaderCollection(headerList);
+            }
+        }
+
+        internal bool HasReferenceProperties
+        {
+            get
+            {
+                for (int i = 0; i < InternalCount; i++)
+                {
+                    if (this[i].IsReferenceProperty)
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        }
+
+        internal bool HasNonReferenceProperties
+        {
+            get
+            {
+                for (int i = 0; i < InternalCount; i++)
+                {
+                    if (!this[i].IsReferenceProperty)
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        }
+
+        internal void WriteReferencePropertyContentsTo(XmlDictionaryWriter writer)
+        {
+            for (int i = 0; i < InternalCount; i++)
+            {
+                if (this[i].IsReferenceProperty)
+                {
+                    this[i].WriteAddressHeader(writer);
+                }
+            }
+        }
+
+        internal void WriteNonReferencePropertyContentsTo(XmlDictionaryWriter writer)
+        {
+            for (int i = 0; i < InternalCount; i++)
+            {
+                if (!this[i].IsReferenceProperty)
+                {
+                    this[i].WriteAddressHeader(writer);
+                }
             }
         }
 

@@ -1,11 +1,36 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+
+using System.Threading.Tasks;
+
 namespace CoreWCF.Channels
 {
-    public interface IInputChannel : IChannel, ICommunicationObject
+    public interface IInputChannel : IChannel
     {
         EndpointAddress LocalAddress { get; }
-        System.Threading.Tasks.Task<Message> ReceiveAsync();
-        System.Threading.Tasks.Task<Message> ReceiveAsync(System.Threading.CancellationToken token);
-        System.Threading.Tasks.Task<TryAsyncResult<Message>> TryReceiveAsync(System.Threading.CancellationToken token);
-        System.Threading.Tasks.Task<bool> WaitForMessageAsync(System.Threading.CancellationToken token);
+
+        Message Receive();
+        Message Receive(TimeSpan timeout);
+        IAsyncResult BeginReceive(AsyncCallback callback, object state);
+        IAsyncResult BeginReceive(TimeSpan timeout, AsyncCallback callback, object state);
+        Message EndReceive(IAsyncResult result);
+
+        bool TryReceive(TimeSpan timeout, out Message message);
+        IAsyncResult BeginTryReceive(TimeSpan timeout, AsyncCallback callback, object state);
+        bool EndTryReceive(IAsyncResult result, out Message message);
+
+        bool WaitForMessage(TimeSpan timeout);
+        IAsyncResult BeginWaitForMessage(TimeSpan timeout, AsyncCallback callback, object state);
+        bool EndWaitForMessage(IAsyncResult result);
+    }
+
+    public interface IAsyncInputChannel : IInputChannel, IAsyncCommunicationObject
+    {
+        Task<Message> ReceiveAsync();
+        Task<Message> ReceiveAsync(TimeSpan timeout);
+        Task<(bool, Message)> TryReceiveAsync(TimeSpan timeout);
+        Task<bool> WaitForMessageAsync(TimeSpan timeout);
     }
 }

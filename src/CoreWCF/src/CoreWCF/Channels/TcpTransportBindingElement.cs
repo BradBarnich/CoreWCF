@@ -1,52 +1,31 @@
-using CoreWCF.Channels;
-using System;
-using System.ComponentModel;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+
 using System.Security.Authentication.ExtendedProtection;
 
 namespace CoreWCF.Channels
 {
-    public partial class TcpTransportBindingElement : ConnectionOrientedTransportBindingElement
+    public class TcpTransportBindingElement : ConnectionOrientedTransportBindingElement
     {
-        private int _listenBacklog;
-        private ExtendedProtectionPolicy _extendedProtectionPolicy;
-        private TcpConnectionPoolSettings _connectionPoolSettings;
+        ExtendedProtectionPolicy _extendedProtectionPolicy;
 
-        public TcpTransportBindingElement() : base()
+        public TcpTransportBindingElement()
+            : base()
         {
-            _listenBacklog = TcpTransportDefaults.GetListenBacklog();
-            _connectionPoolSettings = new TcpConnectionPoolSettings();
+            ConnectionPoolSettings = new TcpConnectionPoolSettings();
             _extendedProtectionPolicy = ChannelBindingUtility.DefaultPolicy;
         }
-        protected TcpTransportBindingElement(TcpTransportBindingElement elementToBeCloned) : base(elementToBeCloned)
+
+        protected TcpTransportBindingElement(TcpTransportBindingElement elementToBeCloned)
+            : base(elementToBeCloned)
         {
-            _listenBacklog = elementToBeCloned._listenBacklog;
-            _connectionPoolSettings = elementToBeCloned._connectionPoolSettings.Clone();
-            _extendedProtectionPolicy = elementToBeCloned.ExtendedProtectionPolicy;
+            ConnectionPoolSettings = elementToBeCloned.ConnectionPoolSettings.Clone();
+            _extendedProtectionPolicy = elementToBeCloned._extendedProtectionPolicy;
         }
 
-        public TcpConnectionPoolSettings ConnectionPoolSettings
-        {
-            get { return _connectionPoolSettings; }
-        }
-
-        public int ListenBacklog
-        {
-            get
-            {
-                return _listenBacklog;
-            }
-
-            set
-            {
-                if (value <= 0)
-                {
-                    throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException("value",
-                        SR.ValueMustBePositive));
-                }
-
-                _listenBacklog = value;
-            }
-        }
+        public TcpConnectionPoolSettings ConnectionPoolSettings { get; }
 
         public override string Scheme
         {
@@ -82,33 +61,87 @@ namespace CoreWCF.Channels
             return new TcpTransportBindingElement(this);
         }
 
+        public override IChannelFactory<TChannel> BuildChannelFactory<TChannel>(BindingContext context)
+        {
+            if (context == null)
+            {
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(context));
+            }
+
+            if (!CanBuildChannelFactory<TChannel>(context))
+            {
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgument("TChannel", SR.Format(SR.ChannelTypeNotSupported, typeof(TChannel)));
+            }
+
+            return (IChannelFactory<TChannel>)(object)new TcpChannelFactory<TChannel>(this, context);
+        }
+
         public override T GetProperty<T>(BindingContext context)
         {
             if (context == null)
             {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(context));
             }
-            // TODO: Decide whether to support DeliveryRequirementsAttribute
-            //if (typeof(T) == typeof(IBindingDeliveryCapabilities))
-            //{
-            //    return (T)(object)new BindingDeliveryCapabilitiesHelper();
-            //}
+            if (typeof(T) == typeof(IBindingDeliveryCapabilities))
+            {
+                return (T)(object)new BindingDeliveryCapabilitiesHelper();
+            }
             else if (typeof(T) == typeof(ExtendedProtectionPolicy))
             {
                 return (T)(object)ExtendedProtectionPolicy;
             }
-            // TODO: Support ITransportCompressionSupport
-            //else if (typeof(T) == typeof(ITransportCompressionSupport))
-            //{
-            //    return (T)(object)new TransportCompressionSupportHelper();
-            //}
-            else if (typeof(T) == typeof(IConnectionReuseHandler))
+            else if (typeof(T) == typeof(ITransportCompressionSupport))
             {
-                return (T)(object)new ConnectionReuseHandler(new TcpTransportBindingElement(this));
+                return (T)(object)new TransportCompressionSupportHelper();
             }
             else
             {
                 return base.GetProperty<T>(context);
+            }
+        }
+
+        internal override bool IsMatch(BindingElement b)
+        {
+            if (!base.IsMatch(b))
+            {
+                return false;
+            }
+
+            TcpTransportBindingElement tcp = b as TcpTransportBindingElement;
+            if (tcp == null)
+            {
+                return false;
+            }
+
+            if (!ConnectionPoolSettings.IsMatch(tcp.ConnectionPoolSettings))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private class BindingDeliveryCapabilitiesHelper : IBindingDeliveryCapabilities
+        {
+            internal BindingDeliveryCapabilitiesHelper()
+            {
+            }
+            bool IBindingDeliveryCapabilities.AssuresOrderedDelivery
+            {
+                get { return true; }
+            }
+
+            bool IBindingDeliveryCapabilities.QueuedDelivery
+            {
+                get { return false; }
+            }
+        }
+
+        private class TransportCompressionSupportHelper : ITransportCompressionSupport
+        {
+            public bool IsCompressionFormatSupported(CompressionFormat compressionFormat)
+            {
+                return true;
             }
         }
     }

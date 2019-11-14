@@ -1,6 +1,11 @@
-﻿using System;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+
 using System.Text;
 using System.Xml;
+using System.ComponentModel;
 
 namespace CoreWCF.Channels
 {
@@ -19,11 +24,6 @@ namespace CoreWCF.Channels
 
         public TextMessageEncodingBindingElement(MessageVersion messageVersion, Encoding writeEncoding)
         {
-            if (messageVersion == null)
-            {
-                throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(messageVersion));
-            }
-
             if (writeEncoding == null)
             {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(writeEncoding));
@@ -35,7 +35,7 @@ namespace CoreWCF.Channels
             _maxWritePoolSize = EncoderDefaults.MaxWritePoolSize;
             _readerQuotas = new XmlDictionaryReaderQuotas();
             EncoderDefaults.ReaderQuotas.CopyTo(_readerQuotas);
-            _messageVersion = messageVersion;
+            _messageVersion = messageVersion ?? throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(messageVersion));
             _writeEncoding = writeEncoding;
         }
 
@@ -50,6 +50,7 @@ namespace CoreWCF.Channels
             _messageVersion = elementToBeCloned._messageVersion;
         }
 
+        [DefaultValue(EncoderDefaults.MaxReadPoolSize)]
         public int MaxReadPoolSize
         {
             get
@@ -67,6 +68,7 @@ namespace CoreWCF.Channels
             }
         }
 
+        [DefaultValue(EncoderDefaults.MaxWritePoolSize)]
         public int MaxWritePoolSize
         {
             get
@@ -109,12 +111,7 @@ namespace CoreWCF.Channels
             }
             set
             {
-                if (value == null)
-                {
-                    throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(value));
-                }
-
-                _messageVersion = value;
+                _messageVersion = value ?? throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(value));
             }
         }
 
@@ -134,6 +131,11 @@ namespace CoreWCF.Channels
                 TextEncoderDefaults.ValidateEncoding(value);
                 _writeEncoding = value;
             }
+        }
+
+        public override IChannelFactory<TChannel> BuildChannelFactory<TChannel>(BindingContext context)
+        {
+            return InternalBuildChannelFactory<TChannel>(context);
         }
 
         public override BindingElement Clone()
@@ -167,7 +169,7 @@ namespace CoreWCF.Channels
             return _messageVersion.Envelope == version;
         }
 
-        protected override bool IsMatch(BindingElement b)
+        internal override bool IsMatch(BindingElement b)
         {
             if (!base.IsMatch(b))
             {
@@ -216,7 +218,7 @@ namespace CoreWCF.Channels
                 return false;
             }
 
-            if (WriteEncoding.EncodingName != text.WriteEncoding.EncodingName)
+            if (WriteEncoding.WebName != text.WriteEncoding.WebName)
             {
                 return false;
             }

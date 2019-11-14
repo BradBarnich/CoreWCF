@@ -1,13 +1,18 @@
-﻿using System;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+
 using System.Threading;
 using System.Globalization;
+using System;
 
 namespace CoreWCF.Channels
 {
     internal class UriGenerator
     {
-        private long id;
-        private string prefix;
+        private long _id;
+        private string _prefix;
 
         public UriGenerator()
             : this("uuid")
@@ -23,7 +28,7 @@ namespace CoreWCF.Channels
         {
             if (scheme == null)
             {
-                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException("scheme"));
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(scheme)));
             }
 
             if (scheme.Length == 0)
@@ -31,13 +36,13 @@ namespace CoreWCF.Channels
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentException(SR.UriGeneratorSchemeMustNotBeEmpty, "scheme"));
             }
 
-            prefix = string.Concat(scheme, ":", Guid.NewGuid().ToString(), delimiter, "id=");
+            _prefix = string.Concat(scheme, ":", Guid.NewGuid().ToString(), delimiter, "id=");
         }
 
         public string Next()
         {
-            long nextId = Interlocked.Increment(ref id);
-            return prefix + nextId.ToString(CultureInfo.InvariantCulture);
+            long nextId = Interlocked.Increment(ref _id);
+            return _prefix + nextId.ToString(CultureInfo.InvariantCulture);
         }
     }
 }

@@ -1,127 +1,111 @@
-﻿using System;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
-using System.Reflection;
-using System.Threading;
-using System.Threading.Tasks;
 using CoreWCF.Runtime;
 using CoreWCF.Description;
 using CoreWCF.Diagnostics;
 using CoreWCF.Dispatcher;
+using CoreWCF.Security;
+using System.Threading;
+using System.Threading.Tasks;
+using System;
 
 namespace CoreWCF.Channels
 {
     // This class is sealed because the constructor could call Abort, which is virtual
     internal sealed class ServiceChannel : CommunicationObject, IChannel, IClientChannel, IDuplexContextChannel, IOutputChannel, IRequestChannel, IServiceChannel
     {
-        private int activityCount = 0;
-        private readonly bool allowOutputBatching = false;
+        private int _activityCount = 0;
+        private bool _allowInitializationUI = true;
+        private bool _allowOutputBatching = false;
+        private bool _autoClose = true;
+        private CallOnceManager _autoDisplayUIManager;
+        private CallOnceManager _autoOpenManager;
+        private readonly ChannelDispatcher _channelDispatcher;
+        private readonly bool _closeBinder = true;
+        private bool _didInteractiveInitialization;
+        private bool _doneReceiving;
+        private EndpointDispatcher _endpointDispatcher;
+        private bool _explicitlyOpened;
+        private ExtensionCollection<IContextChannel> _extensions;
+        private readonly SessionIdleManager _idleManager;
+        private EndpointAddress _localAddress;
+        private readonly bool _openBinder = false;
+        private TimeSpan _operationTimeout;
+        private object _proxy;
+        private string _terminatingOperationName;
+        private bool _hasChannelStartedAutoClosing;
+        private bool _hasCleanedUpChannelCollections;
+        private EventTraceActivity _eventActivity;
 
-        private bool autoClose = true;
-        //CallOnceManager autoDisplayUIManager;
-        private CallOnceManager autoOpenManager;
-        private readonly IChannelBinder binder;
-        private readonly ChannelDispatcher channelDispatcher;
-        private ClientRuntime clientRuntime;
-        private readonly bool closeBinder = true;
-        private bool closeFactory;
-        private bool doneReceiving;
-        private EndpointDispatcher endpointDispatcher;
-        private bool explicitlyOpened;
-        private ExtensionCollection<IContextChannel> extensions;
-        private readonly bool hasSession;
-        private readonly SessionIdleManager idleManager;
-        private InstanceContext instanceContext;
-        private ServiceThrottle instanceContextServiceThrottle;
-        private bool isPending;
-        private readonly bool isReplyChannel;
-        private EndpointAddress localAddress;
-        private readonly MessageVersion messageVersion;
-        private readonly bool openBinder = false;
-        private TimeSpan operationTimeout;
-        private object proxy;
-        private ServiceThrottle serviceThrottle;
-        private string terminatingOperationName;
+        private EventHandler<UnknownMessageReceivedEventArgs> _unknownMessageReceived;
 
-        private bool hasCleanedUpChannelCollections;
-        //EventTraceActivity eventActivity;
-        private IDefaultCommunicationTimeouts timeouts;
-
-        private EventHandler<UnknownMessageReceivedEventArgs> unknownMessageReceived;
-
-        private ServiceChannel(IChannelBinder binder, Binding binding)
+        private ServiceChannel(IChannelBinder binder, MessageVersion messageVersion, IDefaultCommunicationTimeouts timeouts)
         {
-            if (binder == null)
-            {
-                throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(binder));
-            }
-
-            this.messageVersion = binding.MessageVersion;
-            this.binder = binder;
-            isReplyChannel = this.binder.Channel is IReplyChannel;
+            MessageVersion = messageVersion;
+            Binder = binder ?? throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(binder));
+            IsReplyChannel = Binder.Channel is IReplyChannel;
 
             IChannel innerChannel = binder.Channel;
-            hasSession = (innerChannel is ISessionChannel<IDuplexSession>) ||
+            HasSession = (innerChannel is ISessionChannel<IDuplexSession>) ||
                         (innerChannel is ISessionChannel<IInputSession>) ||
                         (innerChannel is ISessionChannel<IOutputSession>);
 
             IncrementActivity();
-            openBinder = (binder.Channel.State == CommunicationState.Created);
+            _openBinder = (binder.Channel.State == CommunicationState.Created);
 
-            operationTimeout = binding.SendTimeout;
-            this.timeouts = binding;
+            _operationTimeout = timeouts.SendTimeout;
         }
 
-        // Only used by ServiceChannelFactory
-        //internal ServiceChannel(ServiceChannelFactory factory, IChannelBinder binder)
-        //    : this(binder, factory.MessageVersion, factory)
-        //{
-        //    this.factory = factory;
-        //    this.clientRuntime = factory.ClientRuntime;
-
-        //    this.SetupInnerChannelFaultHandler();
-
-        //    DispatchRuntime dispatch = factory.ClientRuntime.DispatchRuntime;
-        //    if (dispatch != null)
-        //    {
-        //        this.autoClose = dispatch.AutomaticInputSessionShutdown;
-        //    }
-
-        //    factory.ChannelCreated(this);
-        //}
-
-        internal ServiceChannel(IChannelBinder binder,
-                                EndpointDispatcher endpointDispatcher,
-                                ServiceDispatcher serviceDispatcher,
-                                SessionIdleManager idleManager)
-            : this(binder, serviceDispatcher.Binding)
+        internal ServiceChannel(ServiceChannelFactory factory, IChannelBinder binder)
+            : this(binder, factory.MessageVersion, factory)
         {
-            if (endpointDispatcher == null)
-            {
-                throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(endpointDispatcher));
-            }
-
-            channelDispatcher = serviceDispatcher.ChannelDispatcher;
-            this.endpointDispatcher = endpointDispatcher;
-            clientRuntime = endpointDispatcher.DispatchRuntime.CallbackClientRuntime;
+            Factory = factory;
+            ClientRuntime = factory.ClientRuntime;
 
             SetupInnerChannelFaultHandler();
 
-            autoClose = endpointDispatcher.DispatchRuntime.AutomaticInputSessionShutdown;
-            isPending = true;
+            DispatchRuntime dispatch = factory.ClientRuntime.DispatchRuntime;
+            if (dispatch != null)
+            {
+                _autoClose = dispatch.AutomaticInputSessionShutdown;
+            }
 
-            this.idleManager = idleManager;
+            factory.ChannelCreated(this);
+        }
+
+        internal ServiceChannel(IChannelBinder binder,
+                                EndpointDispatcher endpointDispatcher,
+                                ChannelDispatcher channelDispatcher,
+                                SessionIdleManager idleManager)
+            : this(binder, channelDispatcher.MessageVersion, channelDispatcher.DefaultCommunicationTimeouts)
+        {
+            _channelDispatcher = channelDispatcher;
+            _endpointDispatcher = endpointDispatcher ?? throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(endpointDispatcher));
+            ClientRuntime = endpointDispatcher.DispatchRuntime.CallbackClientRuntime;
+
+            SetupInnerChannelFaultHandler();
+
+            _autoClose = endpointDispatcher.DispatchRuntime.AutomaticInputSessionShutdown;
+            IsPending = true;
+
+            IDefaultCommunicationTimeouts timeouts = channelDispatcher.DefaultCommunicationTimeouts;
+            _idleManager = idleManager;
 
             if (!binder.HasSession)
             {
-                closeBinder = false;
+                _closeBinder = false;
             }
 
-            if (this.idleManager != null)
+            if (_idleManager != null)
             {
                 bool didIdleAbort;
-                this.idleManager.RegisterChannel(this, out didIdleAbort);
+                _idleManager.RegisterChannel(this, out didIdleAbort);
                 if (didIdleAbort)
                 {
                     Abort();
@@ -133,45 +117,41 @@ namespace CoreWCF.Channels
         {
             get
             {
-                if (!explicitlyOpened && (autoOpenManager == null))
+                if (!_explicitlyOpened && (_autoOpenManager == null))
                 {
                     EnsureAutoOpenManagers();
                 }
-                return autoOpenManager;
+                return _autoOpenManager;
             }
         }
 
-        //CallOnceManager AutoDisplayUIManager
-        //{
-        //    get
-        //    {
-        //        if (!this.explicitlyOpened && (this.autoDisplayUIManager == null))
-        //        {
-        //            this.EnsureAutoOpenManagers();
-        //        }
-        //        return this.autoDisplayUIManager;
-        //    }
-        //}
-
-
-        //internal EventTraceActivity EventActivity
-        //{
-        //    get
-        //    {
-        //        if (this.eventActivity == null)
-        //        {
-        //            //Take the id on the thread so that we know the initiating operation.
-        //            this.eventActivity = EventTraceActivity.GetFromThreadOrCreate();
-        //        }
-        //        return this.eventActivity;
-        //    }
-        //}
-
-        internal bool CloseFactory
+        private CallOnceManager AutoDisplayUIManager
         {
-            get { return closeFactory; }
-            set { closeFactory = value; }
+            get
+            {
+                if (!_explicitlyOpened && (_autoDisplayUIManager == null))
+                {
+                    EnsureAutoOpenManagers();
+                }
+                return _autoDisplayUIManager;
+            }
         }
+
+
+        internal EventTraceActivity EventActivity
+        {
+            get
+            {
+                if (_eventActivity == null)
+                {
+                    //Take the id on the thread so that we know the initiating operation.
+                    _eventActivity = EventTraceActivity.GetFromThreadOrCreate();
+                }
+                return _eventActivity;
+            }
+        }
+
+        internal bool CloseFactory { get; set; }
 
         protected override TimeSpan DefaultCloseTimeout
         {
@@ -187,92 +167,78 @@ namespace CoreWCF.Channels
         {
             get
             {
-                if (endpointDispatcher != null)
+                if (_endpointDispatcher != null)
                 {
-                    return endpointDispatcher.DispatchRuntime;
+                    return _endpointDispatcher.DispatchRuntime;
                 }
-                if (clientRuntime != null)
+                if (ClientRuntime != null)
                 {
-                    return clientRuntime.DispatchRuntime;
+                    return ClientRuntime.DispatchRuntime;
                 }
                 return null;
             }
         }
 
-        internal MessageVersion MessageVersion
-        {
-            get { return messageVersion; }
-        }
+        internal MessageVersion MessageVersion { get; }
 
-        internal IChannelBinder Binder
-        {
-            get { return binder; }
-        }
+        internal IChannelBinder Binder { get; }
 
         internal TimeSpan CloseTimeout
         {
             get
             {
-                //if (this.IsClient)
-                //{
-                //    return factory.InternalCloseTimeout;
-                //}
-                //else
-                //{
-                    return timeouts.CloseTimeout;
-                //}
+                if (IsClient)
+                {
+                    return Factory.InternalCloseTimeout;
+                }
+                else
+                {
+                    return ChannelDispatcher.InternalCloseTimeout;
+                }
             }
         }
 
         internal ChannelDispatcher ChannelDispatcher
         {
-            get { return channelDispatcher; }
+            get { return _channelDispatcher; }
         }
 
         internal EndpointDispatcher EndpointDispatcher
         {
-            get { return endpointDispatcher; }
+            get { return _endpointDispatcher; }
             set
             {
                 lock (ThisLock)
                 {
-                    endpointDispatcher = value;
-                    clientRuntime = value.DispatchRuntime.CallbackClientRuntime;
+                    _endpointDispatcher = value;
+                    ClientRuntime = value.DispatchRuntime.CallbackClientRuntime;
                 }
             }
         }
 
-        //internal ServiceChannelFactory Factory
-        //{
-        //    get { return this.factory; }
-        //}
+        internal ServiceChannelFactory Factory { get; }
 
         internal IChannel InnerChannel
         {
-            get { return binder.Channel; }
+            get { return Binder.Channel; }
         }
 
-        internal bool IsPending
+        internal bool IsPending { get; set; }
+
+        internal bool HasSession { get; }
+
+        internal bool IsClient
         {
-            get { return isPending; }
-            set { isPending = value; }
+            get { return Factory != null; }
         }
 
-        internal bool HasSession
-        {
-            get { return hasSession; }
-        }
-
-        internal bool IsReplyChannel
-        {
-            get { return isReplyChannel; }
-        }
+        internal bool IsReplyChannel { get; }
 
         public Uri ListenUri
         {
             get
             {
-                return binder.ListenUri;
+                return Binder.ListenUri;
             }
         }
 
@@ -280,18 +246,18 @@ namespace CoreWCF.Channels
         {
             get
             {
-                if (localAddress == null)
+                if (_localAddress == null)
                 {
-                    if (endpointDispatcher != null)
+                    if (_endpointDispatcher != null)
                     {
-                        localAddress = endpointDispatcher.EndpointAddress;
+                        _localAddress = _endpointDispatcher.EndpointAddress;
                     }
                     else
                     {
-                        localAddress = binder.LocalAddress;
+                        _localAddress = Binder.LocalAddress;
                     }
                 }
-                return localAddress;
+                return _localAddress;
             }
         }
 
@@ -299,20 +265,20 @@ namespace CoreWCF.Channels
         {
             get
             {
-                //if (this.IsClient)
-                //{
-                //    return factory.InternalOpenTimeout;
-                //}
-                //else
-                //{
+                if (IsClient)
+                {
+                    return Factory.InternalOpenTimeout;
+                }
+                else
+                {
                     return ChannelDispatcher.InternalOpenTimeout;
-                //}
+                }
             }
         }
 
         public TimeSpan OperationTimeout
         {
-            get { return operationTimeout; }
+            get { return _operationTimeout; }
             set
             {
                 if (value < TimeSpan.Zero)
@@ -326,7 +292,7 @@ namespace CoreWCF.Channels
                 }
 
 
-                operationTimeout = value;
+                _operationTimeout = value;
             }
         }
 
@@ -334,7 +300,7 @@ namespace CoreWCF.Channels
         {
             get
             {
-                object proxy = this.proxy;
+                object proxy = _proxy;
                 if (proxy != null)
                 {
                     return proxy;
@@ -346,15 +312,12 @@ namespace CoreWCF.Channels
             }
             set
             {
-                proxy = value;
-                base.EventSender = value;   // need to use "proxy" as open/close event source
+                _proxy = value;
+                EventSender = value;   // need to use "proxy" as open/close event source
             }
         }
 
-        internal ClientRuntime ClientRuntime
-        {
-            get { return clientRuntime; }
-        }
+        internal ClientRuntime ClientRuntime { get; private set; }
 
         public EndpointAddress RemoteAddress
         {
@@ -401,45 +364,31 @@ namespace CoreWCF.Channels
             }
         }
 
-        internal InstanceContext InstanceContext
-        {
-            get { return instanceContext; }
-            set { instanceContext = value; }
-        }
+        internal InstanceContext InstanceContext { get; set; }
 
-        internal ServiceThrottle InstanceContextServiceThrottle
-        {
-            get { return this.instanceContextServiceThrottle; }
-            set { this.instanceContextServiceThrottle = value; }
-        }
+        internal ServiceThrottle InstanceContextServiceThrottle { get; set; }
 
-        internal ServiceThrottle ServiceThrottle
-        {
-            get { return this.serviceThrottle; }
-            set
-            {
-                this.ThrowIfDisposed();
-                this.serviceThrottle = value;
-            }
-        }
+        internal ServiceThrottle ServiceThrottle { get; set; }
 
         private void SetupInnerChannelFaultHandler()
         {
-            // need to call this method after this.binder and this.clientRuntime are set to prevent a potential 
-            // NullReferenceException in this method or in the OnInnerChannelFaulted method; 
+            // need to call this method after this.binder and this.clientRuntime are set to prevent a potential
+            // NullReferenceException in this method or in the OnInnerChannelFaulted method;
             // because this method accesses this.binder and OnInnerChannelFaulted accesses this.clientRuntime.
-            binder.Channel.Faulted += OnInnerChannelFaulted;
+            Binder.Channel.Faulted += OnInnerChannelFaulted;
         }
 
-        //void BindDuplexCallbacks()
-        //{
-        //    IDuplexChannel duplexChannel = this.InnerChannel as IDuplexChannel;
-        //    if ((duplexChannel != null) && (this.factory != null) && (this.instanceContext != null))
-        //    {
-        //        if (this.binder is DuplexChannelBinder)
-        //            ((DuplexChannelBinder)this.binder).EnsurePumping();
-        //    }
-        //}
+        private void BindDuplexCallbacks()
+        {
+            IDuplexChannel duplexChannel = InnerChannel as IDuplexChannel;
+            if ((duplexChannel != null) && (Factory != null) && (InstanceContext != null))
+            {
+                if (Binder is DuplexChannelBinder)
+                {
+                    ((DuplexChannelBinder)Binder).EnsurePumping();
+                }
+            }
+        }
 
         internal bool CanCastTo(Type t)
         {
@@ -463,9 +412,9 @@ namespace CoreWCF.Channels
 
         internal void CompletedIOOperation()
         {
-            if (idleManager != null)
+            if (_idleManager != null)
             {
-                idleManager.CompletedActivity();
+                _idleManager.CompletedActivity();
             }
         }
 
@@ -473,14 +422,67 @@ namespace CoreWCF.Channels
         {
             lock (ThisLock)
             {
-                if (!explicitlyOpened)
+                if (!_explicitlyOpened)
                 {
-                    if (autoOpenManager == null)
+                    if (_autoOpenManager == null)
                     {
-                        autoOpenManager = new CallOnceManager(this, CallOpenOnce.Instance);
+                        _autoOpenManager = new CallOnceManager(this, CallOpenOnce.Instance);
+                    }
+                    if (_autoDisplayUIManager == null)
+                    {
+                        _autoDisplayUIManager = new CallOnceManager(this, CallDisplayUIOnce.Instance);
                     }
                 }
             }
+        }
+
+        private void EnsureDisplayUI()
+        {
+            CallOnceManager manager = AutoDisplayUIManager;
+            if (manager != null)
+            {
+                manager.CallOnce(TimeSpan.MaxValue, null);
+            }
+            ThrowIfInitializationUINotCalled();
+        }
+
+        private IAsyncResult BeginEnsureDisplayUI(AsyncCallback callback, object state)
+        {
+            CallOnceManager manager = AutoDisplayUIManager;
+            if (manager != null)
+            {
+                return manager.BeginCallOnce(TimeSpan.MaxValue, null, callback, state);
+            }
+            else
+            {
+                return new CallOnceCompletedAsyncResult(callback, state);
+            }
+        }
+
+        private void EndEnsureDisplayUI(IAsyncResult result)
+        {
+            CallOnceManager manager = AutoDisplayUIManager;
+            if (manager != null)
+            {
+                manager.EndCallOnce(result);
+            }
+            else
+            {
+                CallOnceCompletedAsyncResult.End(result);
+            }
+            ThrowIfInitializationUINotCalled();
+        }
+
+        private void EnsureOpened(TimeSpan timeout)
+        {
+            CallOnceManager manager = AutoOpenManager;
+            if (manager != null)
+            {
+                manager.CallOnce(timeout, _autoDisplayUIManager);
+            }
+
+            ThrowIfOpening();
+            ThrowIfDisposedOrNotOpen();
         }
 
         private async Task EnsureOpenedAsync(CancellationToken token)
@@ -494,6 +496,35 @@ namespace CoreWCF.Channels
 
             ThrowIfOpening();
             ThrowIfDisposedOrNotOpen();
+        }
+
+        private IAsyncResult BeginEnsureOpened(TimeSpan timeout, AsyncCallback callback, object state)
+        {
+            CallOnceManager manager = AutoOpenManager;
+            if (manager != null)
+            {
+                return manager.BeginCallOnce(timeout, _autoDisplayUIManager, callback, state);
+            }
+            else
+            {
+                ThrowIfOpening();
+                ThrowIfDisposedOrNotOpen();
+
+                return new CallOnceCompletedAsyncResult(callback, state);
+            }
+        }
+
+        private void EndEnsureOpened(IAsyncResult result)
+        {
+            CallOnceManager manager = AutoOpenManager;
+            if (manager != null)
+            {
+                manager.EndCallOnce(result);
+            }
+            else
+            {
+                CallOnceCompletedAsyncResult.End(result);
+            }
         }
 
         public T GetProperty<T>() where T : class
@@ -536,9 +567,14 @@ namespace CoreWCF.Channels
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.Format(SR.SFxNonInitiatingOperation1, operation.Name)));
             }
 
-            if (terminatingOperationName != null)
+            if (_terminatingOperationName != null)
             {
-                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.Format(SR.SFxTerminatingOperationAlreadyCalled1, terminatingOperationName)));
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.Format(SR.SFxTerminatingOperationAlreadyCalled1, _terminatingOperationName)));
+            }
+
+            if (_hasChannelStartedAutoClosing)
+            {
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ProtocolException(SR.SFxClientOutputSessionAutoClosed));
             }
 
             operation.BeforeRequest(ref rpc);
@@ -555,162 +591,177 @@ namespace CoreWCF.Channels
                 {
                     headers.ReplyTo = localAddress ?? EndpointAddress.AnonymousAddress;
                 }
+
+                if (IsClient && (localAddress != null) && !localAddress.IsAnonymous)
+                {
+                    Uri localUri = localAddress.Uri;
+
+                    if ((replyTo != null) && !replyTo.IsAnonymous && (localUri != replyTo.Uri))
+                    {
+                        string text = SR.Format(SR.SFxRequestHasInvalidReplyToOnClient, replyTo.Uri, localUri);
+                        Exception error = new InvalidOperationException(text);
+                        throw TraceUtility.ThrowHelperError(error, rpc.Request);
+                    }
+
+                    EndpointAddress faultTo = headers.FaultTo;
+                    if ((faultTo != null) && !faultTo.IsAnonymous && (localUri != faultTo.Uri))
+                    {
+                        string text = SR.Format(SR.SFxRequestHasInvalidFaultToOnClient, faultTo.Uri, localUri);
+                        Exception error = new InvalidOperationException(text);
+                        throw TraceUtility.ThrowHelperError(error, rpc.Request);
+                    }
+
+                    if (MessageVersion.Addressing == AddressingVersion.WSAddressingAugust2004)
+                    {
+                        EndpointAddress from = headers.From;
+                        if ((from != null) && !from.IsAnonymous && (localUri != from.Uri))
+                        {
+                            string text = SR.Format(SR.SFxRequestHasInvalidFromOnClient, from.Uri, localUri);
+                            Exception error = new InvalidOperationException(text);
+                            throw TraceUtility.ThrowHelperError(error, rpc.Request);
+                        }
+                    }
+                }
             }
 
-            //if (TraceUtility.MessageFlowTracingOnly)
-            //{
-            //    //always set a new ID if none provided
-            //    if (Trace.CorrelationManager.ActivityId == Guid.Empty)
-            //    {
-            //        rpc.ActivityId = Guid.NewGuid();
-            //        FxTrace.Trace.SetAndTraceTransfer(rpc.ActivityId, true);
-            //    }
-            //}
+            if (TraceUtility.MessageFlowTracingOnly)
+            {
+                //always set a new ID if none provided
+            }
 
-            //if (rpc.Activity != null)
-            //{
-            //    TraceUtility.SetActivity(rpc.Request, rpc.Activity);
-            //    if (TraceUtility.ShouldPropagateActivity)
-            //    {
-            //        TraceUtility.AddActivityHeader(rpc.Request);
-            //    }
-            //}
-            //else if (TraceUtility.PropagateUserActivity || TraceUtility.ShouldPropagateActivity)
-            //{
-            //    TraceUtility.AddAmbientActivityToMessage(rpc.Request);
-            //}
+            if (rpc.Activity != null)
+            {
+                TraceUtility.SetActivity(rpc.Request, rpc.Activity);
+                if (TraceUtility.ShouldPropagateActivity)
+                {
+                    TraceUtility.AddActivityHeader(rpc.Request);
+                }
+            }
+            else if (TraceUtility.PropagateUserActivity || TraceUtility.ShouldPropagateActivity)
+            {
+                TraceUtility.AddAmbientActivityToMessage(rpc.Request);
+            }
             operation.Parent.BeforeSendRequest(ref rpc);
 
 
             //Attach and transfer Activity
-            //if (FxTrace.Trace.IsEnd2EndActivityTracingEnabled)
-            //{
-            //    TraceClientOperationPrepared(ref rpc);
-            //}
+            if (Fx.Trace.IsEnd2EndActivityTracingEnabled)
+            {
+                TraceClientOperationPrepared(ref rpc);
+            }
 
-            //TraceUtility.MessageFlowAtMessageSent(rpc.Request, rpc.EventTraceActivity);
+            TraceUtility.MessageFlowAtMessageSent(rpc.Request, rpc.EventTraceActivity);
 
-            //if (MessageLogger.LogMessagesAtServiceLevel)
-            //{
-            //    MessageLogger.LogMessage(ref rpc.Request, (oneway ? MessageLoggingSource.ServiceLevelSendDatagram : MessageLoggingSource.ServiceLevelSendRequest) | MessageLoggingSource.LastChance);
-            //}
+            if (MessageLogger.LogMessagesAtServiceLevel)
+            {
+                MessageLogger.LogMessage(ref rpc.Request, (oneway ? MessageLoggingSource.ServiceLevelSendDatagram : MessageLoggingSource.ServiceLevelSendRequest) | MessageLoggingSource.LastChance);
+            }
         }
 
-        //private void TraceClientOperationPrepared(ref ProxyRpc rpc)
-        //{
-        //    //Retrieve the old id on the RPC and attach the id on the message since we have a message id now.
-        //    Guid previousId = rpc.EventTraceActivity != null ? rpc.EventTraceActivity.ActivityId : Guid.Empty;
-        //    EventTraceActivity requestActivity = EventTraceActivityHelper.TryExtractActivity(rpc.Request);
-        //    if (requestActivity == null)
-        //    {
-        //        requestActivity = EventTraceActivity.GetFromThreadOrCreate();
-        //        EventTraceActivityHelper.TryAttachActivity(rpc.Request, requestActivity);
-        //    }
-        //    rpc.EventTraceActivity = requestActivity;
+        private void TraceClientOperationPrepared(ref ProxyRpc rpc)
+        {
+            //Retrieve the old id on the RPC and attach the id on the message since we have a message id now.
+            Guid previousId = rpc.EventTraceActivity != null ? rpc.EventTraceActivity.ActivityId : Guid.Empty;
+            EventTraceActivity requestActivity = EventTraceActivityHelper.TryExtractActivity(rpc.Request);
+            if (requestActivity == null)
+            {
+                requestActivity = EventTraceActivity.GetFromThreadOrCreate();
+                EventTraceActivityHelper.TryAttachActivity(rpc.Request, requestActivity);
+            }
+            rpc.EventTraceActivity = requestActivity;
 
-        //    if (TD.ClientOperationPreparedIsEnabled())
-        //    {
-        //        string remoteAddress = string.Empty;
-        //        if (this.RemoteAddress != null && this.RemoteAddress.Uri != null)
-        //        {
-        //            remoteAddress = this.RemoteAddress.Uri.AbsoluteUri;
-        //        }
-        //        TD.ClientOperationPrepared(rpc.EventTraceActivity,
-        //                                    rpc.Action,
-        //                                    this.clientRuntime.ContractName,
-        //                                    remoteAddress,
-        //                                    previousId);
-        //    }
+            if (WcfEventSource.Instance.ClientOperationPreparedIsEnabled())
+            {
+                string remoteAddress = string.Empty;
+                if (RemoteAddress != null && RemoteAddress.Uri != null)
+                {
+                    remoteAddress = RemoteAddress.Uri.AbsoluteUri;
+                }
+                WcfEventSource.Instance.ClientOperationPrepared(rpc.EventTraceActivity,
+                                            rpc.Action,
+                                            ClientRuntime.ContractName,
+                                            remoteAddress,
+                                            previousId);
+            }
+        }
 
-        //}
+        internal static IAsyncResult BeginCall(ServiceChannel channel, ProxyOperationRuntime operation, object[] ins, AsyncCallback callback, object asyncState)
+        {
+            Fx.Assert(channel != null, "'channel' MUST NOT be NULL.");
+            Fx.Assert(operation != null, "'operation' MUST NOT be NULL.");
+            return channel.BeginCall(operation.Action, operation.IsOneWay, operation, ins, channel._operationTimeout, callback, asyncState);
+        }
 
         internal IAsyncResult BeginCall(string action, bool oneway, ProxyOperationRuntime operation, object[] ins, AsyncCallback callback, object asyncState)
         {
-            return BeginCall(action, oneway, operation, ins, operationTimeout, callback, asyncState);
+            return BeginCall(action, oneway, operation, ins, _operationTimeout, callback, asyncState);
         }
 
         internal IAsyncResult BeginCall(string action, bool oneway, ProxyOperationRuntime operation, object[] ins, TimeSpan timeout, AsyncCallback callback, object asyncState)
         {
-            var helper = new TimeoutHelper(operationTimeout);
-            return BeginCallAsync(action, oneway, operation, ins, helper.GetCancellationToken()).ToApm(callback, asyncState);
-        }
-
-        internal async Task<ProxyRpc> BeginCallAsync(string action, bool oneway, ProxyOperationRuntime operation, object[] ins, CancellationToken token)
-        {
+            ThrowIfDisallowedInitializationUI();
             ThrowIfIdleAborted(operation);
             ThrowIfIsConnectionOpened(operation);
 
-            ProxyRpc rpc = new ProxyRpc(this, operation, action, ins, token);
+            ServiceModelActivity serviceModelActivity = null;
 
-            PrepareCall(operation, oneway, ref rpc);
-
-            if (!explicitlyOpened)
+            if (DiagnosticUtility.ShouldUseActivity)
             {
-                await EnsureOpenedAsync(token);
-            }
-            else
-            {
-                ThrowIfOpening();
-                ThrowIfDisposedOrNotOpen();
+                serviceModelActivity = ServiceModelActivity.CreateActivity(true);
+                callback = TraceUtility.WrapExecuteUserCodeAsyncCallback(callback);
             }
 
-            try
-            {
-                ConcurrencyBehavior.UnlockInstanceBeforeCallout(OperationContext.Current);
+            SendAsyncResult result;
 
-                if (oneway)
+            using (Activity boundOperation = ServiceModelActivity.BoundOperation(serviceModelActivity, true))
+            {
+                if (DiagnosticUtility.ShouldUseActivity)
                 {
-                    await binder.SendAsync(rpc.Request, rpc.CancellationToken);
+                    ServiceModelActivity.Start(serviceModelActivity, SR.Format(SR.ActivityProcessAction, action), ActivityType.ProcessAction);
                 }
-                else
+
+                result = new SendAsyncResult(this, operation, action, ins, oneway, timeout, callback, asyncState);
+                if (DiagnosticUtility.ShouldUseActivity)
                 {
-                    rpc.Reply = await binder.RequestAsync(rpc.Request, rpc.CancellationToken);
-
-                    if (rpc.Reply == null)
-                    {
-                        ThrowIfFaulted();
-                        throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new CommunicationException(SR.SFxServerDidNotReply));
-                    }
+                    result.Rpc.Activity = serviceModelActivity;
                 }
-            }
-            finally
-            {
-                CompletedIOOperation();
-                CallOnceManager.SignalNextIfNonNull(autoOpenManager);
-                await ConcurrencyBehavior.LockInstanceAfterCalloutAsync(OperationContext.Current);
+
+                TraceServiceChannelCallStart(result.Rpc.EventTraceActivity, false);
+
+                result.Begin();
             }
 
-            return rpc;
+            return result;
         }
 
-
-        internal Task<object> CallAsync(string action, bool oneway, ProxyOperationRuntime operation, object[] ins, object[] outs)
+        internal object Call(string action, bool oneway, ProxyOperationRuntime operation, object[] ins, object[] outs)
         {
-            var helper = new TimeoutHelper(operationTimeout);
-            return CallAsync(action, oneway, operation, ins, outs, helper.GetCancellationToken());
+            return Call(action, oneway, operation, ins, outs, _operationTimeout);
         }
 
-        internal async Task<object> CallAsync(string action, bool oneway, ProxyOperationRuntime operation, object[] ins, object[] outs, CancellationToken token)
+        internal object Call(string action, bool oneway, ProxyOperationRuntime operation, object[] ins, object[] outs, TimeSpan timeout)
         {
+            ThrowIfDisallowedInitializationUI();
             ThrowIfIdleAborted(operation);
             ThrowIfIsConnectionOpened(operation);
 
-            ProxyRpc rpc = new ProxyRpc(this, operation, action, ins, token);
+            ProxyRpc rpc = new ProxyRpc(this, operation, action, ins, timeout);
 
-            //TraceServiceChannelCallStart(rpc.EventTraceActivity, true);
+            TraceServiceChannelCallStart(rpc.EventTraceActivity, true);
 
-            //using (rpc.Activity = DiagnosticUtility.ShouldUseActivity ? ServiceModelActivity.CreateBoundedActivity() : null)
-            //{
-            //    if (DiagnosticUtility.ShouldUseActivity)
-            //    {
-            //        ServiceModelActivity.Start(rpc.Activity, SR.Format(SR.ActivityProcessAction, action), ActivityType.ProcessAction);
-            //    }
+            using (rpc.Activity = DiagnosticUtility.ShouldUseActivity ? ServiceModelActivity.CreateBoundedActivity() : null)
+            {
+                if (DiagnosticUtility.ShouldUseActivity)
+                {
+                    ServiceModelActivity.Start(rpc.Activity, SR.Format(SR.ActivityProcessAction, action), ActivityType.ProcessAction);
+                }
 
                 PrepareCall(operation, oneway, ref rpc);
 
-                if (!explicitlyOpened)
+                if (!_explicitlyOpened)
                 {
-                    await EnsureOpenedAsync(token);
+                    EnsureDisplayUI();
+                    EnsureOpened(rpc.TimeoutHelper.RemainingTime());
                 }
                 else
                 {
@@ -724,11 +775,11 @@ namespace CoreWCF.Channels
 
                     if (oneway)
                     {
-                        await binder.SendAsync(rpc.Request, rpc.CancellationToken);
+                        Binder.Send(rpc.Request, rpc.TimeoutHelper.RemainingTime());
                     }
                     else
                     {
-                        rpc.Reply = await binder.RequestAsync(rpc.Request, rpc.CancellationToken);
+                        rpc.Reply = Binder.Request(rpc.Request, rpc.TimeoutHelper.RemainingTime());
 
                         if (rpc.Reply == null)
                         {
@@ -740,73 +791,111 @@ namespace CoreWCF.Channels
                 finally
                 {
                     CompletedIOOperation();
-                    CallOnceManager.SignalNextIfNonNull(autoOpenManager);
-                    await ConcurrencyBehavior.LockInstanceAfterCalloutAsync(OperationContext.Current);
+                    CallOnceManager.SignalNextIfNonNull(_autoOpenManager);
+                    ConcurrencyBehavior.LockInstanceAfterCallout(OperationContext.Current);
                 }
 
                 rpc.OutputParameters = outs;
                 HandleReply(operation, ref rpc);
-            //}
+            }
             return rpc.ReturnValue;
         }
 
         internal object EndCall(string action, object[] outs, IAsyncResult result)
         {
-            var rpc = result.ToApmEnd<ProxyRpc>();
-            rpc.OutputParameters = outs;
-            HandleReply(rpc.Operation, ref rpc);
-            return rpc.ReturnValue;
+            SendAsyncResult sendResult = result as SendAsyncResult;
+            if (sendResult == null)
+            {
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentException(SR.SFxInvalidCallbackIAsyncResult));
+            }
+
+            using (ServiceModelActivity rpcActivity = sendResult.Rpc.Activity)
+            {
+                using (ServiceModelActivity.BoundOperation(rpcActivity, true))
+                {
+                    if (sendResult.Rpc.Activity != null && DiagnosticUtility.ShouldUseActivity)
+                    {
+                        sendResult.Rpc.Activity.Resume();
+                    }
+                    if (sendResult.Rpc.Channel != this)
+                    {
+                        throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgument("result", SR.AsyncEndCalledOnWrongChannel);
+                    }
+
+                    if (action != MessageHeaders.WildcardAction && action != sendResult.Rpc.Action)
+                    {
+                        throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgument("result", SR.AsyncEndCalledWithAnIAsyncResult);
+                    }
+
+                    SendAsyncResult.End(sendResult);
+
+                    sendResult.Rpc.OutputParameters = outs;
+                    HandleReply(sendResult.Rpc.Operation, ref sendResult.Rpc);
+
+                    if (sendResult.Rpc.Activity != null)
+                    {
+                        sendResult.Rpc.Activity = null;
+                    }
+                    return sendResult.Rpc.ReturnValue;
+                }
+            }
         }
 
         internal void DecrementActivity()
         {
-            int updatedActivityCount = Interlocked.Decrement(ref activityCount);
+            int updatedActivityCount = Interlocked.Decrement(ref _activityCount);
 
             if (!((updatedActivityCount >= 0)))
             {
                 throw Fx.AssertAndThrowFatal("ServiceChannel.DecrementActivity: (updatedActivityCount >= 0)");
             }
 
-            if (updatedActivityCount == 0 && autoClose)
+            if (updatedActivityCount == 0 && _autoClose)
             {
                 try
                 {
                     if (State == CommunicationState.Opened)
                     {
-                        // TODO: Async
-                        var helper = new TimeoutHelper(CloseTimeout);
-                        CloseAsync(helper.GetCancellationToken()).GetAwaiter().GetResult();
+                        if (IsClient)
+                        {
+                            ISessionChannel<IDuplexSession> duplexSessionChannel = InnerChannel as ISessionChannel<IDuplexSession>;
+                            if (duplexSessionChannel != null)
+                            {
+                                _hasChannelStartedAutoClosing = true;
+                                duplexSessionChannel.Session.CloseOutputSession(CloseTimeout);
+                            }
+                        }
+                        else
+                        {
+                            Close(CloseTimeout);
+                        }
                     }
                 }
-                catch (CommunicationException e)
+                catch (CommunicationException)
                 {
-                    DiagnosticUtility.TraceHandledException(e, TraceEventType.Information);
                 }
                 catch (TimeoutException e)
                 {
-                    //if (TD.CloseTimeoutIsEnabled())
-                    //{
-                    //    TD.CloseTimeout(e.Message);
-                    //}
-                    DiagnosticUtility.TraceHandledException(e, TraceEventType.Information);
+                    if (WcfEventSource.Instance.CloseTimeoutIsEnabled())
+                    {
+                        WcfEventSource.Instance.CloseTimeout(e.Message);
+                    }
                 }
-                catch (ObjectDisposedException e)
+                catch (ObjectDisposedException)
                 {
-                    DiagnosticUtility.TraceHandledException(e, TraceEventType.Information);
                 }
-                catch (InvalidOperationException e)
+                catch (InvalidOperationException)
                 {
-                    DiagnosticUtility.TraceHandledException(e, TraceEventType.Information);
                 }
             }
         }
 
         internal void FireUnknownMessageReceived(Message message)
         {
-            EventHandler<UnknownMessageReceivedEventArgs> handler = unknownMessageReceived;
+            EventHandler<UnknownMessageReceivedEventArgs> handler = _unknownMessageReceived;
             if (handler != null)
             {
-                handler(proxy, new UnknownMessageReceivedEventArgs(message));
+                handler(_proxy, new UnknownMessageReceivedEventArgs(message));
             }
         }
 
@@ -830,18 +919,13 @@ namespace CoreWCF.Channels
                 bool first;
                 lock (ThisLock)
                 {
-                    first = !doneReceiving;
-                    doneReceiving = true;
+                    first = !_doneReceiving;
+                    _doneReceiving = true;
                 }
 
                 if (first)
                 {
                     DispatchRuntime dispatchBehavior = ClientRuntime.DispatchRuntime;
-                    if (dispatchBehavior != null)
-                    {
-                        dispatchBehavior.GetRuntime().InputSessionDoneReceiving(this);
-                    }
-
                     DecrementActivity();
                 }
             }
@@ -852,35 +936,36 @@ namespace CoreWCF.Channels
             try
             {
                 //set the ID after response
-                //if (TraceUtility.MessageFlowTracingOnly && rpc.ActivityId != Guid.Empty)
-                //{
-                //    System.Runtime.Diagnostics.DiagnosticTraceBase.ActivityId = rpc.ActivityId;
-                //}
+                if (TraceUtility.MessageFlowTracingOnly && rpc.ActivityId != Guid.Empty)
+                {
+                    DiagnosticTraceBase.ActivityId = rpc.ActivityId;
+                }
 
                 if (rpc.Reply != null)
                 {
-                    //TraceUtility.MessageFlowAtMessageReceived(rpc.Reply, null, rpc.EventTraceActivity, false);
+                    TraceUtility.MessageFlowAtMessageReceived(rpc.Reply, null, rpc.EventTraceActivity, false);
 
-                    //if (MessageLogger.LogMessagesAtServiceLevel)
-                    //{
-                    //    MessageLogger.LogMessage(ref rpc.Reply, MessageLoggingSource.ServiceLevelReceiveReply | MessageLoggingSource.LastChance);
-                    //}
+                    if (MessageLogger.LogMessagesAtServiceLevel)
+                    {
+                        MessageLogger.LogMessage(ref rpc.Reply, MessageLoggingSource.ServiceLevelReceiveReply | MessageLoggingSource.LastChance);
+                    }
                     operation.Parent.AfterReceiveReply(ref rpc);
 
                     if ((operation.ReplyAction != MessageHeaders.WildcardAction) && !rpc.Reply.IsFault && rpc.Reply.Headers.Action != null)
                     {
-                        if (string.CompareOrdinal(operation.ReplyAction, rpc.Reply.Headers.Action) != 0)
+                        if (String.CompareOrdinal(operation.ReplyAction, rpc.Reply.Headers.Action) != 0)
                         {
-                            Exception error = new ProtocolException(SR.Format(SR.SFxReplyActionMismatch3,operation.Name,
+                            Exception error = new ProtocolException(SR.Format(SR.SFxReplyActionMismatch3,
+                                                                                  operation.Name,
                                                                                   rpc.Reply.Headers.Action,
                                                                                   operation.ReplyAction));
                             TerminateIfNecessary(ref rpc);
                             throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(error);
                         }
                     }
-                    if (operation.DeserializeReply && clientRuntime.IsFault(ref rpc.Reply))
+                    if (operation.DeserializeReply && ClientRuntime.IsFault(ref rpc.Reply))
                     {
-                        MessageFault fault = MessageFault.CreateFault(rpc.Reply, clientRuntime.MaxFaultSize);
+                        MessageFault fault = MessageFault.CreateFault(rpc.Reply, ClientRuntime.MaxFaultSize);
                         string action = rpc.Reply.Headers.Action;
                         if (action == rpc.Reply.Version.Addressing.DefaultFaultAction)
                         {
@@ -914,37 +999,36 @@ namespace CoreWCF.Channels
                     rpc.Reply.Close();
                 }
 
-                //if (TraceUtility.MessageFlowTracingOnly)
-                //{
-                //    if (rpc.ActivityId != Guid.Empty)
-                //    {
-                //        //reset the ID as it was created internally - ensures each call is uniquely correlatable
-                //        System.Runtime.Diagnostics.DiagnosticTraceBase.ActivityId = Guid.Empty;
-                //        rpc.ActivityId = Guid.Empty;
-                //    }
-                //}
+                if (TraceUtility.MessageFlowTracingOnly)
+                {
+                    if (rpc.ActivityId != Guid.Empty)
+                    {
+                        //reset the ID as it was created internally - ensures each call is uniquely correlatable
+                        DiagnosticTraceBase.ActivityId = Guid.Empty;
+                        rpc.ActivityId = Guid.Empty;
+                    }
+                }
             }
             TerminateIfNecessary(ref rpc);
 
-            //if (TD.ServiceChannelCallStopIsEnabled())
-            //{
-            //    string remoteAddress = string.Empty;
-            //    if (this.RemoteAddress != null && this.RemoteAddress.Uri != null)
-            //    {
-            //        remoteAddress = this.RemoteAddress.Uri.AbsoluteUri;
-            //    }
-            //    TD.ServiceChannelCallStop(rpc.EventTraceActivity, rpc.Action,
-            //                                this.clientRuntime.ContractName,
-            //                                remoteAddress);
-            //}
-
+            if (WcfEventSource.Instance.ServiceChannelCallStopIsEnabled())
+            {
+                string remoteAddress = string.Empty;
+                if (RemoteAddress != null && RemoteAddress.Uri != null)
+                {
+                    remoteAddress = RemoteAddress.Uri.AbsoluteUri;
+                }
+                WcfEventSource.Instance.ServiceChannelCallStop(rpc.EventTraceActivity, rpc.Action,
+                                            ClientRuntime.ContractName,
+                                            remoteAddress);
+            }
         }
 
         private void TerminateIfNecessary(ref ProxyRpc rpc)
         {
             if (rpc.Operation.IsTerminating)
             {
-                terminatingOperationName = rpc.Operation.Name;
+                _terminatingOperationName = rpc.Operation.Name;
                 TerminatingOperationBehavior.AfterReply(ref rpc);
             }
         }
@@ -992,22 +1076,16 @@ namespace CoreWCF.Channels
                     {
                         throw DiagnosticUtility.ExceptionUtility.ThrowHelperWarning(new ChannelTerminatedException(fault.Reason.GetMatchingTranslation(CultureInfo.CurrentCulture).Text));
                     }
-
-                    //if (string.Compare(code.Name, FaultCodeConstants.Codes.TransactionAborted, StringComparison.Ordinal) == 0)
-                    //{
-                    //    throw DiagnosticUtility.ExceptionUtility.ThrowHelperWarning(new ProtocolException(fault.Reason.GetMatchingTranslation(CultureInfo.CurrentCulture).Text));
-                    //}
                 }
 
                 // throw SecurityAccessDeniedException explicitly
-                // MessageSecurity
-                //if (string.Compare(code.Namespace, SecurityVersion.Default.HeaderNamespace.Value, StringComparison.Ordinal) == 0)
-                //{
-                //    if (string.Compare(code.Name, SecurityVersion.Default.FailedAuthenticationFaultCode.Value, StringComparison.Ordinal) == 0)
-                //    {
-                //        throw DiagnosticUtility.ExceptionUtility.ThrowHelperWarning(new SecurityAccessDeniedException(fault.Reason.GetMatchingTranslation(CultureInfo.CurrentCulture).Text));
-                //    }
-                //}
+                if (string.Compare(code.Namespace, SecurityVersion.Default.HeaderNamespace.Value, StringComparison.Ordinal) == 0)
+                {
+                    if (string.Compare(code.Name, SecurityVersion.Default.FailedAuthenticationFaultCode.Value, StringComparison.Ordinal) == 0)
+                    {
+                        throw DiagnosticUtility.ExceptionUtility.ThrowHelperWarning(new SecurityAccessDeniedException(fault.Reason.GetMatchingTranslation(CultureInfo.CurrentCulture).Text));
+                    }
+                }
             }
 
             if (checkReceiver)
@@ -1038,7 +1116,7 @@ namespace CoreWCF.Channels
 
         private void ThrowIfIdleAborted(ProxyOperationRuntime operation)
         {
-            if (idleManager != null && idleManager.DidIdleAbort)
+            if (_idleManager != null && _idleManager.DidIdleAbort)
             {
                 string text = SR.Format(SR.SFxServiceChannelIdleAborted, operation.Name);
                 Exception error = new CommunicationObjectAbortedException(text);
@@ -1055,6 +1133,36 @@ namespace CoreWCF.Channels
             }
         }
 
+        private void ThrowIfInitializationUINotCalled()
+        {
+            if (!_didInteractiveInitialization && (ClientRuntime.InteractiveChannelInitializers.Count > 0))
+            {
+                IInteractiveChannelInitializer example = ClientRuntime.InteractiveChannelInitializers[0];
+                string text = SR.Format(SR.SFxInitializationUINotCalled, example.GetType().ToString());
+                Exception error = new InvalidOperationException(text);
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(error);
+            }
+        }
+
+        private void ThrowIfDisallowedInitializationUI()
+        {
+            if (!_allowInitializationUI)
+            {
+                ThrowIfDisallowedInitializationUICore();
+            }
+        }
+
+        private void ThrowIfDisallowedInitializationUICore()
+        {
+            if (ClientRuntime.InteractiveChannelInitializers.Count > 0)
+            {
+                IInteractiveChannelInitializer example = ClientRuntime.InteractiveChannelInitializers[0];
+                string text = SR.Format(SR.SFxInitializationUIDisallowed, example.GetType().ToString());
+                Exception error = new InvalidOperationException(text);
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(error);
+            }
+        }
+
         private void ThrowIfOpening()
         {
             if (State == CommunicationState.Opening)
@@ -1065,7 +1173,7 @@ namespace CoreWCF.Channels
 
         internal void IncrementActivity()
         {
-            Interlocked.Increment(ref activityCount);
+            Interlocked.Increment(ref _activityCount);
         }
 
         private void OnInnerChannelFaulted(object sender, EventArgs e)
@@ -1075,13 +1183,9 @@ namespace CoreWCF.Channels
             if (HasSession)
             {
                 DispatchRuntime dispatchRuntime = ClientRuntime.DispatchRuntime;
-                if (dispatchRuntime != null)
-                {
-                    dispatchRuntime.GetRuntime().InputSessionFaulted(this);
-                }
             }
 
-            if (autoClose)
+            if (_autoClose && !IsClient)
             {
                 Abort();
             }
@@ -1089,7 +1193,7 @@ namespace CoreWCF.Channels
 
         private void AddMessageProperties(Message message, OperationContext context)
         {
-            if (allowOutputBatching)
+            if (_allowOutputBatching)
             {
                 message.Properties.AllowOutputBatching = true;
             }
@@ -1116,137 +1220,228 @@ namespace CoreWCF.Channels
         }
 
         #region IChannel Members
-        public Task SendAsync(Message message)
-        { 
-            var helper = new TimeoutHelper(OperationTimeout);
-            return SendAsync(message, helper.GetCancellationToken());
+        public void Send(Message message)
+        {
+            Send(message, OperationTimeout);
         }
 
-        public Task SendAsync(Message message, CancellationToken token)
+        public void Send(Message message, TimeSpan timeout)
         {
             ProxyOperationRuntime operation = UnhandledProxyOperation;
-            return CallAsync(message.Headers.Action, true, operation, new object[] { message }, Array.Empty<object>(), token);
+            Call(message.Headers.Action, true, operation, new object[] { message }, Array.Empty<object>(), timeout);
         }
 
-        public Task<Message> RequestAsync(Message message)
+        public IAsyncResult BeginSend(Message message, AsyncCallback callback, object state)
         {
-            var helper = new TimeoutHelper(OperationTimeout);
-            return RequestAsync(message, helper.GetCancellationToken());
+            return BeginSend(message, OperationTimeout, callback, state);
         }
 
-        public async Task<Message> RequestAsync(Message message, CancellationToken token)
+        public IAsyncResult BeginSend(Message message, TimeSpan timeout, AsyncCallback callback, object state)
         {
             ProxyOperationRuntime operation = UnhandledProxyOperation;
-            return (Message)await CallAsync(message.Headers.Action, false, operation, new object[] { message }, Array.Empty<object>(), token);
+            return BeginCall(message.Headers.Action, true, operation, new object[] { message }, timeout, callback, state);
+        }
+
+        public void EndSend(IAsyncResult result)
+        {
+            EndCall(MessageHeaders.WildcardAction, Array.Empty<object>(), result);
+        }
+
+        public Message Request(Message message)
+        {
+            return Request(message, OperationTimeout);
+        }
+
+        public Message Request(Message message, TimeSpan timeout)
+        {
+            ProxyOperationRuntime operation = UnhandledProxyOperation;
+            return (Message)Call(message.Headers.Action, false, operation, new object[] { message }, Array.Empty<object>(), timeout);
+        }
+
+        public IAsyncResult BeginRequest(Message message, AsyncCallback callback, object state)
+        {
+            return BeginRequest(message, OperationTimeout, callback, state);
+        }
+
+        public IAsyncResult BeginRequest(Message message, TimeSpan timeout, AsyncCallback callback, object state)
+        {
+            ProxyOperationRuntime operation = UnhandledProxyOperation;
+            return BeginCall(message.Headers.Action, false, operation, new object[] { message }, timeout, callback, state);
+        }
+
+        public Message EndRequest(IAsyncResult result)
+        {
+            return (Message)EndCall(MessageHeaders.WildcardAction, Array.Empty<object>(), result);
         }
 
         protected override void OnAbort()
         {
-            if (idleManager != null)
+            if (_idleManager != null)
             {
-                idleManager.CancelTimer();
+                _idleManager.CancelTimer();
             }
 
-            binder.Abort();
+            Binder.Abort();
 
-            CleanupChannelCollections();
-
-            //ServiceThrottle serviceThrottle = this.serviceThrottle;
-            //if (serviceThrottle != null)
-            //    serviceThrottle.DeactivateChannel();
-
-            //rollback the attached transaction if one is present
-            //if ((this.instanceContext != null) && this.HasSession)
-            //{
-            //    if (instanceContext.HasTransaction)
-            //    {
-            //        instanceContext.Transaction.CompletePendingTransaction(instanceContext.Transaction.Attached, new Exception()); // error!=null forces Tx rollback
-            //    }
-            //}
-        }
-
-        protected override async Task OnCloseAsync(CancellationToken token)
-        {
-            if (idleManager != null)
+            if (Factory != null)
             {
-                idleManager.CancelTimer();
+                Factory.ChannelDisposed(this);
             }
 
-            //if (this.InstanceContext != null && this.InstanceContext.HasTransaction)
-            //{
-            //    this.InstanceContext.CompleteAttachedTransaction();
-            //}
-
-            if (closeBinder)
+            if (CloseFactory)
             {
-                await InnerChannel.CloseAsync(token);
+                if (Factory != null)
+                {
+                    Factory.Abort();
+                }
             }
 
             CleanupChannelCollections();
-
-            //ServiceThrottle serviceThrottle = this.serviceThrottle;
-            //if (serviceThrottle != null)
-            //{
-            //    serviceThrottle.DeactivateChannel();
-            //}
         }
 
-        protected override async Task OnOpenAsync(CancellationToken token)
+        protected override IAsyncResult OnBeginClose(TimeSpan timeout, AsyncCallback callback, object state)
         {
-            if (autoOpenManager == null)
+            return CommunicationObjectInternal.OnBeginClose(this, timeout, callback, state);
+        }
+
+        protected override void OnEndClose(IAsyncResult result)
+        {
+            CommunicationObjectInternal.OnEnd(result);
+        }
+
+        protected override void OnClose(TimeSpan timeout)
+        {
+            CommunicationObjectInternal.OnClose(this, timeout);
+        }
+
+        protected internal override async Task OnCloseAsync(TimeSpan timeout)
+        {
+            TimeoutHelper timeoutHelper = new TimeoutHelper(timeout);
+
+            if (_idleManager != null)
             {
-                explicitlyOpened = true;
+                _idleManager.CancelTimer();
             }
 
-            //this.TraceChannelOpenStarted();
-
-            if (openBinder)
+            if (Factory != null)
             {
-                await InnerChannel.OpenAsync(token);
+                Factory.ChannelDisposed(this);
             }
 
+            if (_closeBinder)
+            {
+                await CloseOtherAsync(InnerChannel, timeoutHelper.RemainingTime());
+            }
+
+            if (CloseFactory)
+            {
+                await CloseOtherAsync(Factory, timeoutHelper.RemainingTime());
+            }
+
+            CleanupChannelCollections();
+        }
+
+        protected override IAsyncResult OnBeginOpen(TimeSpan timeout, AsyncCallback callback, object state)
+        {
+            return CommunicationObjectInternal.OnBeginOpen(this, timeout, callback, state);
+        }
+
+        protected override void OnEndOpen(IAsyncResult result)
+        {
+            CommunicationObjectInternal.OnEnd(result);
+        }
+
+        protected override void OnOpen(TimeSpan timeout)
+        {
+            CommunicationObjectInternal.OnOpen(this, timeout);
+        }
+
+        protected internal override async Task OnOpenAsync(TimeSpan timeout)
+        {
+            ThrowIfDisallowedInitializationUI();
+            ThrowIfInitializationUINotCalled();
+
+            if (_autoOpenManager == null)
+            {
+                _explicitlyOpened = true;
+            }
+
+            TraceChannelOpenStarted();
+
+            if (_openBinder)
+            {
+                await OpenOtherAsync(InnerChannel, timeout);
+            }
+
+            BindDuplexCallbacks();
             CompletedIOOperation();
 
-            //this.TraceChannelOpenCompleted();
+            TraceChannelOpenCompleted();
         }
 
         private void CleanupChannelCollections()
         {
-            if (!hasCleanedUpChannelCollections)
+            if (!_hasCleanedUpChannelCollections)
             {
                 lock (ThisLock)
                 {
-                    if (!hasCleanedUpChannelCollections)
+                    if (!_hasCleanedUpChannelCollections)
                     {
                         if (InstanceContext != null)
                         {
-                            InstanceContext.OutgoingChannels.Remove((IChannel)proxy);
+                            InstanceContext.OutgoingChannels.Remove((IChannel)_proxy);
                         }
 
-                        hasCleanedUpChannelCollections = true;
+                        _hasCleanedUpChannelCollections = true;
                     }
                 }
             }
         }
+
         #endregion
 
         #region IClientChannel Members
 
         bool IDuplexContextChannel.AutomaticInputSessionShutdown
         {
-            get { return autoClose; }
-            set { autoClose = value; }
+            get { return _autoClose; }
+            set { _autoClose = value; }
         }
 
-        //bool IContextChannel.AllowOutputBatching
-        //{
-        //    get { return this.allowOutputBatching; }
-        //    set { this.allowOutputBatching = value; }
-        //}
-
-        Task IDuplexContextChannel.CloseOutputSessionAsync(CancellationToken token)
+        bool IClientChannel.AllowInitializationUI
         {
-            return GetDuplexSessionOrThrow().CloseOutputSessionAsync(token);
+            get { return _allowInitializationUI; }
+            set
+            {
+                ThrowIfDisposedOrImmutable();
+                _allowInitializationUI = value;
+            }
+        }
+
+        bool IContextChannel.AllowOutputBatching
+        {
+            get { return _allowOutputBatching; }
+            set { _allowOutputBatching = value; }
+        }
+
+        bool IClientChannel.DidInteractiveInitialization
+        {
+            get { return _didInteractiveInitialization; }
+        }
+
+        IAsyncResult IDuplexContextChannel.BeginCloseOutputSession(TimeSpan timeout, AsyncCallback callback, object state)
+        {
+            return GetDuplexSessionOrThrow().BeginCloseOutputSession(timeout, callback, state);
+        }
+
+        void IDuplexContextChannel.EndCloseOutputSession(IAsyncResult result)
+        {
+            GetDuplexSessionOrThrow().EndCloseOutputSession(result);
+        }
+
+        void IDuplexContextChannel.CloseOutputSession(TimeSpan timeout)
+        {
+            GetDuplexSessionOrThrow().CloseOutputSession(timeout);
         }
 
         private IDuplexSession GetDuplexSessionOrThrow()
@@ -1271,33 +1466,33 @@ namespace CoreWCF.Channels
             {
                 lock (ThisLock)
                 {
-                    if (extensions == null)
+                    if (_extensions == null)
                     {
-                        extensions = new ExtensionCollection<IContextChannel>((IContextChannel)Proxy, ThisLock);
+                        _extensions = new ExtensionCollection<IContextChannel>((IContextChannel)Proxy, ThisLock);
                     }
 
-                    return extensions;
+                    return _extensions;
                 }
             }
         }
 
         InstanceContext IDuplexContextChannel.CallbackInstance
         {
-            get { return instanceContext; }
+            get { return InstanceContext; }
             set
             {
                 lock (ThisLock)
                 {
-                    if (instanceContext != null)
+                    if (InstanceContext != null)
                     {
-                        instanceContext.OutgoingChannels.Remove((IChannel)proxy);
+                        InstanceContext.OutgoingChannels.Remove((IChannel)_proxy);
                     }
 
-                    instanceContext = value;
+                    InstanceContext = value;
 
-                    if (instanceContext != null)
+                    if (InstanceContext != null)
                     {
-                        instanceContext.OutgoingChannels.Add((IChannel)proxy);
+                        InstanceContext.OutgoingChannels.Add((IChannel)_proxy);
                     }
                 }
             }
@@ -1384,91 +1579,94 @@ namespace CoreWCF.Channels
             {
                 lock (ThisLock)
                 {
-                    unknownMessageReceived += value;
+                    _unknownMessageReceived += value;
                 }
             }
             remove
             {
                 lock (ThisLock)
                 {
-                    unknownMessageReceived -= value;
+                    _unknownMessageReceived -= value;
                 }
             }
         }
 
+        public void DisplayInitializationUI()
+        {
+            ThrowIfDisallowedInitializationUI();
+
+            if (_autoDisplayUIManager == null)
+            {
+                _explicitlyOpened = true;
+            }
+
+            ClientRuntime.GetRuntime().DisplayInitializationUI(this);
+            _didInteractiveInitialization = true;
+        }
+
+        public IAsyncResult BeginDisplayInitializationUI(AsyncCallback callback, object state)
+        {
+            ThrowIfDisallowedInitializationUI();
+
+            if (_autoDisplayUIManager == null)
+            {
+                _explicitlyOpened = true;
+            }
+
+            return ClientRuntime.GetRuntime().BeginDisplayInitializationUI(this, callback, state);
+        }
+
+        public void EndDisplayInitializationUI(IAsyncResult result)
+        {
+            ClientRuntime.GetRuntime().EndDisplayInitializationUI(result);
+            _didInteractiveInitialization = true;
+        }
+
         void IDisposable.Dispose()
         {
-            CloseAsync().GetAwaiter().GetResult();
+            Close();
         }
 
         #endregion
 
-        //void TraceChannelOpenStarted()
-        //{
-        //    if (TD.ClientChannelOpenStartIsEnabled() && this.endpointDispatcher == null)
-        //    {
-        //        TD.ClientChannelOpenStart(this.EventActivity);
-        //    }
-        //    else if (TD.ServiceChannelOpenStartIsEnabled())
-        //    {
-        //        TD.ServiceChannelOpenStart(this.EventActivity);
-        //    }
+        private void TraceChannelOpenStarted()
+        {
+            if (WcfEventSource.Instance.ClientChannelOpenStartIsEnabled() && _endpointDispatcher == null)
+            {
+                WcfEventSource.Instance.ClientChannelOpenStart(EventActivity);
+            }
+            else if (WcfEventSource.Instance.ServiceChannelOpenStartIsEnabled())
+            {
+                WcfEventSource.Instance.ServiceChannelOpenStart(EventActivity);
+            }
+        }
 
-        //    //if (DiagnosticUtility.ShouldTraceInformation)
-        //    //{
-        //    //    Dictionary<string, string> values = new Dictionary<string, string>(4);
-        //    //    bool traceNeeded = false;
-        //    //    DispatchRuntime behavior = this.DispatchRuntime;
-        //    //    if (behavior != null)
-        //    //    {
-        //    //        if (behavior.Type != null)
-        //    //        {
-        //    //            values["ServiceType"] = behavior.Type.AssemblyQualifiedName;
-        //    //        }
-        //    //        values["ContractNamespace"] = this.clientRuntime.ContractNamespace;
-        //    //        values["ContractName"] = this.clientRuntime.ContractName;
-        //    //        traceNeeded = true;
-        //    //    }
-        //    //    if ((this.endpointDispatcher != null) && (this.endpointDispatcher.ListenUri != null))
-        //    //    {
-        //    //        values["Uri"] = this.endpointDispatcher.ListenUri.ToString();
-        //    //        traceNeeded = true;
-        //    //    }
-        //    //    if (traceNeeded)
-        //    //    {
-        //    //        TraceUtility.TraceEvent(TraceEventType.Information, TraceCode.ServiceChannelLifetime,
-        //    //            SR.Format(SR.TraceCodeServiceChannelLifetime),
-        //    //            new DictionaryTraceRecord(values), this, null);
-        //    //    }
-        //    //}
-        //}
+        private void TraceChannelOpenCompleted()
+        {
+            if (_endpointDispatcher == null && WcfEventSource.Instance.ClientChannelOpenStopIsEnabled())
+            {
+                WcfEventSource.Instance.ClientChannelOpenStop(EventActivity);
+            }
+            else if (WcfEventSource.Instance.ServiceChannelOpenStopIsEnabled())
+            {
+                WcfEventSource.Instance.ServiceChannelOpenStop(EventActivity);
+            }
+        }
 
-        //void TraceChannelOpenCompleted()
-        //{
-        //    if (this.endpointDispatcher == null && TD.ClientChannelOpenStopIsEnabled())
-        //    {
-        //        TD.ClientChannelOpenStop(this.EventActivity);
-        //    }
-        //    else if (TD.ServiceChannelOpenStopIsEnabled())
-        //    {
-        //        TD.ServiceChannelOpenStop(this.EventActivity);
-        //    }
-        //}
-
-        //static void TraceServiceChannelCallStart(EventTraceActivity eventTraceActivity, bool isSynchronous)
-        //{
-        //    if (TD.ServiceChannelCallStartIsEnabled())
-        //    {
-        //        if (isSynchronous)
-        //        {
-        //            TD.ServiceChannelCallStart(eventTraceActivity);
-        //        }
-        //        else
-        //        {
-        //            TD.ServiceChannelBeginCallStart(eventTraceActivity);
-        //        }
-        //    }
-        //}
+        private static void TraceServiceChannelCallStart(EventTraceActivity eventTraceActivity, bool isSynchronous)
+        {
+            if (WcfEventSource.Instance.ServiceChannelCallStartIsEnabled())
+            {
+                if (isSynchronous)
+                {
+                    WcfEventSource.Instance.ServiceChannelCallStart(eventTraceActivity);
+                }
+                else
+                {
+                    WcfEventSource.Instance.ServiceChannelBeginCallStart(eventTraceActivity);
+                }
+            }
+        }
 
         // Invariants for signalling the CallOnce manager.
         //
@@ -1479,47 +1677,376 @@ namespace CoreWCF.Channels
         // 3) Once Call or EndCall returns successfully, it guarantees
         //    that SignalNext will be called once the // next stage
         //    has sufficiently completed.
-        private interface ICallOnce
+
+        internal class SendAsyncResult : TraceAsyncResult
         {
-            Task CallAsync(ServiceChannel channel, CancellationToken token);
+            private readonly bool _isOneWay;
+            private readonly ProxyOperationRuntime _operation;
+            internal ProxyRpc Rpc;
+            private OperationContext _operationContext;
+
+            private static AsyncCallback s_ensureInteractiveInitCallback = Fx.ThunkCallback(EnsureInteractiveInitCallback);
+            private static AsyncCallback s_ensureOpenCallback = Fx.ThunkCallback(EnsureOpenCallback);
+            private static AsyncCallback s_sendCallback = Fx.ThunkCallback(SendCallback);
+
+            internal SendAsyncResult(ServiceChannel channel, ProxyOperationRuntime operation,
+                                     string action, object[] inputParameters, bool isOneWay, TimeSpan timeout,
+                                     AsyncCallback userCallback, object userState)
+                : base(userCallback, userState)
+            {
+                Rpc = new ProxyRpc(channel, operation, action, inputParameters, timeout);
+                _isOneWay = isOneWay;
+                _operation = operation;
+                _operationContext = OperationContext.Current;
+            }
+
+            internal void Begin()
+            {
+                Rpc.Channel.PrepareCall(_operation, _isOneWay, ref Rpc);
+
+                if (Rpc.Channel._explicitlyOpened)
+                {
+                    Rpc.Channel.ThrowIfOpening();
+                    Rpc.Channel.ThrowIfDisposedOrNotOpen();
+                    StartSend(true);
+                }
+                else
+                {
+                    StartEnsureInteractiveInit();
+                }
+            }
+
+            private void StartEnsureInteractiveInit()
+            {
+                IAsyncResult result = Rpc.Channel.BeginEnsureDisplayUI(s_ensureInteractiveInitCallback, this);
+
+                if (result.CompletedSynchronously)
+                {
+                    FinishEnsureInteractiveInit(result, true);
+                }
+            }
+
+            private static void EnsureInteractiveInitCallback(IAsyncResult result)
+            {
+                if (!result.CompletedSynchronously)
+                {
+                    ((SendAsyncResult)result.AsyncState).FinishEnsureInteractiveInit(result, false);
+                }
+            }
+
+            private void FinishEnsureInteractiveInit(IAsyncResult result, bool completedSynchronously)
+            {
+                Exception exception = null;
+
+                try
+                {
+                    Rpc.Channel.EndEnsureDisplayUI(result);
+                }
+                catch (Exception e)
+                {
+                    if (Fx.IsFatal(e) || completedSynchronously)
+                    {
+                        throw;
+                    }
+                    exception = e;
+                }
+
+                if (exception != null)
+                {
+                    CallComplete(completedSynchronously, exception);
+                }
+                else
+                {
+                    StartEnsureOpen(completedSynchronously);
+                }
+            }
+
+            private void StartEnsureOpen(bool completedSynchronously)
+            {
+                TimeSpan timeout = Rpc.TimeoutHelper.RemainingTime();
+                IAsyncResult result = null;
+                Exception exception = null;
+
+                try
+                {
+                    result = Rpc.Channel.BeginEnsureOpened(timeout, s_ensureOpenCallback, this);
+                }
+                catch (Exception e)
+                {
+                    if (Fx.IsFatal(e) || completedSynchronously)
+                    {
+                        throw;
+                    }
+                    exception = e;
+                }
+
+                if (exception != null)
+                {
+                    CallComplete(completedSynchronously, exception);
+                }
+                else if (result.CompletedSynchronously)
+                {
+                    FinishEnsureOpen(result, completedSynchronously);
+                }
+            }
+
+            private static void EnsureOpenCallback(IAsyncResult result)
+            {
+                if (!result.CompletedSynchronously)
+                {
+                    ((SendAsyncResult)result.AsyncState).FinishEnsureOpen(result, false);
+                }
+            }
+
+            private void FinishEnsureOpen(IAsyncResult result, bool completedSynchronously)
+            {
+                Exception exception = null;
+                using (ServiceModelActivity.BoundOperation(Rpc.Activity))
+                {
+                    try
+                    {
+                        Rpc.Channel.EndEnsureOpened(result);
+                    }
+                    catch (Exception e)
+                    {
+                        if (Fx.IsFatal(e) || completedSynchronously)
+                        {
+                            throw;
+                        }
+                        exception = e;
+                    }
+
+                    if (exception != null)
+                    {
+                        CallComplete(completedSynchronously, exception);
+                    }
+                    else
+                    {
+                        StartSend(completedSynchronously);
+                    }
+                }
+            }
+
+            private void StartSend(bool completedSynchronously)
+            {
+                TimeSpan timeout = Rpc.TimeoutHelper.RemainingTime();
+                IAsyncResult result = null;
+                Exception exception = null;
+
+                try
+                {
+                    ConcurrencyBehavior.UnlockInstanceBeforeCallout(_operationContext);
+
+                    if (_isOneWay)
+                    {
+                        result = Rpc.Channel.Binder.BeginSend(Rpc.Request, timeout, s_sendCallback, this);
+                    }
+                    else
+                    {
+                        result = Rpc.Channel.Binder.BeginRequest(Rpc.Request, timeout, s_sendCallback, this);
+                    }
+                }
+                catch (Exception e)
+                {
+                    if (Fx.IsFatal(e))
+                    {
+                        throw;
+                    }
+                    if (completedSynchronously)
+                    {
+                        ConcurrencyBehavior.LockInstanceAfterCallout(_operationContext);
+                        throw;
+                    }
+                    exception = e;
+                }
+                finally
+                {
+                    CallOnceManager.SignalNextIfNonNull(Rpc.Channel._autoOpenManager);
+                }
+
+                if (exception != null)
+                {
+                    CallComplete(completedSynchronously, exception);
+                }
+                else if (result.CompletedSynchronously)
+                {
+                    FinishSend(result, completedSynchronously);
+                }
+            }
+
+            private static void SendCallback(IAsyncResult result)
+            {
+                if (!result.CompletedSynchronously)
+                {
+                    ((SendAsyncResult)result.AsyncState).FinishSend(result, false);
+                }
+            }
+
+            private void FinishSend(IAsyncResult result, bool completedSynchronously)
+            {
+                Exception exception = null;
+
+                try
+                {
+                    if (_isOneWay)
+                    {
+                        Rpc.Channel.Binder.EndSend(result);
+                    }
+                    else
+                    {
+                        Rpc.Reply = Rpc.Channel.Binder.EndRequest(result);
+
+                        if (Rpc.Reply == null)
+                        {
+                            Rpc.Channel.ThrowIfFaulted();
+                            throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new CommunicationException(SR.SFxServerDidNotReply));
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    if (Fx.IsFatal(e))
+                    {
+                        throw;
+                    }
+                    if (completedSynchronously)
+                    {
+                        ConcurrencyBehavior.LockInstanceAfterCallout(_operationContext);
+                        throw;
+                    }
+                    exception = e;
+                }
+
+                CallComplete(completedSynchronously, exception);
+            }
+
+            private void CallComplete(bool completedSynchronously, Exception exception)
+            {
+                Rpc.Channel.CompletedIOOperation();
+                Complete(completedSynchronously, exception);
+            }
+
+            public static void End(SendAsyncResult result)
+            {
+                try
+                {
+                    AsyncResult.End<SendAsyncResult>(result);
+                }
+                finally
+                {
+                    ConcurrencyBehavior.LockInstanceAfterCallout(result._operationContext);
+                }
+            }
         }
 
-        private class CallOpenOnce : ICallOnce
+        internal interface ICallOnce
         {
-            private static CallOpenOnce instance;
+            void Call(ServiceChannel channel, TimeSpan timeout);
+            IAsyncResult BeginCall(ServiceChannel channel, TimeSpan timeout, AsyncCallback callback, object state);
+            void EndCall(ServiceChannel channel, IAsyncResult result);
+        }
+
+        internal class CallDisplayUIOnce : ICallOnce
+        {
+            private static CallDisplayUIOnce s_instance;
+
+            internal static CallDisplayUIOnce Instance
+            {
+                get
+                {
+                    if (s_instance == null)
+                    {
+                        s_instance = new CallDisplayUIOnce();
+                    }
+                    return s_instance;
+                }
+            }
+            [Conditional("DEBUG")]
+
+            private void ValidateTimeoutIsMaxValue(TimeSpan timeout)
+            {
+                if (timeout != TimeSpan.MaxValue)
+                {
+                    Fx.Assert("non-MaxValue timeout for displaying interactive initialization UI");
+                }
+            }
+
+            void ICallOnce.Call(ServiceChannel channel, TimeSpan timeout)
+            {
+                ValidateTimeoutIsMaxValue(timeout);
+                channel.DisplayInitializationUI();
+            }
+
+            IAsyncResult ICallOnce.BeginCall(ServiceChannel channel, TimeSpan timeout, AsyncCallback callback, object state)
+            {
+                ValidateTimeoutIsMaxValue(timeout);
+                return channel.BeginDisplayInitializationUI(callback, state);
+            }
+
+            void ICallOnce.EndCall(ServiceChannel channel, IAsyncResult result)
+            {
+                channel.EndDisplayInitializationUI(result);
+            }
+        }
+
+        internal class CallOpenOnce : ICallOnce
+        {
+            private static CallOpenOnce s_instance;
 
             internal static CallOpenOnce Instance
             {
                 get
                 {
-                    if (CallOpenOnce.instance == null)
+                    if (s_instance == null)
                     {
-                        CallOpenOnce.instance = new CallOpenOnce();
+                        s_instance = new CallOpenOnce();
                     }
-                    return CallOpenOnce.instance;
+                    return s_instance;
                 }
             }
 
-            Task ICallOnce.CallAsync(ServiceChannel channel, CancellationToken token)
+            void ICallOnce.Call(ServiceChannel channel, TimeSpan timeout)
             {
-                return channel.OpenAsync(token);
+                channel.Open(timeout);
+            }
+
+            IAsyncResult ICallOnce.BeginCall(ServiceChannel channel, TimeSpan timeout, AsyncCallback callback, object state)
+            {
+                return channel.BeginOpen(timeout, callback, state);
+            }
+
+            void ICallOnce.EndCall(ServiceChannel channel, IAsyncResult result)
+            {
+                channel.EndOpen(result);
             }
         }
 
-        private class CallOnceManager
+        internal class CallOnceManager
         {
-            private readonly ICallOnce callOnce;
-            private readonly ServiceChannel channel;
-            private bool isFirst = true;
-            private Queue<IWaiter> queue;
+            private readonly ICallOnce _callOnce;
+            private readonly ServiceChannel _channel;
+            private bool _isFirst = true;
+            private Queue<IWaiter> _queue;
 
-            private static readonly Action<object> signalWaiter = CallOnceManager.SignalWaiter;
+            private static Action<object> s_signalWaiter = new Action<object>(SignalWaiter);
 
             internal CallOnceManager(ServiceChannel channel, ICallOnce callOnce)
             {
-                this.callOnce = callOnce;
-                this.channel = channel;
-                queue = new Queue<IWaiter>();
+                _callOnce = callOnce;
+                _channel = channel;
+                _queue = new Queue<IWaiter>();
+
+                // Detect when the channel becomes unusable
+                ChannelIsAvailable = true;
+                _channel.Closing += (s, e) =>
+                {
+                    SetChannelUnavailable();
+                };
+
+                _channel.Faulted += (s, e) =>
+                {
+                    SetChannelUnavailable();
+                };
             }
 
             private object ThisLock
@@ -1527,37 +2054,51 @@ namespace CoreWCF.Channels
                 get { return this; }
             }
 
-            internal async Task CallOnceAsync(CancellationToken token)
+            internal bool ChannelIsAvailable { get; private set; }
+
+            // Called when the channel becomes unusable during the open
+            // or waiting for queued waiters to complete.  This method
+            // ensures any waiters' WaitHandles are set so they complete
+            // rather than timing out.
+            private void SetChannelUnavailable()
             {
-                AsyncWaiter waiter = null;
+                ChannelIsAvailable = false;
+                SignalNext();
+            }
+
+            internal void CallOnce(TimeSpan timeout, CallOnceManager cascade)
+            {
+                SyncWaiter waiter = null;
                 bool first = false;
 
-                if (queue != null)
+                if (_queue != null)
                 {
                     lock (ThisLock)
                     {
-                        if (queue != null)
+                        if (_queue != null)
                         {
-                            if (isFirst)
+                            if (_isFirst)
                             {
                                 first = true;
-                                isFirst = false;
+                                _isFirst = false;
                             }
                             else
                             {
-                                waiter = new AsyncWaiter(this);
-                                queue.Enqueue(waiter);
+                                waiter = new SyncWaiter(this);
+                                _queue.Enqueue(waiter);
                             }
                         }
                     }
                 }
+
+                SignalNextIfNonNull(cascade);
 
                 if (first)
                 {
                     bool throwing = true;
                     try
                     {
-                        await callOnce.CallAsync(channel, token);
+                        _callOnce.Call(_channel, timeout);
                         throwing = false;
                     }
                     finally
@@ -1570,7 +2111,90 @@ namespace CoreWCF.Channels
                 }
                 else if (waiter != null)
                 {
-                    await waiter.WaitAsync(token);
+                    waiter.Wait(timeout);
+                }
+            }
+
+            internal IAsyncResult BeginCallOnce(TimeSpan timeout, CallOnceManager cascade,
+                                                AsyncCallback callback, object state)
+            {
+                AsyncWaiter waiter = null;
+                bool first = false;
+
+                if (_queue != null)
+                {
+                    lock (ThisLock)
+                    {
+                        if (_queue != null)
+                        {
+                            if (_isFirst)
+                            {
+                                first = true;
+                                _isFirst = false;
+                            }
+                            else
+                            {
+                                waiter = new AsyncWaiter(this, timeout, callback, state);
+                                _queue.Enqueue(waiter);
+                            }
+                        }
+                    }
+                }
+
+                SignalNextIfNonNull(cascade);
+
+                if (first)
+                {
+                    bool throwing = true;
+                    try
+                    {
+                        IAsyncResult result = _callOnce.BeginCall(_channel, timeout, callback, state);
+                        throwing = false;
+                        return result;
+                    }
+                    finally
+                    {
+                        if (throwing)
+                        {
+                            SignalNext();
+                        }
+                    }
+                }
+                else if (waiter != null)
+                {
+                    return waiter;
+                }
+                else
+                {
+                    return new CallOnceCompletedAsyncResult(callback, state);
+                }
+            }
+
+            internal void EndCallOnce(IAsyncResult result)
+            {
+                if (result is CallOnceCompletedAsyncResult)
+                {
+                    CallOnceCompletedAsyncResult.End(result);
+                }
+                else if (result is AsyncWaiter)
+                {
+                    AsyncWaiter.End(result);
+                }
+                else
+                {
+                    bool throwing = true;
+                    try
+                    {
+                        _callOnce.EndCall(_channel, result);
+                        throwing = false;
+                    }
+                    finally
+                    {
+                        if (throwing)
+                        {
+                            SignalNext();
+                        }
+                    }
                 }
             }
 
@@ -1584,7 +2208,7 @@ namespace CoreWCF.Channels
 
             internal void SignalNext()
             {
-                if (queue == null)
+                if (_queue == null)
                 {
                     return;
                 }
@@ -1593,22 +2217,22 @@ namespace CoreWCF.Channels
 
                 lock (ThisLock)
                 {
-                    if (queue != null)
+                    if (_queue != null)
                     {
-                        if (queue.Count > 0)
+                        if (_queue.Count > 0)
                         {
-                            waiter = queue.Dequeue();
+                            waiter = _queue.Dequeue();
                         }
                         else
                         {
-                            queue = null;
+                            _queue = null;
                         }
                     }
                 }
 
                 if (waiter != null)
                 {
-                    ActionItem.Schedule(CallOnceManager.signalWaiter, waiter);
+                    ActionItem.Schedule(s_signalWaiter, waiter);
                 }
             }
 
@@ -1622,56 +2246,59 @@ namespace CoreWCF.Channels
                 void Signal();
             }
 
-            private class AsyncWaiter : IWaiter
+            internal class SyncWaiter : IWaiter
             {
-                private readonly AsyncManualResetEvent wait = new AsyncManualResetEvent();
-                private readonly CallOnceManager manager;
-                private bool isTimedOut = false;
-                private bool isSignaled = false;
-                private int waitCount = 0;
+                private ManualResetEvent _wait = new ManualResetEvent(false);
+                private CallOnceManager _manager;
+                private bool _isTimedOut = false;
+                private bool _isSignaled = false;
+                private int _waitCount = 0;
 
-                internal AsyncWaiter(CallOnceManager manager)
+                internal SyncWaiter(CallOnceManager manager)
                 {
-                    this.manager = manager;
+                    _manager = manager;
                 }
 
                 private bool ShouldSignalNext
                 {
-                    get { return isTimedOut && isSignaled; }
+                    get { return (_isTimedOut || !_manager.ChannelIsAvailable) && _isSignaled; }
                 }
 
                 void IWaiter.Signal()
                 {
-                    wait.Set();
+                    _wait.Set();
                     CloseWaitHandle();
 
                     bool signalNext;
-                    lock (manager.ThisLock)
+                    lock (_manager.ThisLock)
                     {
-                        isSignaled = true;
+                        _isSignaled = true;
                         signalNext = ShouldSignalNext;
                     }
                     if (signalNext)
                     {
-                        manager.SignalNext();
+                        _manager.SignalNext();
                     }
                 }
 
-                internal async Task<bool> WaitAsync(CancellationToken token)
+                internal bool Wait(TimeSpan timeout)
                 {
                     try
                     {
-                        if (!await wait.WaitAsync(token))
+                        // The wait can be ended by success, a timeout, or the
+                        // channel becoming unavailable for further use
+                        bool timedOut = !TimeoutHelper.WaitOne(_wait, timeout);
+                        if (timedOut || !_manager.ChannelIsAvailable)
                         {
                             bool signalNext;
-                            lock (manager.ThisLock)
+                            lock (_manager.ThisLock)
                             {
-                                isTimedOut = true;
+                                _isTimedOut = timedOut;
                                 signalNext = ShouldSignalNext;
                             }
                             if (signalNext)
                             {
-                                manager.SignalNext();
+                                _manager.SignalNext();
                             }
                         }
                     }
@@ -1680,53 +2307,115 @@ namespace CoreWCF.Channels
                         CloseWaitHandle();
                     }
 
-                    return !isTimedOut;
+                    return !_isTimedOut;
                 }
 
                 private void CloseWaitHandle()
                 {
-                    if (Interlocked.Increment(ref waitCount) == 2)
+                    if (Interlocked.Increment(ref _waitCount) == 2)
                     {
-                        wait.Dispose();
+                        _wait.Dispose();
                     }
                 }
             }
-        }
- 
-        internal class SessionIdleManager
-        {
-            private IChannelBinder binder;
-            private ServiceChannel channel;
-            private long idleTicks;
-            private long lastActivity;
-            private Timer timer;
-            private static Action<object> timerCallback;
-            private bool didIdleAbort;
-            private bool isTimerCancelled;
-            private object thisLock;
-            private bool? isNeeded = null;
 
-            public SessionIdleManager() { }
-
-            internal SessionIdleManager UseIfNeeded(IChannelBinder binder, TimeSpan idle)
+            internal class AsyncWaiter : AsyncResult, IWaiter
             {
-                if (isNeeded.HasValue)
+                private static TimerCallback s_timeoutCallback = new TimerCallback(Fx.ThunkCallback<object>(TimeoutCallback));
+
+                private CallOnceManager _manager;
+                private TimeSpan _timeout;
+                private Timer _timer;
+
+                internal AsyncWaiter(CallOnceManager manager, TimeSpan timeout,
+                                     AsyncCallback callback, object state)
+                    : base(callback, state)
                 {
-                    return isNeeded.Value ? this : null;
+                    _manager = manager;
+                    _timeout = timeout;
+
+                    if (timeout != TimeSpan.MaxValue)
+                    {
+                        _timer = new Timer(s_timeoutCallback, this, timeout, TimeSpan.FromMilliseconds(-1));
+                    }
                 }
 
+                internal static void End(IAsyncResult result)
+                {
+                    AsyncResult.End<AsyncWaiter>(result);
+                }
+
+                void IWaiter.Signal()
+                {
+                    if ((_timer == null) || _timer.Change(TimeSpan.FromMilliseconds(-1), TimeSpan.FromMilliseconds(-1)))
+                    {
+                        Complete(false);
+                        _manager._channel.Closed -= OnClosed;
+                    }
+                    else
+                    {
+                        _manager.SignalNext();
+                    }
+                }
+
+                private void OnClosed(object sender, EventArgs e)
+                {
+                    if ((_timer == null) || _timer.Change(TimeSpan.FromMilliseconds(-1), TimeSpan.FromMilliseconds(-1)))
+                    {
+                        Complete(false, _manager._channel.CreateClosedException());
+                    }
+                }
+
+                private static void TimeoutCallback(object state)
+                {
+                    AsyncWaiter _this = (AsyncWaiter)state;
+                    _this.Complete(false, _this._manager._channel.GetOpenTimeoutException(_this._timeout));
+                }
+            }
+        }
+
+        private class CallOnceCompletedAsyncResult : AsyncResult
+        {
+            internal CallOnceCompletedAsyncResult(AsyncCallback callback, object state)
+                : base(callback, state)
+            {
+                Complete(true);
+            }
+
+            static internal void End(IAsyncResult result)
+            {
+                AsyncResult.End<CallOnceCompletedAsyncResult>(result);
+            }
+        }
+
+        internal class SessionIdleManager
+        {
+            private readonly IChannelBinder _binder;
+            private ServiceChannel _channel;
+            private readonly long _idleTicks;
+            private long _lastActivity;
+            private readonly Timer _timer;
+            private static Action<object> s_timerCallback;
+            private bool _didIdleAbort;
+            private bool _isTimerCancelled;
+            private object _thisLock;
+
+            private SessionIdleManager(IChannelBinder binder, TimeSpan idle)
+            {
+                _binder = binder;
+                _timer = new Timer(new TimerCallback(GetTimerCallback()), this, idle, TimeSpan.FromMilliseconds(-1));
+                _idleTicks = Ticks.FromTimeSpan(idle);
+                _thisLock = new Object();
+            }
+
+            internal static SessionIdleManager CreateIfNeeded(IChannelBinder binder, TimeSpan idle)
+            {
                 if (binder.HasSession && (idle != TimeSpan.MaxValue))
                 {
-                    this.binder = binder;
-                    timer = new Timer(new TimerCallback(GetTimerCallback()), this, idle, TimeSpan.FromMilliseconds(-1));
-                    idleTicks = Ticks.FromTimeSpan(idle);
-                    thisLock = new object();
-                    isNeeded = true;
-                    return this;
+                    return new SessionIdleManager(binder, idle);
                 }
                 else
                 {
-                    isNeeded = false;
                     return null;
                 }
             }
@@ -1735,43 +2424,43 @@ namespace CoreWCF.Channels
             {
                 get
                 {
-                    lock (thisLock)
+                    lock (_thisLock)
                     {
-                        return didIdleAbort;
+                        return _didIdleAbort;
                     }
                 }
             }
 
             internal void CancelTimer()
             {
-                lock (thisLock)
+                lock (_thisLock)
                 {
-                    isTimerCancelled = true;
-                    timer.Change(TimeSpan.FromMilliseconds(-1), TimeSpan.FromMilliseconds(-1));
+                    _isTimerCancelled = true;
+                    _timer.Change(TimeSpan.FromMilliseconds(-1), TimeSpan.FromMilliseconds(-1));
                 }
             }
 
             internal void CompletedActivity()
             {
-                Interlocked.Exchange(ref lastActivity, Ticks.Now);
+                Interlocked.Exchange(ref _lastActivity, Ticks.Now);
             }
 
             internal void RegisterChannel(ServiceChannel channel, out bool didIdleAbort)
             {
-                lock (thisLock)
+                lock (_thisLock)
                 {
-                    this.channel = channel;
-                    didIdleAbort = this.didIdleAbort;
+                    _channel = channel;
+                    didIdleAbort = _didIdleAbort;
                 }
             }
 
             private static Action<object> GetTimerCallback()
             {
-                if (SessionIdleManager.timerCallback == null)
+                if (s_timerCallback == null)
                 {
-                    SessionIdleManager.timerCallback = SessionIdleManager.TimerCallback;
+                    s_timerCallback = TimerCallback;
                 }
-                return SessionIdleManager.timerCallback;
+                return s_timerCallback;
             }
 
             private static void TimerCallback(object state)
@@ -1783,45 +2472,44 @@ namespace CoreWCF.Channels
             {
                 // This reads lastActivity atomically without changing its value.
                 // (it only sets if it is zero, and then it sets it to zero).
-                long last = Interlocked.CompareExchange(ref lastActivity, 0, 0);
-                long abortTime = last + idleTicks;
+                long last = Interlocked.CompareExchange(ref _lastActivity, 0, 0);
+                long abortTime = last + _idleTicks;
 
-                lock (thisLock)
+                lock (_thisLock)
                 {
                     long ticksNow = Ticks.Now;
                     if (ticksNow > abortTime)
                     {
-                        //if (TD.SessionIdleTimeoutIsEnabled())
-                        //{
-                        //    string listenUri = string.Empty;
-                        //    if (this.binder.ListenUri != null)
-                        //    {
-                        //        listenUri = this.binder.ListenUri.AbsoluteUri;
-                        //    }
-
-                        //    TD.SessionIdleTimeout(listenUri);
-                        //}
-
-                        didIdleAbort = true;
-                        if (channel != null)
+                        if (WcfEventSource.Instance.SessionIdleTimeoutIsEnabled())
                         {
-                            channel.Abort();
+                            string listenUri = string.Empty;
+                            if (_binder.ListenUri != null)
+                            {
+                                listenUri = _binder.ListenUri.AbsoluteUri;
+                            }
+
+                            WcfEventSource.Instance.SessionIdleTimeout(listenUri);
+                        }
+
+                        _didIdleAbort = true;
+                        if (_channel != null)
+                        {
+                            _channel.Abort();
                         }
                         else
                         {
-                            binder.Abort();
+                            _binder.Abort();
                         }
                     }
                     else
                     {
-                        if (!isTimerCancelled && binder.Channel.State != CommunicationState.Faulted && binder.Channel.State != CommunicationState.Closed)
+                        if (!_isTimerCancelled && _binder.Channel.State != CommunicationState.Faulted && _binder.Channel.State != CommunicationState.Closed)
                         {
-                            timer.Change(Ticks.ToTimeSpan(abortTime - ticksNow), TimeSpan.FromMilliseconds(-1));
+                            _timer.Change(Ticks.ToTimeSpan(abortTime - ticksNow), TimeSpan.FromMilliseconds(-1));
                         }
                     }
                 }
             }
         }
     }
-
 }

@@ -1,116 +1,95 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+
 using CoreWCF.Runtime;
-using CoreWCF.Diagnostics;
-using System.Diagnostics;
 
 namespace CoreWCF.Channels
 {
     internal abstract class RequestContextBase : RequestContext
     {
-        private TimeSpan defaultSendTimeout;
-        private TimeSpan defaultCloseTimeout;
-        private CommunicationState state = CommunicationState.Opened;
-        private Message requestMessage;
-        private Exception requestMessageException;
-        private bool replySent;
-        private bool replyInitiated;
-        private bool aborted;
-        private object thisLock = new object();
+        private TimeSpan _defaultCloseTimeout;
+        private CommunicationState _state = CommunicationState.Opened;
+        private Message _requestMessage;
+        private Exception _requestMessageException;
+        private bool _replySent;
+        private bool _aborted;
 
         protected RequestContextBase(Message requestMessage, TimeSpan defaultCloseTimeout, TimeSpan defaultSendTimeout)
         {
-            this.defaultSendTimeout = defaultSendTimeout;
-            this.defaultCloseTimeout = defaultCloseTimeout;
-            this.requestMessage = requestMessage;
+            DefaultSendTimeout = defaultSendTimeout;
+            _defaultCloseTimeout = defaultCloseTimeout;
+            _requestMessage = requestMessage;
         }
 
         public void ReInitialize(Message requestMessage)
         {
-            state = CommunicationState.Opened;
-            requestMessageException = null;
-            replySent = false;
-            replyInitiated = false;
-            aborted = false;
-            this.requestMessage = requestMessage;
+            _state = CommunicationState.Opened;
+            _requestMessageException = null;
+            _replySent = false;
+            ReplyInitiated = false;
+            _aborted = false;
+            _requestMessage = requestMessage;
         }
 
         public override Message RequestMessage
         {
             get
             {
-                if (requestMessageException != null)
+                if (_requestMessageException != null)
                 {
-                    throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(requestMessageException);
+                    throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(_requestMessageException);
                 }
 
-                return requestMessage;
+                return _requestMessage;
             }
         }
 
         protected void SetRequestMessage(Message requestMessage)
         {
-            Fx.Assert(requestMessageException == null, "Cannot have both a requestMessage and a requestException.");
-            this.requestMessage = requestMessage;
+            Fx.Assert(_requestMessageException == null, "Cannot have both a requestMessage and a requestException.");
+            _requestMessage = requestMessage;
         }
 
         protected void SetRequestMessage(Exception requestMessageException)
         {
-            Fx.Assert(requestMessage == null, "Cannot have both a requestMessage and a requestException.");
-            this.requestMessageException = requestMessageException;
+            Fx.Assert(_requestMessage == null, "Cannot have both a requestMessage and a requestException.");
+            _requestMessageException = requestMessageException;
         }
 
-        protected bool ReplyInitiated
-        {
-            get { return replyInitiated; }
-        }
+        protected bool ReplyInitiated { get; private set; }
 
-        protected object ThisLock
-        {
-            get
-            {
-                return thisLock;
-            }
-        }
+        protected object ThisLock { get; } = new object();
 
         public bool Aborted
         {
             get
             {
-                return aborted;
+                return _aborted;
             }
         }
 
         public TimeSpan DefaultCloseTimeout
         {
-            get { return defaultCloseTimeout; }
+            get { return _defaultCloseTimeout; }
         }
 
-        public TimeSpan DefaultSendTimeout
-        {
-            get { return defaultSendTimeout; }
-        }
+        public TimeSpan DefaultSendTimeout { get; }
 
         public override void Abort()
         {
             lock (ThisLock)
             {
-                if (state == CommunicationState.Closed)
+                if (_state == CommunicationState.Closed)
                 {
                     return;
                 }
 
-                state = CommunicationState.Closing;
+                _state = CommunicationState.Closing;
 
-                aborted = true;
+                _aborted = true;
             }
-
-            //if (DiagnosticUtility.ShouldTraceWarning)
-            //{
-            //    TraceUtility.TraceEvent(TraceEventType.Warning, TraceCode.RequestContextAbort,
-            //        SR.Format(SR.TraceCodeRequestContextAbort), this);
-            //}
 
             try
             {
@@ -118,22 +97,26 @@ namespace CoreWCF.Channels
             }
             finally
             {
-                state = CommunicationState.Closed;
+                _state = CommunicationState.Closed;
             }
         }
 
-        public override Task CloseAsync()
+        public override void Close()
         {
-            var helper = new TimeoutHelper(defaultCloseTimeout);
-            return CloseAsync(helper.GetCancellationToken());
+            Close(_defaultCloseTimeout);
         }
 
-        public override async Task CloseAsync(CancellationToken token)
+        public override void Close(TimeSpan timeout)
         {
+            if (timeout < TimeSpan.Zero)
+            {
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(timeout), timeout, SR.ValueMustBeNonNegative));
+            }
+
             bool sendAck = false;
             lock (ThisLock)
             {
-                if (state != CommunicationState.Opened)
+                if (_state != CommunicationState.Opened)
                 {
                     return;
                 }
@@ -143,20 +126,21 @@ namespace CoreWCF.Channels
                     sendAck = true;
                 }
 
-                state = CommunicationState.Closing;
+                _state = CommunicationState.Closing;
             }
 
+            TimeoutHelper timeoutHelper = new TimeoutHelper(timeout);
             bool throwing = true;
 
             try
             {
                 if (sendAck)
                 {
-                    await OnReplyAsync(null, token);
+                    OnReply(null, timeoutHelper.RemainingTime());
                 }
 
-                await OnCloseAsync(token);
-                state = CommunicationState.Closed;
+                OnClose(timeoutHelper.RemainingTime());
+                _state = CommunicationState.Closed;
                 throwing = false;
             }
             finally
@@ -177,9 +161,9 @@ namespace CoreWCF.Channels
                 return;
             }
 
-            if (replySent)
+            if (_replySent)
             {
-                CloseAsync().GetAwaiter().GetResult();
+                Close();
             }
             else
             {
@@ -188,14 +172,16 @@ namespace CoreWCF.Channels
         }
 
         protected abstract void OnAbort();
-        protected abstract Task OnCloseAsync(CancellationToken token);
-        protected abstract Task OnReplyAsync(Message message, CancellationToken token);
+        protected abstract void OnClose(TimeSpan timeout);
+        protected abstract void OnReply(Message message, TimeSpan timeout);
+        protected abstract IAsyncResult OnBeginReply(Message message, TimeSpan timeout, AsyncCallback callback, object state);
+        protected abstract void OnEndReply(IAsyncResult result);
 
         protected void ThrowIfInvalidReply()
         {
-            if (state == CommunicationState.Closed || state == CommunicationState.Closing)
+            if (_state == CommunicationState.Closed || _state == CommunicationState.Closing)
             {
-                if (aborted)
+                if (_aborted)
                 {
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new CommunicationObjectAbortedException(SR.RequestContextAborted));
                 }
@@ -205,76 +191,98 @@ namespace CoreWCF.Channels
                 }
             }
 
-            if (replyInitiated)
+            if (ReplyInitiated)
             {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.ReplyAlreadySent));
             }
         }
 
         /// <summary>
-        /// Attempts to initiate the reply. If a reply is not initiated already (and the object is opened), 
+        /// Attempts to initiate the reply. If a reply is not initiated already (and the object is opened),
         /// then it initiates the reply and returns true. Otherwise, it returns false.
         /// </summary>
         protected bool TryInitiateReply()
         {
-            lock (thisLock)
+            lock (ThisLock)
             {
-                if ((state != CommunicationState.Opened) || replyInitiated)
+                if ((_state != CommunicationState.Opened) || ReplyInitiated)
                 {
                     return false;
                 }
                 else
                 {
-                    replyInitiated = true;
+                    ReplyInitiated = true;
                     return true;
                 }
             }
         }
 
-        public override Task ReplyAsync(Message message)
+        public override IAsyncResult BeginReply(Message message, AsyncCallback callback, object state)
         {
-            var helper = new TimeoutHelper(defaultSendTimeout);
-            return ReplyAsync(message, helper.GetCancellationToken());
+            return BeginReply(message, DefaultSendTimeout, callback, state);
         }
 
-        public override async Task ReplyAsync(Message message, CancellationToken token)
+        public override IAsyncResult BeginReply(Message message, TimeSpan timeout, AsyncCallback callback, object state)
         {
             // "null" is a valid reply (signals a 202-style "ack"), so we don't have a null-check here
-            lock (thisLock)
+            lock (ThisLock)
             {
                 ThrowIfInvalidReply();
-                replyInitiated = true;
+                ReplyInitiated = true;
             }
 
-            await OnReplyAsync(message, token);
-            replySent = true;
+            return OnBeginReply(message, timeout, callback, state);
+        }
+
+        public override void EndReply(IAsyncResult result)
+        {
+            OnEndReply(result);
+            _replySent = true;
+        }
+
+        public override void Reply(Message message)
+        {
+            Reply(message, DefaultSendTimeout);
+        }
+
+        public override void Reply(Message message, TimeSpan timeout)
+        {
+            // "null" is a valid reply (signals a 202-style "ack"), so we don't have a null-check here
+            lock (ThisLock)
+            {
+                ThrowIfInvalidReply();
+                ReplyInitiated = true;
+            }
+
+            OnReply(message, timeout);
+            _replySent = true;
         }
 
         // This method is designed for WebSocket only, and will only be used once the WebSocket response was sent.
-        // For WebSocket, we never call HttpRequestContext.Reply to send the response back. 
-        // Instead we call AcceptWebSocket directly. So we need to set the replyInitiated and 
-        // replySent boolean to be true once the response was sent successfully. Otherwise when we 
+        // For WebSocket, we never call HttpRequestContext.Reply to send the response back.
+        // Instead we call AcceptWebSocket directly. So we need to set the replyInitiated and
+        // replySent boolean to be true once the response was sent successfully. Otherwise when we
         // are disposing the HttpRequestContext, we will see a bunch of warnings in trace log.
         protected void SetReplySent()
         {
-            lock (thisLock)
+            lock (ThisLock)
             {
                 ThrowIfInvalidReply();
-                replyInitiated = true;
+                ReplyInitiated = true;
             }
 
-            replySent = true;
+            _replySent = true;
         }
     }
 
     internal class RequestContextMessageProperty : IDisposable
     {
-        private RequestContext context;
-        private object thisLock = new object();
+        private RequestContext _context;
+        private object _thisLock = new object();
 
         public RequestContextMessageProperty(RequestContext context)
         {
-            this.context = context;
+            _context = context;
         }
 
         public static string Name
@@ -287,33 +295,31 @@ namespace CoreWCF.Channels
             bool success = false;
             RequestContext thisContext;
 
-            lock (thisLock)
+            lock (_thisLock)
             {
-                if (context == null)
+                if (_context == null)
                 {
                     return;
                 }
 
-                thisContext = context;
-                context = null;
+                thisContext = _context;
+                _context = null;
             }
 
             try
             {
-                thisContext.CloseAsync().GetAwaiter().GetResult();
+                thisContext.Close();
                 success = true;
             }
-            catch (CommunicationException e)
+            catch (CommunicationException)
             {
-                DiagnosticUtility.TraceHandledException(e, TraceEventType.Information);
             }
             catch (TimeoutException e)
             {
-                //if (TD.CloseTimeoutIsEnabled())
-                //{
-                //    TD.CloseTimeout(e.Message);
-                //}
-                DiagnosticUtility.TraceHandledException(e, TraceEventType.Information);
+                if (WcfEventSource.Instance.CloseTimeoutIsEnabled())
+                {
+                    WcfEventSource.Instance.CloseTimeout(e.Message);
+                }
             }
             finally
             {
@@ -324,5 +330,4 @@ namespace CoreWCF.Channels
             }
         }
     }
-
 }

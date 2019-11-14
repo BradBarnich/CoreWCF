@@ -1,16 +1,22 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+
+using System;
 using System.Collections.Generic;
 
 namespace CoreWCF.Channels
 {
     public class CustomBinding : Binding
     {
-        private BindingElementCollection _bindingElements = new BindingElementCollection();
-
         public CustomBinding()
+            : base()
         {
         }
 
         public CustomBinding(params BindingElement[] bindingElementsInTopDownChannelStackOrder)
+            : base()
         {
             if (bindingElementsInTopDownChannelStackOrder == null)
             {
@@ -19,7 +25,7 @@ namespace CoreWCF.Channels
 
             foreach (BindingElement element in bindingElementsInTopDownChannelStackOrder)
             {
-                _bindingElements.Add(element);
+                Elements.Add(element);
             }
         }
 
@@ -33,7 +39,7 @@ namespace CoreWCF.Channels
 
             foreach (BindingElement element in bindingElementsInTopDownChannelStackOrder)
             {
-                _bindingElements.Add(element);
+                Elements.Add(element);
             }
         }
 
@@ -46,12 +52,26 @@ namespace CoreWCF.Channels
 
             foreach (BindingElement element in bindingElementsInTopDownChannelStackOrder)
             {
-                _bindingElements.Add(element);
+                Elements.Add(element);
+            }
+        }
+
+        internal CustomBinding(BindingElementCollection bindingElements)
+            : base()
+        {
+            if (bindingElements == null)
+            {
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(bindingElements));
+            }
+
+            for (int i = 0; i < bindingElements.Count; i++)
+            {
+                Elements.Add(bindingElements[i]);
             }
         }
 
         public CustomBinding(Binding binding)
-    : this(binding, SafeCreateBindingElements(binding))
+            : this(binding, SafeCreateBindingElements(binding))
         {
         }
 
@@ -84,31 +104,25 @@ namespace CoreWCF.Channels
 
             for (int i = 0; i < elements.Count; i++)
             {
-                _bindingElements.Add(elements[i]);
+                Elements.Add(elements[i]);
             }
         }
 
-        public BindingElementCollection Elements
-        {
-            get
-            {
-                return _bindingElements;
-            }
-        }
+        public BindingElementCollection Elements { get; } = new BindingElementCollection();
 
         public override BindingElementCollection CreateBindingElements()
         {
-            return _bindingElements.Clone();
+            return Elements.Clone();
         }
 
         public override string Scheme
         {
             get
             {
-                TransportBindingElement transport = _bindingElements.Find<TransportBindingElement>();
+                TransportBindingElement transport = Elements.Find<TransportBindingElement>();
                 if (transport == null)
                 {
-                    return string.Empty;
+                    return String.Empty;
                 }
 
                 return transport.Scheme;

@@ -1,48 +1,57 @@
-using System;
-using System.Collections.ObjectModel;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+
+using CoreWCF.Security;
 using System.Xml;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 
 namespace CoreWCF.Channels
 {
-    public abstract class TransportBindingElement : BindingElement
+    public abstract class TransportBindingElement
+        : BindingElement
     {
-        private bool manualAddressing;
-        private long maxBufferPoolSize;
-        private long maxReceivedMessageSize;
+        private bool _manualAddressing;
+        private long _maxBufferPoolSize;
+        private long _maxReceivedMessageSize;
 
         protected TransportBindingElement()
         {
-            manualAddressing = TransportDefaults.ManualAddressing;
-            maxBufferPoolSize = TransportDefaults.MaxBufferPoolSize;
-            maxReceivedMessageSize = TransportDefaults.MaxReceivedMessageSize;
+            _manualAddressing = TransportDefaults.ManualAddressing;
+            _maxBufferPoolSize = TransportDefaults.MaxBufferPoolSize;
+            _maxReceivedMessageSize = TransportDefaults.MaxReceivedMessageSize;
         }
 
         protected TransportBindingElement(TransportBindingElement elementToBeCloned)
+            : base(elementToBeCloned)
         {
-            manualAddressing = elementToBeCloned.manualAddressing;
-            maxBufferPoolSize = elementToBeCloned.maxBufferPoolSize;
-            maxReceivedMessageSize = elementToBeCloned.maxReceivedMessageSize;
+            _manualAddressing = elementToBeCloned._manualAddressing;
+            _maxBufferPoolSize = elementToBeCloned._maxBufferPoolSize;
+            _maxReceivedMessageSize = elementToBeCloned._maxReceivedMessageSize;
         }
 
-        [System.ComponentModel.DefaultValueAttribute(false)]
+        [DefaultValue(TransportDefaults.ManualAddressing)]
         public virtual bool ManualAddressing
         {
             get
             {
-                return manualAddressing;
+                return _manualAddressing;
             }
 
             set
             {
-                manualAddressing = value;
+                _manualAddressing = value;
             }
         }
 
+        [DefaultValue(TransportDefaults.MaxBufferPoolSize)]
         public virtual long MaxBufferPoolSize
         {
             get
             {
-                return maxBufferPoolSize;
+                return _maxBufferPoolSize;
             }
             set
             {
@@ -51,16 +60,16 @@ namespace CoreWCF.Channels
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(value), value,
                         SR.ValueMustBeNonNegative));
                 }
-                maxBufferPoolSize = value;
+                _maxBufferPoolSize = value;
             }
         }
 
-        [System.ComponentModel.DefaultValueAttribute((long)65536)]
+        [DefaultValue(TransportDefaults.MaxReceivedMessageSize)]
         public virtual long MaxReceivedMessageSize
         {
             get
             {
-                return maxReceivedMessageSize;
+                return _maxReceivedMessageSize;
             }
             set
             {
@@ -69,11 +78,19 @@ namespace CoreWCF.Channels
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(value), value,
                         SR.ValueMustBePositive));
                 }
-                maxReceivedMessageSize = value;
+                _maxReceivedMessageSize = value;
             }
         }
 
         public abstract string Scheme { get; }
+
+        internal static IChannelFactory<TChannel> CreateChannelFactory<TChannel>(TransportBindingElement transport)
+        {
+            Binding binding = new CustomBinding(transport);
+            return binding.BuildChannelFactory<TChannel>();
+        }
+
+
         public override T GetProperty<T>(BindingContext context)
         {
             if (context == null)
@@ -81,17 +98,16 @@ namespace CoreWCF.Channels
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(context));
             }
 
+            if (typeof(T) == typeof(ChannelProtectionRequirements))
+            {
+                ChannelProtectionRequirements myRequirements = GetProtectionRequirements(context);
+                myRequirements.Add(context.GetInnerProperty<ChannelProtectionRequirements>() ?? new ChannelProtectionRequirements());
+                return (T)(object)myRequirements;
+            }
 
             // to cover all our bases, let's iterate through the BindingParameters to make sure
             // we haven't missed a query (since we're the Transport and we're at the bottom)
-            Collection<BindingElement> bindingElements = new Collection<BindingElement>();
-            foreach (var param in context.BindingParameters)
-            {
-                if (param is BindingElement)
-                {
-                    bindingElements.Add((BindingElement)param);
-                }
-            }
+            Collection<BindingElement> bindingElements = context.BindingParameters.FindAll<BindingElement>();
 
             T result = default(T);
             for (int i = 0; i < bindingElements.Count; i++)
@@ -116,7 +132,26 @@ namespace CoreWCF.Channels
             return null;
         }
 
-        protected override bool IsMatch(BindingElement b)
+        private ChannelProtectionRequirements GetProtectionRequirements(AddressingVersion addressingVersion)
+        {
+            ChannelProtectionRequirements result = new ChannelProtectionRequirements();
+            result.IncomingSignatureParts.AddParts(addressingVersion.SignedMessageParts);
+            result.OutgoingSignatureParts.AddParts(addressingVersion.SignedMessageParts);
+            return result;
+        }
+
+        internal ChannelProtectionRequirements GetProtectionRequirements(BindingContext context)
+        {
+            AddressingVersion addressingVersion = AddressingVersion.WSAddressing10;
+            MessageEncodingBindingElement messageEncoderBindingElement = context.Binding.Elements.Find<MessageEncodingBindingElement>();
+            if (messageEncoderBindingElement != null)
+            {
+                addressingVersion = messageEncoderBindingElement.MessageVersion.Addressing;
+            }
+            return GetProtectionRequirements(addressingVersion);
+        }
+
+        internal override bool IsMatch(BindingElement b)
         {
             if (b == null)
             {
@@ -127,17 +162,15 @@ namespace CoreWCF.Channels
             {
                 return false;
             }
-            if (maxBufferPoolSize != transport.MaxBufferPoolSize)
+            if (_maxBufferPoolSize != transport.MaxBufferPoolSize)
             {
                 return false;
             }
-            if (maxReceivedMessageSize != transport.MaxReceivedMessageSize)
+            if (_maxReceivedMessageSize != transport.MaxReceivedMessageSize)
             {
                 return false;
             }
             return true;
         }
-
-        public virtual Type MiddlewareType { get; } = null;
     }
 }

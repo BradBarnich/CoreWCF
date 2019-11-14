@@ -1,98 +1,73 @@
-using CoreWCF.Runtime;
-using System;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+
 using System.ComponentModel;
 
 namespace CoreWCF.Channels
 {
-    public abstract class ConnectionOrientedTransportBindingElement : TransportBindingElement
+    public abstract class ConnectionOrientedTransportBindingElement
+        : TransportBindingElement
+
     {
-        private int connectionBufferSize;
-        private bool exposeConnectionProperty;
-        private HostNameComparisonMode hostNameComparisonMode;
-        private bool inheritBaseAddressSettings;
-        private TimeSpan channelInitializationTimeout;
-        private int maxBufferSize;
-        private bool maxBufferSizeInitialized;
-        private int maxPendingConnections;
-        private TimeSpan maxOutputDelay;
-        private int maxPendingAccepts;
-        private TransferMode transferMode;
-        private bool isMaxPendingConnectionsSet;
-        private bool isMaxPendingAcceptsSet;
+        private int _connectionBufferSize;
+        private int _maxBufferSize;
+        private bool _maxBufferSizeInitialized;
+        private TransferMode _transferMode;
 
         internal ConnectionOrientedTransportBindingElement()
             : base()
         {
-            connectionBufferSize = ConnectionOrientedTransportDefaults.ConnectionBufferSize;
-            hostNameComparisonMode = ConnectionOrientedTransportDefaults.HostNameComparisonMode;
-            channelInitializationTimeout = ConnectionOrientedTransportDefaults.ChannelInitializationTimeout;
-            maxBufferSize = TransportDefaults.MaxBufferSize;
-            maxPendingConnections = ConnectionOrientedTransportDefaults.GetMaxPendingConnections();
-            maxOutputDelay = ConnectionOrientedTransportDefaults.MaxOutputDelay;
-            maxPendingAccepts = ConnectionOrientedTransportDefaults.GetMaxPendingAccepts();
-            transferMode = ConnectionOrientedTransportDefaults.TransferMode;
+            _connectionBufferSize = ConnectionOrientedTransportDefaults.ConnectionBufferSize;
+            MaxOutputDelay = ConnectionOrientedTransportDefaults.MaxOutputDelay;
+            _maxBufferSize = TransportDefaults.MaxBufferSize;
+            _transferMode = ConnectionOrientedTransportDefaults.TransferMode;
         }
 
         internal ConnectionOrientedTransportBindingElement(ConnectionOrientedTransportBindingElement elementToBeCloned)
             : base(elementToBeCloned)
         {
-            connectionBufferSize = elementToBeCloned.connectionBufferSize;
-            exposeConnectionProperty = elementToBeCloned.exposeConnectionProperty;
-            hostNameComparisonMode = elementToBeCloned.hostNameComparisonMode;
-            inheritBaseAddressSettings = elementToBeCloned.InheritBaseAddressSettings;
-            channelInitializationTimeout = elementToBeCloned.ChannelInitializationTimeout;
-            maxBufferSize = elementToBeCloned.maxBufferSize;
-            maxBufferSizeInitialized = elementToBeCloned.maxBufferSizeInitialized;
-            maxPendingConnections = elementToBeCloned.maxPendingConnections;
-            maxOutputDelay = elementToBeCloned.maxOutputDelay;
-            maxPendingAccepts = elementToBeCloned.maxPendingAccepts;
-            transferMode = elementToBeCloned.transferMode;
-            isMaxPendingConnectionsSet = elementToBeCloned.isMaxPendingConnectionsSet;
-            isMaxPendingAcceptsSet = elementToBeCloned.isMaxPendingAcceptsSet;
+            _connectionBufferSize = elementToBeCloned._connectionBufferSize;
+            ExposeConnectionProperty = elementToBeCloned.ExposeConnectionProperty;
+            _maxBufferSize = elementToBeCloned._maxBufferSize;
+            _maxBufferSizeInitialized = elementToBeCloned._maxBufferSizeInitialized;
+            _transferMode = elementToBeCloned._transferMode;
         }
 
+        // client
+        // server
         [DefaultValue(ConnectionOrientedTransportDefaults.ConnectionBufferSize)]
         public int ConnectionBufferSize
         {
             get
             {
-                return connectionBufferSize;
+                return _connectionBufferSize;
             }
             set
             {
                 if (value < 0)
                 {
-                    throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException("value", value,
+                    throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(value), value,
                         SR.ValueMustBeNonNegative));
                 }
 
-                connectionBufferSize = value;
+                _connectionBufferSize = value;
             }
         }
 
-        [DefaultValue(ConnectionOrientedTransportDefaults.HostNameComparisonMode)]
-        public HostNameComparisonMode HostNameComparisonMode
-        {
-            get
-            {
-                return hostNameComparisonMode;
-            }
+        // client
+        internal bool ExposeConnectionProperty { get; set; }
 
-            set
-            {
-                HostNameComparisonModeHelper.Validate(value);
-                hostNameComparisonMode = value;
-            }
-        }
-
+        // server
         [DefaultValue(TransportDefaults.MaxBufferSize)]
         public int MaxBufferSize
         {
             get
             {
-                if (maxBufferSizeInitialized || TransferMode != TransferMode.Buffered)
+                if (_maxBufferSizeInitialized || TransferMode != TransferMode.Buffered)
                 {
-                    return maxBufferSize;
+                    return _maxBufferSize;
                 }
 
                 long maxReceivedMessageSize = MaxReceivedMessageSize;
@@ -109,138 +84,45 @@ namespace CoreWCF.Channels
             {
                 if (value <= 0)
                 {
-                    throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException("value", value,
+                    throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(value), value,
                         SR.ValueMustBePositive));
                 }
 
-                maxBufferSizeInitialized = true;
-                maxBufferSize = value;
+                _maxBufferSizeInitialized = true;
+                _maxBufferSize = value;
             }
         }
 
-        public int MaxPendingConnections
-        {
-            get
-            {
-                return maxPendingConnections;
-            }
-            set
-            {
-                if (value <= 0)
-                {
-                    throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException("value", value,
-                        SR.ValueMustBePositive));
-                }
-
-                maxPendingConnections = value;
-                isMaxPendingConnectionsSet = true;
-            }
-        }
-
-        internal bool IsMaxPendingConnectionsSet
-        {
-            get { return isMaxPendingConnectionsSet; }
-        }
-
-        // used by MEX to ensure that we don't conflict on base-address scoped settings
-        internal bool InheritBaseAddressSettings
-        {
-            get
-            {
-                return inheritBaseAddressSettings;
-            }
-            set
-            {
-                inheritBaseAddressSettings = value;
-            }
-        }
-
-        public TimeSpan ChannelInitializationTimeout
-        {
-            get
-            {
-                return channelInitializationTimeout;
-            }
-
-            set
-            {
-                if (value <= TimeSpan.Zero)
-                {
-                    throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException("value", value,
-                        SR.TimeSpanMustBeGreaterThanTimeSpanZero));
-                }
-
-                if (TimeoutHelper.IsTooLarge(value))
-                {
-                    throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException("value", value,
-                        SR.SFxTimeoutOutOfRangeTooBig));
-                }
-
-                channelInitializationTimeout = value;
-            }
-        }
-
-        public TimeSpan MaxOutputDelay
-        {
-            get
-            {
-                return maxOutputDelay;
-            }
-
-            set
-            {
-                if (value < TimeSpan.Zero)
-                {
-                    throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException("value", value,
-                        SR.SFxTimeoutOutOfRange0));
-                }
-
-                if (TimeoutHelper.IsTooLarge(value))
-                {
-                    throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException("value", value,
-                        SR.SFxTimeoutOutOfRangeTooBig));
-                }
-
-                maxOutputDelay = value;
-            }
-        }
-
-        public int MaxPendingAccepts
-        {
-            get
-            {
-                return maxPendingAccepts;
-            }
-
-            set
-            {
-                if (value <= 0)
-                {
-                    throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException("value", value,
-                        SR.ValueMustBePositive));
-                }
-
-                maxPendingAccepts = value;
-                isMaxPendingAcceptsSet = true;
-            }
-        }
-
-        internal bool IsMaxPendingAcceptsSet
-        {
-            get { return isMaxPendingAcceptsSet; }
-        }
+        internal TimeSpan MaxOutputDelay { get; }
 
         [DefaultValue(ConnectionOrientedTransportDefaults.TransferMode)]
         public TransferMode TransferMode
         {
             get
             {
-                return transferMode;
+                return _transferMode;
             }
             set
             {
                 TransferModeHelper.Validate(value);
-                transferMode = value;
+                _transferMode = value;
+            }
+        }
+
+        public override bool CanBuildChannelFactory<TChannel>(BindingContext context)
+        {
+            if (context == null)
+            {
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(context));
+            }
+
+            if (TransferMode == TransferMode.Buffered)
+            {
+                return (typeof(TChannel) == typeof(IDuplexSessionChannel));
+            }
+            else
+            {
+                return (typeof(TChannel) == typeof(IRequestChannel));
             }
         }
 
@@ -261,7 +143,7 @@ namespace CoreWCF.Channels
             }
         }
 
-        protected override bool IsMatch(BindingElement b)
+        internal override bool IsMatch(BindingElement b)
         {
             if (!base.IsMatch(b))
             {
@@ -274,51 +156,34 @@ namespace CoreWCF.Channels
                 return false;
             }
 
-            if (connectionBufferSize != connection.connectionBufferSize)
+            if (_connectionBufferSize != connection._connectionBufferSize)
             {
                 return false;
             }
 
-            if (hostNameComparisonMode != connection.hostNameComparisonMode)
+            if (_maxBufferSize != connection._maxBufferSize)
             {
                 return false;
             }
 
-            if (inheritBaseAddressSettings != connection.inheritBaseAddressSettings)
-            {
-                return false;
-            }
-
-            if (channelInitializationTimeout != connection.channelInitializationTimeout)
-            {
-                return false;
-            }
-            if (maxBufferSize != connection.maxBufferSize)
-            {
-                return false;
-            }
-
-            if (maxPendingConnections != connection.maxPendingConnections)
-            {
-                return false;
-            }
-
-            if (maxOutputDelay != connection.maxOutputDelay)
-            {
-                return false;
-            }
-
-            if (maxPendingAccepts != connection.maxPendingAccepts)
-            {
-                return false;
-            }
-
-            if (transferMode != connection.transferMode)
+            if (_transferMode != connection._transferMode)
             {
                 return false;
             }
 
             return true;
+        }
+
+        private MessageEncodingBindingElement FindMessageEncodingBindingElement(BindingElementCollection bindingElements, out bool createdNew)
+        {
+            createdNew = false;
+            MessageEncodingBindingElement encodingBindingElement = bindingElements.Find<MessageEncodingBindingElement>();
+            if (encodingBindingElement == null)
+            {
+                createdNew = true;
+                encodingBindingElement = new BinaryMessageEncodingBindingElement();
+            }
+            return encodingBindingElement;
         }
     }
 }

@@ -1,20 +1,18 @@
-﻿using System;
-using CoreWCF.Diagnostics;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+
+
+using System;
 
 namespace CoreWCF.Channels
 {
     public abstract class ChannelBase : CommunicationObject, IChannel, IDefaultCommunicationTimeouts
     {
-        private ChannelManagerBase channelManager;
-
         protected ChannelBase(ChannelManagerBase channelManager)
         {
-            if (channelManager == null)
-            {
-                throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(channelManager));
-            }
-
-            this.channelManager = channelManager;
+            Manager = channelManager ?? throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(channelManager));
         }
 
         TimeSpan IDefaultCommunicationTimeouts.CloseTimeout
@@ -39,34 +37,40 @@ namespace CoreWCF.Channels
 
         protected override TimeSpan DefaultCloseTimeout
         {
-            get { return ((IDefaultCommunicationTimeouts)channelManager).CloseTimeout; }
+            get { return ((IDefaultCommunicationTimeouts)Manager).CloseTimeout; }
         }
 
         protected override TimeSpan DefaultOpenTimeout
         {
-            get { return ((IDefaultCommunicationTimeouts)channelManager).OpenTimeout; }
+            get { return ((IDefaultCommunicationTimeouts)Manager).OpenTimeout; }
         }
 
         protected TimeSpan DefaultReceiveTimeout
         {
-            get { return ((IDefaultCommunicationTimeouts)channelManager).ReceiveTimeout; }
+            get { return ((IDefaultCommunicationTimeouts)Manager).ReceiveTimeout; }
         }
 
         protected TimeSpan DefaultSendTimeout
         {
-            get { return ((IDefaultCommunicationTimeouts)channelManager).SendTimeout; }
+            get { return ((IDefaultCommunicationTimeouts)Manager).SendTimeout; }
         }
 
-        protected ChannelManagerBase Manager
-        {
-            get
-            {
-                return channelManager;
-            }
-        }
+        protected ChannelManagerBase Manager { get; }
 
         public virtual T GetProperty<T>() where T : class
         {
+            IChannelFactory factory = Manager as IChannelFactory;
+            if (factory != null)
+            {
+                return factory.GetProperty<T>();
+            }
+
+            IChannelListener listener = Manager as IChannelListener;
+            if (listener != null)
+            {
+                return listener.GetProperty<T>();
+            }
+
             return null;
         }
 
@@ -75,5 +79,4 @@ namespace CoreWCF.Channels
             base.OnClosed();
         }
     }
-
 }

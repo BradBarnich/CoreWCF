@@ -1,3 +1,8 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+
 using System;
 using System.Threading.Tasks;
 using System.Xml;
@@ -6,24 +11,20 @@ namespace CoreWCF.Channels
 {
     public abstract class BodyWriter
     {
-        private bool isBuffered;
-        private bool canWrite;
-        private object thisLock;
+        private bool _canWrite;
+        private object _thisLock;
 
         protected BodyWriter(bool isBuffered)
         {
-            this.isBuffered = isBuffered;
-            canWrite = true;
-            if (!this.isBuffered)
+            IsBuffered = isBuffered;
+            _canWrite = true;
+            if (!IsBuffered)
             {
-                thisLock = new object();
+                _thisLock = new object();
             }
         }
 
-        public bool IsBuffered
-        {
-            get { return isBuffered; }
-        }
+        public bool IsBuffered { get; }
 
         internal virtual bool IsEmpty
         {
@@ -40,23 +41,23 @@ namespace CoreWCF.Channels
             if (maxBufferSize < 0)
             {
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(maxBufferSize), maxBufferSize,
-                    SR.ValueMustBeNonNegative));
+                                                    SR.ValueMustBeNonNegative));
             }
 
-            if (isBuffered)
+            if (IsBuffered)
             {
                 return this;
             }
             else
             {
-                lock (thisLock)
+                lock (_thisLock)
                 {
-                    if (!canWrite)
+                    if (!_canWrite)
                     {
                         throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.BodyWriterCanOnlyBeWrittenOnce));
                     }
 
-                    canWrite = false;
+                    _canWrite = false;
                 }
                 BodyWriter bodyWriter = OnCreateBufferedCopy(maxBufferSize);
                 if (!bodyWriter.IsBuffered)
@@ -95,23 +96,33 @@ namespace CoreWCF.Channels
             return Task.CompletedTask;
         }
 
+        protected virtual IAsyncResult OnBeginWriteBodyContents(XmlDictionaryWriter writer, AsyncCallback callback, object state)
+        {
+            throw ExceptionHelper.PlatformNotSupported();
+        }
+
+        protected virtual void OnEndWriteBodyContents(IAsyncResult result)
+        {
+            throw ExceptionHelper.PlatformNotSupported();
+        }
+
         private void EnsureWriteBodyContentsState(XmlDictionaryWriter writer)
         {
             if (writer == null)
             {
-                throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgumentNull(nameof(writer));
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(writer)));
             }
 
-            if (!isBuffered)
+            if (!IsBuffered)
             {
-                lock (thisLock)
+                lock (_thisLock)
                 {
-                    if (!canWrite)
+                    if (!_canWrite)
                     {
                         throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.BodyWriterCanOnlyBeWrittenOnce));
                     }
 
-                    canWrite = false;
+                    _canWrite = false;
                 }
             }
         }
@@ -122,25 +133,36 @@ namespace CoreWCF.Channels
             OnWriteBodyContents(writer);
         }
 
-        public Task WriteBodyContentsAsync(XmlDictionaryWriter writer)
+        internal Task WriteBodyContentsAsync(XmlDictionaryWriter writer)
         {
             EnsureWriteBodyContentsState(writer);
             return OnWriteBodyContentsAsync(writer);
         }
 
-        private class BufferedBodyWriter : BodyWriter
+        public IAsyncResult BeginWriteBodyContents(XmlDictionaryWriter writer, AsyncCallback callback, object state)
         {
-            private XmlBuffer buffer;
+            EnsureWriteBodyContentsState(writer);
+            return OnBeginWriteBodyContents(writer, callback, state);
+        }
+
+        public void EndWriteBodyContents(IAsyncResult result)
+        {
+            OnEndWriteBodyContents(result);
+        }
+
+        internal class BufferedBodyWriter : BodyWriter
+        {
+            private XmlBuffer _buffer;
 
             public BufferedBodyWriter(XmlBuffer buffer)
                 : base(true)
             {
-                this.buffer = buffer;
+                _buffer = buffer;
             }
 
             protected override void OnWriteBodyContents(XmlDictionaryWriter writer)
             {
-                XmlDictionaryReader reader = buffer.GetReader(0);
+                XmlDictionaryReader reader = _buffer.GetReader(0);
                 using (reader)
                 {
                     reader.ReadStartElement();

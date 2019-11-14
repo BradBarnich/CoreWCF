@@ -1,5 +1,10 @@
-﻿using System.Xml;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+
 using CoreWCF.Runtime;
+using System.Xml;
 
 namespace CoreWCF.Channels
 {
@@ -10,7 +15,7 @@ namespace CoreWCF.Channels
             XmlDictionaryReaderQuotas bufferedReadQuotas = new XmlDictionaryReaderQuotas();
             encoderQuotas.CopyTo(bufferedReadQuotas);
 
-            // now we have the quotas from the encoder, we need to update the values with the new quotas from the default read quotas. 
+            // now we have the quotas from the encoder, we need to update the values with the new quotas from the default read quotas.
             if (IsDefaultQuota(bufferedReadQuotas, XmlDictionaryReaderQuotaTypes.MaxStringContentLength))
             {
                 bufferedReadQuotas.MaxStringContentLength = EncoderDefaults.BufferedReadDefaultMaxStringContentLength;

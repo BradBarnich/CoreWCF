@@ -1,54 +1,59 @@
-﻿using System;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+
+using System;
 
 namespace CoreWCF.Channels
 {
     /*
         Message Framing BNF:
- 
+
         protocol-stream-a = (singleton-unsized-stream-a | duplex-stream-a | simplex-stream-a | singleton-sized-stream-a)+
         protocol-stream-b = (singleton-unsized-stream-b | duplex-stream-b)+
- 
+
         singleton-unsized-stream-a = version-record mode-record-type singleton-unsized-mode via-record encoding-record upgrade-request* preamble-end-record-type singleton-message end-record-type
         duplex-stream-a = version-record mode-record-type duplex-mode via-record encoding-record upgrade-request* preamble-end-record-type duplex-message* end-record-type
         simplex-stream-a = version-record mode-record-type simplex-mode via-record encoding-record simplex-message* end-record-type
         singleton-sized-stream-a = version-record mode-record-type singleton-sized-mode via-record encoding-record octets
- 
+
         singleton-unsized-stream-b = upgrade-response* preamble-response singleton-message? end-record-type
         duplex-stream-b = upgrade-response* preamble-response duplex-message* (fault-message | end-record-type)
- 
+
         singleton-message = unsized-message
         duplex-message = sized-message
         simplex-message = sized-message
         fault-message = fault-record-type mbint utf8-octets
         sized-message = sized-envelope-record-type mbint octets
         unsized-message = unsized-envelope-record-type (mbint octets)* octet(0x0)
- 
+
         preamble-response = preamble-ack-record-type | fault-message
-     
+
         upgrade-request = upgrade-request-record-type mbint utf8-octets octets
         upgrade-response = upgrade-response-record-type octets
- 
+
         version-record = version-record-type major-version-number minor-version-number
         major-version-number = octet(0x1)
         minor-version-number = octet(0x0)
- 
+
         encoding-record = known-encoding-record | extensible-encoding-record
         known-encoding-record = known-encoding-record-type known-encoding-type
         extensible-encoding-record = extensible-encoding-record-type mbint utf8-octets
- 
+
         via-record = via-record-type mbint utf8-octets
- 
+
         singleton-unsized-mode = octet(0x1)
         duplex-mode = octet(0x2)
         simplex-mode = octet(0x3)
         singleton-sized-mode = octet(0x4)
- 
+
         known-encoding-type = text-encoding | binary-encoding | mtom-encoding
         binary-encoding = binary-sessionless-encoding | binary-session-encoding
         text-encoding = soap11-text-encoding | soap12-text-encoding
         soap11-text-encoding = soap11-utf8-encoding | soap11-utf16-encoding | soap11-unicodeFFFE-encoding
         soap12-text-encoding = soap12-utf8-encoding | soap12-utf16-encoding | soap12-unicodeFFFE-encoding
- 
+
         soap11-utf8-encoding = octet(0x0)
         soap11-utf16-encoding = octet(0x1)
         soap11-unicodeFFFE-encoding = octet(0x2)
@@ -58,7 +63,7 @@ namespace CoreWCF.Channels
         mtom-encoding = octet(0x6)
         binary-sessionless-encoding = octet(0x7)
         binary-session-encoding = octet(0x8)
- 
+
         version-record-type = octet(0x0)
         mode-record-type = octet(0x1)
         via-record-type = octet(0x2)

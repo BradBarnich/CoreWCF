@@ -1,13 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+
+using System;
 
 namespace CoreWCF.Channels
 {
-    public abstract class StreamUpgradeProvider : CommunicationObject
+    public abstract class StreamUpgradeProvider : CommunicationObject, IAsyncCommunicationObject
     {
-        private TimeSpan closeTimeout;
-        private TimeSpan openTimeout;
+        private TimeSpan _closeTimeout;
+        private TimeSpan _openTimeout;
 
         protected StreamUpgradeProvider()
             : this(null)
@@ -18,24 +21,24 @@ namespace CoreWCF.Channels
         {
             if (timeouts != null)
             {
-                closeTimeout = timeouts.CloseTimeout;
-                openTimeout = timeouts.OpenTimeout;
+                _closeTimeout = timeouts.CloseTimeout;
+                _openTimeout = timeouts.OpenTimeout;
             }
             else
             {
-                closeTimeout = ServiceDefaults.CloseTimeout;
-                openTimeout = ServiceDefaults.OpenTimeout;
+                _closeTimeout = ServiceDefaults.CloseTimeout;
+                _openTimeout = ServiceDefaults.OpenTimeout;
             }
         }
 
         protected override TimeSpan DefaultCloseTimeout
         {
-            get { return closeTimeout; }
+            get { return _closeTimeout; }
         }
 
         protected override TimeSpan DefaultOpenTimeout
         {
-            get { return closeTimeout; }
+            get { return _closeTimeout; }
         }
 
         public virtual T GetProperty<T>() where T : class
@@ -43,6 +46,6 @@ namespace CoreWCF.Channels
             return null;
         }
 
-        public abstract StreamUpgradeAcceptor CreateUpgradeAcceptor();
+        public abstract StreamUpgradeInitiator CreateUpgradeInitiator(EndpointAddress remoteAddress, Uri via);
     }
 }

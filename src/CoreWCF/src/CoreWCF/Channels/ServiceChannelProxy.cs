@@ -1,23 +1,23 @@
-﻿using System;
-using System.Collections;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+
+using System.Collections.Concurrent;
+using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Reflection;
-using System.Threading.Tasks;
 using CoreWCF.Runtime;
 using CoreWCF.Description;
 using CoreWCF.Diagnostics;
 using CoreWCF.Dispatcher;
-using System.Collections.Concurrent;
-using System.Diagnostics.Contracts;
-using System.Runtime;
-using System.Runtime.CompilerServices;
-using System.Threading;
+using System.Threading.Tasks;
 
 namespace CoreWCF.Channels
 {
     public class ServiceChannelProxy : DispatchProxy, ICommunicationObject, IChannel, IClientChannel, IOutputChannel, IRequestChannel, IServiceChannel, IDuplexContextChannel
     {
-        private const string activityIdSlotName = "E2ETrace.ActivityID";
+        private const String activityIdSlotName = "E2ETrace.ActivityID";
         private Type _proxiedType;
         private ServiceChannel _serviceChannel;
         private ImmutableClientRuntime _proxyRuntime;
@@ -78,7 +78,14 @@ namespace CoreWCF.Channels
 
                 if (operation == null)
                 {
-                    throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new NotSupportedException(SR.Format(SR.SFxMethodNotSupportedOnCallback1, method.Name)));
+                    if (_serviceChannel.Factory != null)
+                    {
+                        throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new NotSupportedException(SR.Format(SR.SFxMethodNotSupported1, method.Name)));
+                    }
+                    else
+                    {
+                        throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new NotSupportedException(SR.Format(SR.SFxMethodNotSupportedOnCallback1, method.Name)));
+                    }
                 }
 
                 MethodType methodType;
@@ -147,7 +154,7 @@ namespace CoreWCF.Channels
                     return InvokeGetType(methodCall);
                 default:
                     Fx.Assert("Invalid proxy method type");
-                    throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(string.Format(CultureInfo.InvariantCulture, "Invalid proxy method type")));
+                    throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(String.Format(CultureInfo.InvariantCulture, "Invalid proxy method type")));
             }
         }
 
@@ -165,28 +172,33 @@ namespace CoreWCF.Channels
             private static Task CreateGenericTask(ServiceChannel channel, ProxyOperationRuntime operation, object[] inputParameters)
             {
                 TaskCompletionSourceProxy tcsp = new TaskCompletionSourceProxy(operation.TaskTResult);
-                Action<Task<object>, object> completeCallDelegate = (antecedent, obj) =>
+                bool completedCallback = false;
+                Action<IAsyncResult> endCallDelegate = (asyncResult) =>
                 {
-                    var tcsProxy = obj as TaskCompletionSourceProxy;
-                    Contract.Assert(tcsProxy != null);
-                    if (antecedent.IsFaulted)
+                    Contract.Assert(asyncResult != null, "'asyncResult' MUST NOT be NULL.");
+                    completedCallback = true;
+                    OperationContext originalOperationContext = OperationContext.Current;
+                    OperationContext.Current = asyncResult.AsyncState as OperationContext;
+                    try
                     {
-                        tcsProxy.TrySetException(antecedent.Exception.InnerException);
+                        object result = channel.EndCall(operation.Action, Array.Empty<object>(), asyncResult);
+                        OperationContext.Current = originalOperationContext;
+                        tcsp.TrySetResult(result);
                     }
-                    else if (antecedent.IsCanceled)
+                    catch (Exception e)
                     {
-                        tcsProxy.TrySetCanceled();
-                    }
-                    else
-                    {
-                        tcsProxy.TrySetResult(antecedent.Result);
+                        OperationContext.Current = originalOperationContext;
+                        tcsp.TrySetException(e);
                     }
                 };
 
                 try
                 {
-                    channel.CallAsync(operation.Action, operation.IsOneWay, operation, inputParameters,
-                    Array.Empty<object>()).ContinueWith(completeCallDelegate, tcsp);
+                    IAsyncResult ar = ServiceChannel.BeginCall(channel, operation, inputParameters, new AsyncCallback(endCallDelegate), OperationContext.Current);
+                    if (ar.CompletedSynchronously && !completedCallback)
+                    {
+                        endCallDelegate(ar);
+                    }
                 }
                 catch (Exception e)
                 {
@@ -199,30 +211,34 @@ namespace CoreWCF.Channels
             private static Task CreateTask(ServiceChannel channel, ProxyOperationRuntime operation, object[] inputParameters)
             {
                 TaskCompletionSource<object> tcs = new TaskCompletionSource<object>();
+                bool completedCallback = false;
 
-                Action<Task<object>, object> completeCallDelegate = (antecedent, obj) =>
+                Action<IAsyncResult> endCallDelegate = (asyncResult) =>
                 {
-                    var tcsObj = obj as TaskCompletionSource<object>;
-                    Contract.Assert(tcsObj != null);
-                    if (antecedent.IsFaulted)
+                    Contract.Assert(asyncResult != null, "'asyncResult' MUST NOT be NULL.");
+                    completedCallback = true;
+                    OperationContext originalOperationContext = OperationContext.Current;
+                    OperationContext.Current = asyncResult.AsyncState as OperationContext;
+                    try
                     {
-                        tcsObj.TrySetException(antecedent.Exception.InnerException);
+                        channel.EndCall(operation.Action, Array.Empty<object>(), asyncResult);
+                        OperationContext.Current = originalOperationContext;
+                        tcs.TrySetResult(null);
                     }
-                    else if (antecedent.IsCanceled)
+                    catch (Exception e)
                     {
-                        tcsObj.TrySetCanceled();
-                    }
-                    else
-                    {
-                        tcsObj.TrySetResult(antecedent.Result);
+                        OperationContext.Current = originalOperationContext;
+                        tcs.TrySetException(e);
                     }
                 };
 
-
                 try
                 {
-                    channel.CallAsync(operation.Action, operation.IsOneWay, operation, inputParameters,
-                        Array.Empty<object>()).ContinueWith(completeCallDelegate, tcs);
+                    IAsyncResult ar = ServiceChannel.BeginCall(channel, operation, inputParameters, new AsyncCallback(endCallDelegate), OperationContext.Current);
+                    if (ar.CompletedSynchronously && !completedCallback)
+                    {
+                        endCallDelegate(ar);
+                    }
                 }
                 catch (Exception e)
                 {
@@ -298,31 +314,31 @@ namespace CoreWCF.Channels
 
         private object InvokeChannel(MethodCall methodCall)
         {
-            //string activityName = null;
-            //ActivityType activityType = ActivityType.Unknown;
-            //if (DiagnosticUtility.ShouldUseActivity)
-            //{
-            //    if (ServiceModelActivity.Current == null ||
-            //        ServiceModelActivity.Current.ActivityType != ActivityType.Close)
-            //    {
-            //        MethodData methodData = this.GetMethodData(methodCall);
-            //        if (methodData.MethodBase.DeclaringType == typeof(System.ServiceModel.ICommunicationObject)
-            //            && methodData.MethodBase.Name.Equals("Close", StringComparison.Ordinal))
-            //        {
-            //            activityName = SR.Format(SR.ActivityClose, _serviceChannel.GetType().FullName);
-            //            activityType = ActivityType.Close;
-            //        }
-            //    }
-            //}
+            string activityName = null;
+            ActivityType activityType = ActivityType.Unknown;
+            if (DiagnosticUtility.ShouldUseActivity)
+            {
+                if (ServiceModelActivity.Current == null ||
+                    ServiceModelActivity.Current.ActivityType != ActivityType.Close)
+                {
+                    MethodData methodData = GetMethodData(methodCall);
+                    if (methodData.MethodBase.DeclaringType == typeof(ICommunicationObject)
+                        && methodData.MethodBase.Name.Equals("Close", StringComparison.Ordinal))
+                    {
+                        activityName = SR.Format(SR.ActivityClose, _serviceChannel.GetType().FullName);
+                        activityType = ActivityType.Close;
+                    }
+                }
+            }
 
-            //using (ServiceModelActivity activity = string.IsNullOrEmpty(activityName) ? null : ServiceModelActivity.CreateBoundedActivity())
-            //{
-            //    if (DiagnosticUtility.ShouldUseActivity)
-            //    {
-            //        ServiceModelActivity.Start(activity, activityName, activityType);
-            //    }
+            using (ServiceModelActivity activity = string.IsNullOrEmpty(activityName) ? null : ServiceModelActivity.CreateBoundedActivity())
+            {
+                if (DiagnosticUtility.ShouldUseActivity)
+                {
+                    ServiceModelActivity.Start(activity, activityName, activityType);
+                }
                 return ExecuteMessage(_serviceChannel, methodCall);
-            //}
+            }
         }
 
         private object InvokeGetType(MethodCall methodCall)
@@ -353,11 +369,7 @@ namespace CoreWCF.Channels
         {
             object[] outs;
             object[] ins = operation.MapSyncInputs(methodCall, out outs);
-            object ret;
-            using (TaskHelpers.RunTaskContinuationsOnOurThreads())
-            {
-              ret = _serviceChannel.CallAsync(operation.Action, operation.IsOneWay, operation, ins, outs).GetAwaiter().GetResult();
-            }
+            object ret = _serviceChannel.Call(operation.Action, operation.IsOneWay, operation, ins, outs);
             operation.MapSyncOutputs(methodCall, outs, ref ret);
             return ret;
         }
@@ -467,8 +479,6 @@ namespace CoreWCF.Channels
 
         internal struct MethodData
         {
-            private MethodBase _methodBase;
-            private MethodType _methodType;
             private ProxyOperationRuntime _operation;
 
             public MethodData(MethodBase methodBase, MethodType methodType)
@@ -478,20 +488,14 @@ namespace CoreWCF.Channels
 
             public MethodData(MethodBase methodBase, MethodType methodType, ProxyOperationRuntime operation)
             {
-                _methodBase = methodBase;
-                _methodType = methodType;
+                MethodBase = methodBase;
+                MethodType = methodType;
                 _operation = operation;
             }
 
-            public MethodBase MethodBase
-            {
-                get { return _methodBase; }
-            }
+            public MethodBase MethodBase { get; }
 
-            public MethodType MethodType
-            {
-                get { return _methodType; }
-            }
+            public MethodType MethodType { get; }
 
             public ProxyOperationRuntime Operation
             {
@@ -553,30 +557,77 @@ namespace CoreWCF.Channels
             _serviceChannel.Abort();
         }
 
-        Task ICommunicationObject.CloseAsync()
+        void ICommunicationObject.Close()
         {
-            return _serviceChannel.CloseAsync();
+            _serviceChannel.Close();
         }
 
-        Task ICommunicationObject.CloseAsync(CancellationToken token)
+        void ICommunicationObject.Close(TimeSpan timeout)
         {
-            return _serviceChannel.CloseAsync(token);
+            _serviceChannel.Close(timeout);
         }
 
-        Task ICommunicationObject.OpenAsync()
+        IAsyncResult ICommunicationObject.BeginClose(AsyncCallback callback, object state)
         {
-            return _serviceChannel.OpenAsync();
+            return _serviceChannel.BeginClose(callback, state);
         }
 
-        Task ICommunicationObject.OpenAsync(CancellationToken token)
+        IAsyncResult ICommunicationObject.BeginClose(TimeSpan timeout, AsyncCallback callback, object state)
         {
-            return _serviceChannel.OpenAsync(token);
+            return _serviceChannel.BeginClose(timeout, callback, state);
         }
 
-        //Uri IClientChannel.Via
-        //{
-        //    get { return _serviceChannel.Via; }
-        //}
+        void ICommunicationObject.EndClose(IAsyncResult result)
+        {
+            _serviceChannel.EndClose(result);
+        }
+
+        void ICommunicationObject.Open()
+        {
+            _serviceChannel.Open();
+        }
+
+        void ICommunicationObject.Open(TimeSpan timeout)
+        {
+            _serviceChannel.Open(timeout);
+        }
+
+        IAsyncResult ICommunicationObject.BeginOpen(AsyncCallback callback, object state)
+        {
+            return _serviceChannel.BeginOpen(callback, state);
+        }
+
+        IAsyncResult ICommunicationObject.BeginOpen(TimeSpan timeout, AsyncCallback callback, object state)
+        {
+            return _serviceChannel.BeginOpen(timeout, callback, state);
+        }
+
+        void ICommunicationObject.EndOpen(IAsyncResult result)
+        {
+            _serviceChannel.EndOpen(result);
+        }
+
+        bool IClientChannel.AllowInitializationUI
+        {
+            get
+            {
+                return ((IClientChannel)_serviceChannel).AllowInitializationUI;
+            }
+            set
+            {
+                ((IClientChannel)_serviceChannel).AllowInitializationUI = value;
+            }
+        }
+
+        bool IClientChannel.DidInteractiveInitialization
+        {
+            get { return ((IClientChannel)_serviceChannel).DidInteractiveInitialization; }
+        }
+
+        Uri IClientChannel.Via
+        {
+            get { return _serviceChannel.Via; }
+        }
 
         event EventHandler<UnknownMessageReceivedEventArgs> IClientChannel.UnknownMessageReceived
         {
@@ -584,22 +635,37 @@ namespace CoreWCF.Channels
             remove { ((IClientChannel)_serviceChannel).UnknownMessageReceived -= value; }
         }
 
+        IAsyncResult IClientChannel.BeginDisplayInitializationUI(AsyncCallback callback, object state)
+        {
+            return _serviceChannel.BeginDisplayInitializationUI(callback, state);
+        }
+
+        void IClientChannel.DisplayInitializationUI()
+        {
+            _serviceChannel.DisplayInitializationUI();
+        }
+
+        void IClientChannel.EndDisplayInitializationUI(IAsyncResult result)
+        {
+            _serviceChannel.EndDisplayInitializationUI(result);
+        }
+
         void IDisposable.Dispose()
         {
             ((IClientChannel)_serviceChannel).Dispose();
         }
 
-        //bool IContextChannel.AllowOutputBatching
-        //{
-        //    get
-        //    {
-        //        return ((IContextChannel)_serviceChannel).AllowOutputBatching;
-        //    }
-        //    set
-        //    {
-        //        ((IContextChannel)_serviceChannel).AllowOutputBatching = value;
-        //    }
-        //}
+        bool IContextChannel.AllowOutputBatching
+        {
+            get
+            {
+                return ((IContextChannel)_serviceChannel).AllowOutputBatching;
+            }
+            set
+            {
+                ((IContextChannel)_serviceChannel).AllowOutputBatching = value;
+            }
+        }
 
         IInputSession IContextChannel.InputSession
         {
@@ -653,29 +719,69 @@ namespace CoreWCF.Channels
             get { return ((IContextChannel)_serviceChannel).Extensions; }
         }
 
-        Task IOutputChannel.SendAsync(Message message)
+        IAsyncResult IOutputChannel.BeginSend(Message message, AsyncCallback callback, object state)
         {
-            return _serviceChannel.SendAsync(message);
+            return _serviceChannel.BeginSend(message, callback, state);
         }
 
-        Task IOutputChannel.SendAsync(Message message, CancellationToken token)
+        IAsyncResult IOutputChannel.BeginSend(Message message, TimeSpan timeout, AsyncCallback callback, object state)
         {
-            return _serviceChannel.SendAsync(message, token);
+            return _serviceChannel.BeginSend(message, timeout, callback, state);
         }
 
-        Task<Message> IRequestChannel.RequestAsync(Message message)
+        void IOutputChannel.EndSend(IAsyncResult result)
         {
-            return _serviceChannel.RequestAsync(message);
+            _serviceChannel.EndSend(result);
         }
 
-        Task<Message> IRequestChannel.RequestAsync(Message message, CancellationToken token)
+        void IOutputChannel.Send(Message message)
         {
-            return _serviceChannel.RequestAsync(message, token);
+            _serviceChannel.Send(message);
         }
 
-        public Task CloseOutputSessionAsync(CancellationToken token)
+        void IOutputChannel.Send(Message message, TimeSpan timeout)
         {
-            return ((IDuplexContextChannel)_serviceChannel).CloseOutputSessionAsync(token);
+            _serviceChannel.Send(message, timeout);
+        }
+
+        Message IRequestChannel.Request(Message message)
+        {
+            return _serviceChannel.Request(message);
+        }
+
+        Message IRequestChannel.Request(Message message, TimeSpan timeout)
+        {
+            return _serviceChannel.Request(message, timeout);
+        }
+
+        IAsyncResult IRequestChannel.BeginRequest(Message message, AsyncCallback callback, object state)
+        {
+            return _serviceChannel.BeginRequest(message, callback, state);
+        }
+
+        IAsyncResult IRequestChannel.BeginRequest(Message message, TimeSpan timeout, AsyncCallback callback, object state)
+        {
+            return _serviceChannel.BeginRequest(message, timeout, callback, state);
+        }
+
+        Message IRequestChannel.EndRequest(IAsyncResult result)
+        {
+            return _serviceChannel.EndRequest(result);
+        }
+
+        public IAsyncResult BeginCloseOutputSession(TimeSpan timeout, AsyncCallback callback, object state)
+        {
+            return ((IDuplexContextChannel)_serviceChannel).BeginCloseOutputSession(timeout, callback, state);
+        }
+
+        public void EndCloseOutputSession(IAsyncResult result)
+        {
+            ((IDuplexContextChannel)_serviceChannel).EndCloseOutputSession(result);
+        }
+
+        public void CloseOutputSession(TimeSpan timeout)
+        {
+            ((IDuplexContextChannel)_serviceChannel).CloseOutputSession(timeout);
         }
 
         EndpointAddress IRequestChannel.RemoteAddress
@@ -720,5 +826,4 @@ namespace CoreWCF.Channels
         }
         #endregion // Channel interfaces
     }
-
 }

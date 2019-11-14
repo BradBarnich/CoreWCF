@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+
 using System.Diagnostics.Contracts;
 using System.IO;
 using CoreWCF.Runtime;
@@ -46,10 +50,10 @@ namespace CoreWCF.Channels
         public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
             // Supporting a passed in cancellationToken as well as honoring the timeout token in this class would require
-            // creating a linked token source on every call which is extra allocation and needs disposal. As this is an 
-            // internal class, it's okay to add this extra constraint to usage of this method.
-            Fx.Assert(!cancellationToken.CanBeCanceled, "cancellationToken shouldn't be cancellable");
-            var cancelToken = _timeoutHelper.GetCancellationToken();
+            // creating a linked token source on every call which is extra allocation and needs disposal. As this is an
+            // internal classs, it's okay to add this extra constraint to usage of this method.
+            Contract.Assert(!cancellationToken.CanBeCanceled, "cancellationToken shouldn't be cancellable");
+            var cancelToken = await _timeoutHelper.GetCancellationTokenAsync();
             return await base.ReadAsync(buffer, offset, count, cancelToken);
         }
 
@@ -73,10 +77,10 @@ namespace CoreWCF.Channels
         public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
             // Supporting a passed in cancellationToken as well as honoring the timeout token in this class would require
-            // creating a linked token source on every call which is extra allocation and needs disposal. As this is an 
-            // internal class, it's okay to add this extra constraint to usage of this method.
-            Fx.Assert(!cancellationToken.CanBeCanceled, "cancellationToken shouldn't be cancellable");
-            var cancelToken = _timeoutHelper.GetCancellationToken();
+            // creating a linked token source on every call which is extra allocation and needs disposal. As this is an
+            // internal classs, it's okay to add this extra constraint to usage of this method.
+            Contract.Assert(!cancellationToken.CanBeCanceled, "cancellationToken shouldn't be cancellable");
+            var cancelToken = await _timeoutHelper.GetCancellationTokenAsync();
             await base.WriteAsync(buffer, offset, count, cancelToken);
         }
 

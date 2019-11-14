@@ -1,23 +1,28 @@
-using System;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+
 using CoreWCF.Runtime;
 using CoreWCF.Description;
+using System;
 
 namespace CoreWCF.Channels
 {
     public abstract class Binding : IDefaultCommunicationTimeouts
     {
-        private TimeSpan closeTimeout = ServiceDefaults.CloseTimeout;
-        private string name;
-        private string namespaceIdentifier;
-        private TimeSpan openTimeout = ServiceDefaults.OpenTimeout;
-        private TimeSpan receiveTimeout = ServiceDefaults.ReceiveTimeout;
-        private TimeSpan sendTimeout = ServiceDefaults.SendTimeout;
+        private TimeSpan _closeTimeout = ServiceDefaults.CloseTimeout;
+        private string _name;
+        private string _namespaceIdentifier;
+        private TimeSpan _openTimeout = ServiceDefaults.OpenTimeout;
+        private TimeSpan _receiveTimeout = ServiceDefaults.ReceiveTimeout;
+        private TimeSpan _sendTimeout = ServiceDefaults.SendTimeout;
         internal const string DefaultNamespace = NamingHelper.DefaultNamespace;
 
         protected Binding()
         {
-            name = null;
-            namespaceIdentifier = DefaultNamespace;
+            _name = null;
+            _namespaceIdentifier = DefaultNamespace;
         }
 
         protected Binding(string name, string ns)
@@ -36,13 +41,13 @@ namespace CoreWCF.Channels
                 NamingHelper.CheckUriParameter(ns, "ns");
             }
 
-            this.name = name;
-            namespaceIdentifier = ns;
+            _name = name;
+            _namespaceIdentifier = ns;
         }
 
         public TimeSpan CloseTimeout
         {
-            get { return closeTimeout; }
+            get { return _closeTimeout; }
             set
             {
                 if (value < TimeSpan.Zero)
@@ -54,7 +59,7 @@ namespace CoreWCF.Channels
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(value), value, SR.SFxTimeoutOutOfRangeTooBig));
                 }
 
-                closeTimeout = value;
+                _closeTimeout = value;
             }
         }
 
@@ -62,12 +67,12 @@ namespace CoreWCF.Channels
         {
             get
             {
-                if (name == null)
+                if (_name == null)
                 {
-                    name = GetType().Name;
+                    _name = GetType().Name;
                 }
 
-                return name;
+                return _name;
             }
             set
             {
@@ -76,13 +81,13 @@ namespace CoreWCF.Channels
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperArgument("value", SR.SFXBindingNameCannotBeNullOrEmpty);
                 }
 
-                name = value;
+                _name = value;
             }
         }
 
         public string Namespace
         {
-            get { return namespaceIdentifier; }
+            get { return _namespaceIdentifier; }
             set
             {
                 if (value == null)
@@ -94,13 +99,13 @@ namespace CoreWCF.Channels
                 {
                     NamingHelper.CheckUriProperty(value, "Namespace");
                 }
-                namespaceIdentifier = value;
+                _namespaceIdentifier = value;
             }
         }
 
         public TimeSpan OpenTimeout
         {
-            get { return openTimeout; }
+            get { return _openTimeout; }
             set
             {
                 if (value < TimeSpan.Zero)
@@ -112,13 +117,13 @@ namespace CoreWCF.Channels
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(value), value, SR.SFxTimeoutOutOfRangeTooBig));
                 }
 
-                openTimeout = value;
+                _openTimeout = value;
             }
         }
 
         public TimeSpan ReceiveTimeout
         {
-            get { return receiveTimeout; }
+            get { return _receiveTimeout; }
             set
             {
                 if (value < TimeSpan.Zero)
@@ -130,7 +135,7 @@ namespace CoreWCF.Channels
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(value), value, SR.SFxTimeoutOutOfRangeTooBig));
                 }
 
-                receiveTimeout = value;
+                _receiveTimeout = value;
             }
         }
 
@@ -146,7 +151,7 @@ namespace CoreWCF.Channels
 
         public TimeSpan SendTimeout
         {
-            get { return sendTimeout; }
+            get { return _sendTimeout; }
             set
             {
                 if (value < TimeSpan.Zero)
@@ -158,8 +163,24 @@ namespace CoreWCF.Channels
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentOutOfRangeException(nameof(value), value, SR.SFxTimeoutOutOfRangeTooBig));
                 }
 
-                sendTimeout = value;
+                _sendTimeout = value;
             }
+        }
+
+        public IChannelFactory<TChannel> BuildChannelFactory<TChannel>(params object[] parameters)
+        {
+            return BuildChannelFactory<TChannel>(new BindingParameterCollection(parameters));
+        }
+
+        public virtual IChannelFactory<TChannel> BuildChannelFactory<TChannel>(BindingParameterCollection parameters)
+        {
+            EnsureInvariants();
+            BindingContext context = new BindingContext(new CustomBinding(this), parameters);
+            IChannelFactory<TChannel> channelFactory = context.BuildInnerChannelFactory<TChannel>();
+            context.ValidateBindingElementsConsumed();
+            ValidateSecurityCapabilities(channelFactory.GetProperty<ISecurityCapabilities>(), parameters);
+
+            return channelFactory;
         }
 
         private void ValidateSecurityCapabilities(ISecurityCapabilities runtimeSecurityCapabilities, BindingParameterCollection parameters)
@@ -173,23 +194,22 @@ namespace CoreWCF.Channels
             }
         }
 
-        // TODO: Ensure any validation logic here is executed in new pipeline
-        //public virtual IChannelListener<TChannel> BuildChannelListener<TChannel>(Uri listenUriBaseAddress, string listenUriRelativeAddress, ListenUriMode listenUriMode, BindingParameterCollection parameters)
-        //    where TChannel : class, IChannel
-        //{
-        //    EnsureInvariants();
-        //    BindingContext context = new BindingContext(new CustomBinding(this), parameters, listenUriBaseAddress, listenUriRelativeAddress, listenUriMode);
-        //    IChannelListener<TChannel> channelListener = context.BuildInnerChannelListener<TChannel>();
-        //    context.ValidateBindingElementsConsumed();
-        //    ValidateSecurityCapabilities(channelListener.GetProperty<ISecurityCapabilities>(), parameters);
+        public bool CanBuildChannelFactory<TChannel>(params object[] parameters)
+        {
+            return CanBuildChannelFactory<TChannel>(new BindingParameterCollection(parameters));
+        }
 
-        //    return channelListener;
-        //}
+        public virtual bool CanBuildChannelFactory<TChannel>(BindingParameterCollection parameters)
+        {
+            BindingContext context = new BindingContext(new CustomBinding(this), parameters);
+            return context.CanBuildInnerChannelFactory<TChannel>();
+        }
 
+        // the elements should NOT reference internal elements used by the Binding
         public abstract BindingElementCollection CreateBindingElements();
 
         public T GetProperty<T>(BindingParameterCollection parameters)
-    where T : class
+            where T : class
         {
             BindingContext context = new BindingContext(new CustomBinding(this), parameters);
             return context.GetInnerProperty<T>();
@@ -245,5 +265,13 @@ namespace CoreWCF.Channels
             }
         }
 
+        internal void CopyTimeouts(IDefaultCommunicationTimeouts source)
+        {
+            CloseTimeout = source.CloseTimeout;
+            OpenTimeout = source.OpenTimeout;
+            ReceiveTimeout = source.ReceiveTimeout;
+            SendTimeout = source.SendTimeout;
+        }
     }
 }
+

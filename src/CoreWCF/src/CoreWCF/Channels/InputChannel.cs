@@ -1,67 +1,37 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Threading;
+﻿// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
 using System.Threading.Tasks;
 
 namespace CoreWCF.Channels
 {
-    internal class InputChannel : ServiceChannelBase, IInputChannel
+    internal class InputChannel
     {
-        private IServiceProvider _serviceProvider;
-
-        public InputChannel(ITransportFactorySettings settings, EndpointAddress localAddress, IServiceProvider serviceProvider) : base(settings)
+        internal static async Task<Message> HelpReceiveAsync(IAsyncInputChannel channel, TimeSpan timeout)
         {
-            LocalAddress = localAddress;
-            _serviceProvider = serviceProvider;
-        }
+            (bool success, Message message) = await channel.TryReceiveAsync(timeout);
 
-        public EndpointAddress LocalAddress { get; }
-
-
-        public Task<Message> ReceiveAsync()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<Message> ReceiveAsync(CancellationToken token)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<TryAsyncResult<Message>> TryReceiveAsync(CancellationToken token)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<bool> WaitForMessageAsync(CancellationToken token)
-        {
-            throw new NotImplementedException();
-        }
-
-        protected override void OnAbort()
-        {
-            return;
-        }
-
-        protected override Task OnCloseAsync(CancellationToken token)
-        {
-            return Task.CompletedTask;
-        }
-
-        protected override Task OnOpenAsync(CancellationToken token)
-        {
-            return Task.CompletedTask;
-        }
-
-        public override T GetProperty<T>()
-        {
-            T service = _serviceProvider.GetService<T>();
-            if (service != null)
+            if (success)
             {
-                return service;
+                return message;
             }
+            else
+            {
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(CreateReceiveTimedOutException(channel, timeout));
+            }
+        }
 
-            return base.GetProperty<T>();
+        private static Exception CreateReceiveTimedOutException(IInputChannel channel, TimeSpan timeout)
+        {
+            if (channel.LocalAddress != null)
+            {
+                return new TimeoutException(SR.Format(SR.ReceiveTimedOut, channel.LocalAddress.Uri.AbsoluteUri, timeout));
+            }
+            else
+            {
+                return new TimeoutException(SR.Format(SR.ReceiveTimedOutNoLocalAddress, timeout));
+            }
         }
     }
 }

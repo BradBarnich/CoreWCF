@@ -1,4 +1,7 @@
-﻿using System;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
 
 namespace CoreWCF.Channels
 {
@@ -15,29 +18,33 @@ namespace CoreWCF.Channels
 
         public abstract MessageVersion MessageVersion { get; set; }
 
-        //        internal IChannelFactory<TChannel> InternalBuildChannelFactory<TChannel>(BindingContext context)
-        //        {
-        //            if (context == null)
-        //            {
-        //                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException("context"));
-        //            }
 
-        //#pragma warning suppress 56506 // brianmcn, BindingContext.BindingParameters never be null
-        //            context.BindingParameters.Add(this);
-        //            return context.BuildInnerChannelFactory<TChannel>();
-        //        }
+        internal virtual bool IsWsdlExportable
+        {
+            get { return true; }
+        }
 
-        //        internal bool InternalCanBuildChannelFactory<TChannel>(BindingContext context)
-        //        {
-        //            if (context == null)
-        //            {
-        //                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException("context"));
-        //            }
+        internal IChannelFactory<TChannel> InternalBuildChannelFactory<TChannel>(BindingContext context)
+        {
+            if (context == null)
+            {
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(context)));
+            }
 
-        //#pragma warning suppress 56506 // brianmcn, BindingContext.BindingParameters never be null
-        //            context.BindingParameters.Add(this);
-        //            return context.CanBuildInnerChannelFactory<TChannel>();
-        //        }
+            context.BindingParameters.Add(this);
+            return context.BuildInnerChannelFactory<TChannel>();
+        }
+
+        internal bool InternalCanBuildChannelFactory<TChannel>(BindingContext context)
+        {
+            if (context == null)
+            {
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(context)));
+            }
+
+            context.BindingParameters.Add(this);
+            return context.CanBuildInnerChannelFactory<TChannel>();
+        }
 
         public abstract MessageEncoderFactory CreateMessageEncoderFactory();
 
@@ -62,8 +69,13 @@ namespace CoreWCF.Channels
             return false;
         }
 
-        protected override bool IsMatch(BindingElement b)
+        internal override bool IsMatch(BindingElement b)
         {
+            if (b == null)
+            {
+                return false;
+            }
+
             MessageEncodingBindingElement encoding = b as MessageEncodingBindingElement;
             if (encoding == null)
             {
@@ -72,6 +84,5 @@ namespace CoreWCF.Channels
 
             return true;
         }
-
     }
 }

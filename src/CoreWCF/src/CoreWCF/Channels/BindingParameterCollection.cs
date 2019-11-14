@@ -1,7 +1,9 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+
 using CoreWCF.Collections.Generic;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 
 namespace CoreWCF.Channels
 {
@@ -35,7 +37,7 @@ namespace CoreWCF.Channels
 
             for (int i = 0; i < parameters.Count; i++)
             {
-                Add(parameters[i]);
+                base.Add(parameters[i]);
             }
         }
     }
