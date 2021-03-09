@@ -10,7 +10,6 @@ using CoreWCF.Configuration;
 using CoreWCF.Runtime;
 using CoreWCF.Security;
 using Microsoft.AspNetCore.Connections;
-using Microsoft.AspNetCore.Http.Features;
 
 namespace CoreWCF.Channels.Framing
 {
@@ -50,20 +49,8 @@ namespace CoreWCF.Channels.Framing
         public int ConnectionBufferSize { get; internal set; }
         public TransferMode TransferMode { get; internal set; }
         public RawStream RawStream { get; internal set; }
-        public IPEndPoint RemoteEndpoint
-        {
-            get
-            {
-                IHttpConnectionFeature connectionFeature = _context.Features.Get<IHttpConnectionFeature>();
-                if (connectionFeature == null)
-                {
-                    return null;
-                }
-
-                return new IPEndPoint(connectionFeature.RemoteIpAddress, connectionFeature.RemotePort);
-            }
-        }
-
+        public IPEndPoint RemoteEndpoint => _context.RemoteEndPoint as IPEndPoint;
+       
         internal void Reset()
         {
             MessageEncoderFactory = null;

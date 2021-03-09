@@ -44,6 +44,7 @@ namespace CoreWCF.Runtime
             _originalTimeout = timeout;
             _deadline = DateTime.MaxValue;
             _deadlineSet = (timeout == TimeSpan.MaxValue || timeout == Timeout.InfiniteTimeSpan);
+            _cancellationToken = CancellationToken.None;
         }
 
         public CancellationToken GetCancellationToken()
@@ -232,7 +233,7 @@ namespace CoreWCF.Runtime
             }
             else
             {
-                // http://msdn.microsoft.com/en-us/library/85bbbxt9(v=vs.110).aspx 
+                // http://msdn.microsoft.com/en-us/library/85bbbxt9(v=vs.110).aspx
                 // with exitContext was used in Desktop which is not supported in Net Native or CoreClr
                 return waitHandle.WaitOne(timeout);
             }
@@ -314,7 +315,7 @@ namespace CoreWCF.Runtime
                     if (!s_timerCache.TryGetValue(targetTime, out ctsTimer))
                     {
                         // In unlikely scenario the timer has already fired, we would not find it in cache.
-                        // In this case we would simply create a CTS which doesn't use the coalesced timer. 
+                        // In this case we would simply create a CTS which doesn't use the coalesced timer.
                         var cts = new RecoverableTimeoutCancellationTokenSource(millisecondsTimeout);
                         cts.CancelAfter(millisecondsTimeout);
                         return cts.Token;
