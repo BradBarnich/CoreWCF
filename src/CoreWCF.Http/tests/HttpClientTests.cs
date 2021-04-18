@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using CoreWCF.Configuration;
 using CoreWCF.Http.Tests.Helpers;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using Xunit.Abstractions;
@@ -79,7 +80,7 @@ namespace CoreWCF.Http.Tests
                 services.AddServiceModelServices();
             }
 
-            public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+            public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
             {
                 app.UseServiceModel(builder =>
                 {

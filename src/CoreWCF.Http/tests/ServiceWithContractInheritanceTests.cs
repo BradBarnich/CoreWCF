@@ -331,7 +331,7 @@ namespace CoreWCF.Http.Tests
                 services.AddServiceModelServices();
             }
 
-            public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+            public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
             {
                 app.UseServiceModel(builder =>
                 {
@@ -366,7 +366,7 @@ namespace CoreWCF.Http.Tests
                 services.AddServiceModelServices();
             }
 
-            public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+            public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
             {
                 Type serviceContractType = null;
                 app.UseServiceModel(builder =>
@@ -403,7 +403,7 @@ namespace CoreWCF.Http.Tests
                 services.AddServiceModelServices();
             }
 
-            public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+            public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
             {
                 app.UseServiceModel(builder =>
                 {

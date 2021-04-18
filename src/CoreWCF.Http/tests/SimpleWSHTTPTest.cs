@@ -278,7 +278,7 @@ namespace WSHttp
                 return wsBInding;
             }
            
-            public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+            public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
             {
                 CoreWCF.WSHttpBinding serverBinding = new CoreWCF.WSHttpBinding(_wsHttpSecurityMode);
                 serverBinding.Security.Message.ClientCredentialType = _credentialType;

@@ -10,8 +10,8 @@ using System.Xml;
 using CoreWCF.Channels.Framing;
 using CoreWCF.Runtime;
 using CoreWCF.Security;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace CoreWCF.Channels
 {
@@ -75,7 +75,7 @@ namespace CoreWCF.Channels
         {
             base.OnOpened();
 
-            IApplicationLifetime appLifetime = _serviceProvider.GetRequiredService<IApplicationLifetime>();
+            IHostApplicationLifetime appLifetime = _serviceProvider.GetRequiredService<IHostApplicationLifetime>();
             _applicationStoppingRegistration = appLifetime.ApplicationStopping.Register(() =>
             {
                 _ = CloseAsync();

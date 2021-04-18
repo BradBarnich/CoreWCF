@@ -3,11 +3,10 @@
 
 using System;
 using System.ServiceModel;
-using CoreWCF.Description;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Hosting.Internal;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Hosting.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -26,7 +25,7 @@ namespace DispatcherClient
                 serverAddressesFeature.Addresses.Add(new Uri(s_endpointAddress).GetLeftPart(UriPartial.Authority) + "/");
                 services.AddSingleton(serverAddressesFeature);
                 services.AddSingleton(typeof(ILogger<>), typeof(NullLogger<>));
-                services.AddSingleton<IApplicationLifetime, ApplicationLifetime>();
+                services.AddSingleton<IHostApplicationLifetime, ApplicationLifetime>();
             }, configureServiceHostBase);
             return new ChannelFactory<TContract>(binding, new EndpointAddress(s_endpointAddress));
         }

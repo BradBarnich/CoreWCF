@@ -4,8 +4,8 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using CoreWCF.Configuration;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace CoreWCF.Channels.Framing
 {
@@ -13,10 +13,10 @@ namespace CoreWCF.Channels.Framing
     {
         private readonly HandshakeDelegate _next;
         private readonly IServiceScopeFactory _servicesScopeFactory;
-        private readonly IApplicationLifetime _appLifetime;
+        private readonly IHostApplicationLifetime _appLifetime;
         private readonly IDictionary<IServiceDispatcher, ITransportFactorySettings> _transportSettingsCache = new Dictionary<IServiceDispatcher, ITransportFactorySettings>();
 
-        public ServerSessionConnectionReaderMiddleware(HandshakeDelegate next, IServiceScopeFactory servicesScopeFactory, IApplicationLifetime appLifetime)
+        public ServerSessionConnectionReaderMiddleware(HandshakeDelegate next, IServiceScopeFactory servicesScopeFactory, IHostApplicationLifetime appLifetime)
         {
             _next = next;
             _servicesScopeFactory = servicesScopeFactory;

@@ -44,7 +44,7 @@ namespace CoreWCF.Http.Tests
 
         internal class StartupCharSetQuotes : StartupBase
         {
-            public override void Configure(IApplicationBuilder app, IHostingEnvironment env)
+            public override void Configure(IApplicationBuilder app, IWebHostEnvironment env)
             {
                 app.Use(async (context, next) =>
                 {
@@ -65,7 +65,7 @@ namespace CoreWCF.Http.Tests
                 services.AddServiceModelServices();
             }
 
-            public virtual void Configure(IApplicationBuilder app, IHostingEnvironment env)
+            public virtual void Configure(IApplicationBuilder app, IWebHostEnvironment env)
             {
                 app.UseServiceModel(builder =>
                 {

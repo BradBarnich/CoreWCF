@@ -28,7 +28,7 @@ namespace CoreWCF.Channels
             : base(requestMessage, settings.CloseTimeout, settings.SendTimeout)
         {
             HttpTransportSettings = settings;
-            _replySentTcs = new TaskCompletionSource<object>(TaskContinuationOptions.RunContinuationsAsynchronously);
+            _replySentTcs = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
         }
 
         public bool KeepAliveEnabled
