@@ -12,20 +12,25 @@ namespace CoreWCF.Channels
 {
     public abstract class MessageFault
     {
-        internal static MessageFault CreateFault(FaultCode code, string reason)
+        public static MessageFault CreateFault(FaultCode code, string reason)
         {
             return CreateFault(code, new FaultReason(reason));
         }
 
-        internal static MessageFault CreateFault(FaultCode code, FaultReason reason)
+        public static MessageFault CreateFault(FaultCode code, FaultReason reason)
         {
             return CreateFault(code, reason, null, null, "", "");
         }
 
-        internal static MessageFault CreateFault(FaultCode code, FaultReason reason, object detail)
+        public static MessageFault CreateFault(FaultCode code, FaultReason reason, object detail)
         {
             return CreateFault(code, reason, detail, DataContractSerializerDefaults.CreateSerializer(
                 (detail == null ? typeof(object) : detail.GetType()), int.MaxValue/*maxItems*/), "", "");
+        }
+
+        public static MessageFault CreateFault(FaultCode code, FaultReason reason, object detail, XmlObjectSerializer serializer)
+        {
+            return CreateFault(code, reason, detail, serializer, "", "");
         }
 
         public static MessageFault CreateFault(FaultCode code, FaultReason reason, object detail, XmlObjectSerializer serializer, string actor, string node)
@@ -611,9 +616,9 @@ namespace CoreWCF.Channels
         private bool ShouldWriteDetailAttribute(EnvelopeVersion targetVersion, string prefix, string localName, string attributeValue)
         {
             // Handle fault detail version conversion from Soap12 to Soap11 -- scope tightly to only conversion from Soap12 -> Soap11
-            // SOAP 1.1 specifications allow an arbitrary element within <fault>, hence: 
-            // transform this IFF the SOAP namespace specified will affect the namespace of the <detail> element, 
-            // AND the namespace specified is exactly the Soap12 Namespace. 
+            // SOAP 1.1 specifications allow an arbitrary element within <fault>, hence:
+            // transform this IFF the SOAP namespace specified will affect the namespace of the <detail> element,
+            // AND the namespace specified is exactly the Soap12 Namespace.
             bool shouldSkip = _receivedVersion == EnvelopeVersion.Soap12    // original incoming version
                                 && targetVersion == EnvelopeVersion.Soap11      // version to serialize to
                                 && string.IsNullOrEmpty(prefix)                 // attribute prefix
