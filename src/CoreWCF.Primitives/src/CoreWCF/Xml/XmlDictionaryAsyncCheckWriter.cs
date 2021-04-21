@@ -12,12 +12,13 @@ using System.Xml;
 
 namespace CoreWCF.Xml
 {
-    internal sealed class XmlDictionaryAsyncCheckWriter : XmlDictionaryWriter
+    // This is changed from dotnet/runtime, by exposing IXmlTextWriterInitializer to allow pooling
+    internal sealed class XmlDictionaryAsyncCheckWriter : XmlDictionaryWriter, IXmlTextWriterInitializer
     {
-        private readonly XmlDictionaryWriter _coreWriter;
+        private readonly XmlUTF8TextWriter _coreWriter;
         private Task? _lastTask;
 
-        public XmlDictionaryAsyncCheckWriter(XmlDictionaryWriter writer)
+        public XmlDictionaryAsyncCheckWriter(XmlUTF8TextWriter writer)
         {
             _coreWriter = writer;
         }
@@ -694,6 +695,11 @@ namespace CoreWCF.Xml
         {
             CheckAsync();
             CoreWriter.Dispose();
+        }
+
+        public void SetOutput(Stream stream, Encoding encoding, bool ownsStream)
+        {
+            _coreWriter.SetOutput(stream, encoding, ownsStream);
         }
     }
 }

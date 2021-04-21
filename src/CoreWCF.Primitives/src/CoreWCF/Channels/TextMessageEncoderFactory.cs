@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
@@ -131,7 +131,7 @@ namespace CoreWCF.Channels
             }
 
             // then some heuristic matches (since System.Mime.ContentType is a performance hit)
-            // start by looking for a parameter. 
+            // start by looking for a parameter.
 
             // If none exists, we don't have an encoding
             int semiColonIndex = contentType.IndexOf(';');
@@ -144,7 +144,7 @@ namespace CoreWCF.Channels
             int charsetValueIndex = -1;
 
             // for Indigo scenarios, we'll have "; charset=", so check for the c
-            if ((contentType.Length > semiColonIndex + 11) // need room for parameter + charset + '=' 
+            if ((contentType.Length > semiColonIndex + 11) // need room for parameter + charset + '='
                 && contentType[semiColonIndex + 2] == 'c'
                 && string.Compare("charset=", 0, contentType, semiColonIndex + 2, 8, StringComparison.OrdinalIgnoreCase) == 0)
             {
@@ -689,7 +689,6 @@ namespace CoreWCF.Channels
                     XmlDictionaryReader xmlReader = _readerPool.Take();
                     if (xmlReader == null)
                     {
-                        // TODO: Use the reinitialization API's once moved to .Net Standard 2.0
                         xmlReader = XmlDictionaryReader.CreateTextReader(buffer.Array, buffer.Offset, buffer.Count, _encoding, Quotas, _onClose);
                     }
                     else
@@ -712,7 +711,7 @@ namespace CoreWCF.Channels
             private class TextBufferedMessageWriter : BufferedMessageWriter
             {
                 private readonly TextMessageEncoder _messageEncoder;
-                //XmlDictionaryWriter writer;
+                XmlDictionaryWriter _writer;
 
                 public TextBufferedMessageWriter(TextMessageEncoder messageEncoder)
                 {
@@ -739,19 +738,17 @@ namespace CoreWCF.Channels
                 {
                     if (_messageEncoder._optimizeWriteForUTF8)
                     {
-                        //XmlDictionaryWriter returnedWriter = writer;
-                        //if (returnedWriter == null)
-                        //{
-                        //    returnedWriter = XmlDictionaryWriter.CreateTextWriter(stream, messageEncoder.writeEncoding, false);
-                        //}
-                        //else
-                        //{
-                        //    writer = null;
-                        //    ((IXmlTextWriterInitializer)returnedWriter).SetOutput(stream, messageEncoder.writeEncoding, false);
-                        //}
-                        //return returnedWriter;
-                        // TODO: Use IXmlTextWriterInitializer when moved to .Net Standard 2.0
-                        return XmlDictionaryWriter.CreateTextWriter(stream, _messageEncoder._writeEncoding, false);
+                        XmlDictionaryWriter returnedWriter = _writer;
+                        if (returnedWriter == null)
+                        {
+                            returnedWriter = XmlDictionaryWriter.CreateTextWriter(stream, _messageEncoder._writeEncoding, false);
+                        }
+                        else
+                        {
+                            _writer = null;
+                            ((IXmlTextWriterInitializer)returnedWriter).SetOutput(stream, _messageEncoder._writeEncoding, false);
+                        }
+                        return returnedWriter;
                     }
                     else
                     {
@@ -765,12 +762,11 @@ namespace CoreWCF.Channels
                     writer.Flush();
                     writer.Dispose();
 
-                    // TODO: Use IXmlTextWriterInitializer reuse once moved to .Net Standard 2.0
-                    //if (messageEncoder.optimizeWriteForUTF8)
-                    //{
-                    //    if (this.writer == null)
-                    //        this.writer = writer;
-                    //}
+                    if (_messageEncoder._optimizeWriteForUTF8)
+                    {
+                        if (_writer == null)
+                            _writer = writer;
+                    }
                 }
             }
         }
