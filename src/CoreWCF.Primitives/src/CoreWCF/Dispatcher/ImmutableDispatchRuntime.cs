@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
@@ -110,7 +110,7 @@ namespace CoreWCF.Dispatcher
 
         internal ErrorBehavior ErrorBehavior { get; }
 
-        private Task AcquireDynamicInstanceContextAsync(MessageRpc rpc)
+        private ValueTask AcquireDynamicInstanceContextAsync(MessageRpc rpc)
         {
             if (rpc.InstanceContext.QuotaThrottle != null)
             {
@@ -118,11 +118,11 @@ namespace CoreWCF.Dispatcher
             }
             else
             {
-                return Task.CompletedTask;
+                return ValueTask.CompletedTask;
             }
         }
 
-        private Task AcquireDynamicInstanceContextCoreAsync(MessageRpc rpc)
+        private ValueTask AcquireDynamicInstanceContextCoreAsync(MessageRpc rpc)
         {
             return rpc.InstanceContext.QuotaThrottle.AcquireAsync();
         }
@@ -212,7 +212,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        private async Task<MessageRpc> ReplyAsync(MessageRpc rpc)
+        private async ValueTask ReplyAsync(MessageRpc rpc)
         {
             rpc.RequestContextThrewOnReply = true;
             rpc.SuccessfullySendReply = false;
@@ -256,15 +256,13 @@ namespace CoreWCF.Dispatcher
                     rpc.CanSendReply = false;
                 }
             }
-
-            return rpc;
         }
 
-        internal Task<MessageRpc> DispatchAsync(MessageRpc rpc, bool isOperationContextSet)
+        internal ValueTask DispatchAsync(MessageRpc rpc, bool isOperationContextSet)
         {
             rpc.ErrorProcessor = ProcessError;
             rpc.AsyncProcessor = ProcessMessageAsync;
-            Task<MessageRpc> task = rpc.ProcessAsync(isOperationContextSet);
+            ValueTask task = rpc.ProcessAsync(isOperationContextSet);
             rpc._processCallReturned = true;
             return task;
         }
@@ -475,7 +473,7 @@ namespace CoreWCF.Dispatcher
             return _demuxer.GetOperation(ref message);
         }
 
-        internal async Task<MessageRpc> ProcessMessageAsync(MessageRpc rpc)
+        internal async ValueTask ProcessMessageAsync(MessageRpc rpc)
         {
             if (rpc.Operation.IsOneWay)
             {
@@ -607,7 +605,7 @@ namespace CoreWCF.Dispatcher
             try
             {
                 SetActivityIdOnThread(rpc);
-                rpc = await rpc.Operation.InvokeAsync(rpc);
+                await rpc.Operation.InvokeAsync(rpc);
             }
             catch
             {
@@ -636,11 +634,9 @@ namespace CoreWCF.Dispatcher
             {
                 rpc.EnsureReceive();
             }
-
-            return rpc;
         }
 
-        private async Task ProcessError(MessageRpc rpc)
+        private async ValueTask ProcessError(MessageRpc rpc)
         {
             try
             {
@@ -886,7 +882,7 @@ namespace CoreWCF.Dispatcher
             ErrorBehavior.HandleError(rpc);
         }
 
-        private Task ProcessMessageNonCleanupError(MessageRpc rpc)
+        private ValueTask ProcessMessageNonCleanupError(MessageRpc rpc)
         {
             try
             {
@@ -903,13 +899,13 @@ namespace CoreWCF.Dispatcher
             }
 
             PrepareReply(rpc);
-            return Task.CompletedTask;
+            return ValueTask.CompletedTask;
         }
 
-        private Task ProcessMessageCleanupError(MessageRpc rpc)
+        private ValueTask ProcessMessageCleanupError(MessageRpc rpc)
         {
             ErrorBehavior.HandleError(rpc);
-            return Task.CompletedTask;
+            return ValueTask.CompletedTask;
         }
 
         private void SetActivityIdOnThread(MessageRpc rpc)

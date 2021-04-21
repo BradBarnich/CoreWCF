@@ -157,8 +157,8 @@ namespace CoreWCF.Dispatcher
                 }
                 try
                 {
-                    // If the field is true, then this operation is to be invoked at the time the service 
-                    // channel is opened. The incoming message is created at ChannelHandler level with no 
+                    // If the field is true, then this operation is to be invoked at the time the service
+                    // channel is opened. The incoming message is created at ChannelHandler level with no
                     // content, so we don't need to deserialize the message.
                     if (!_isSessionOpenNotificationEnabled)
                     {
@@ -317,7 +317,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        internal async Task<MessageRpc> InvokeAsync(MessageRpc rpc)
+        internal async ValueTask InvokeAsync(MessageRpc rpc)
         {
             if (rpc.Error == null)
             {
@@ -360,8 +360,6 @@ namespace CoreWCF.Dispatcher
                     UninitializeCallContext(rpc);
                 }
             }
-
-            return rpc;
         }
 
         private void SetClaimsPrincipalToOperationContext(MessageRpc rpc)

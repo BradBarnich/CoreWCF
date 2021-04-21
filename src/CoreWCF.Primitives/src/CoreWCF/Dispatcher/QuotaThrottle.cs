@@ -37,7 +37,7 @@ namespace CoreWCF.Dispatcher
 
         internal int Limit { get; private set; }
 
-        internal Task AcquireAsync()
+        internal ValueTask AcquireAsync()
         {
             lock (_mutex)
             {
@@ -62,18 +62,18 @@ namespace CoreWCF.Dispatcher
                             //}
                         }
 
-                        return Task.CompletedTask;
+                        return ValueTask.CompletedTask;
                     }
                     else
                     {
                         var tcs = new TaskCompletionSource<object>();
                         _waiters.Enqueue(tcs);
-                        return tcs.Task;
+                        return new ValueTask(tcs.Task);
                     }
                 }
                 else
                 {
-                    return Task.CompletedTask;
+                    return ValueTask.CompletedTask;
                 }
             }
         }

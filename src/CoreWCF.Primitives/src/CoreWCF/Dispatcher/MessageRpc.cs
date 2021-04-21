@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
@@ -12,9 +12,9 @@ using Microsoft.Extensions.ObjectPool;
 
 namespace CoreWCF.Dispatcher
 {
-    internal delegate Task<MessageRpc> MessageRpcProcessor(MessageRpc rpc);
+    internal delegate ValueTask MessageRpcProcessor(MessageRpc rpc);
 
-    internal delegate Task MessageRpcErrorHandler(MessageRpc rpc);
+    internal delegate ValueTask MessageRpcErrorHandler(MessageRpc rpc);
 
     // TODO: Pool MessageRpc objects. These are zero cost on .NET Framework as it's a struct but passing things by ref is problematic
     // when using async/await. This causes an allocation per request so pool them to remove that allocation.
