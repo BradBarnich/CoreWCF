@@ -203,7 +203,18 @@ namespace CoreWCF.Xml
             if (type == StringHandleType.Dictionary)
                 return _bufferReader.Equals2(_key, xmlString2);
             if (type == StringHandleType.UTF8)
-                return _bufferReader.Equals2(_offset, _length, Encoding.UTF8.GetBytes(xmlString2.Value));
+            {
+                // modified to use byte pooling
+                ReadOnlySpan<char> span = xmlString2.Value.AsSpan();
+                int expectedByteCount = s_utf8Encoding.GetByteCount(span);
+                byte[] utf8Bytes = ArrayPool<byte>.Shared.Rent(expectedByteCount);
+                int actualByteCount = s_utf8Encoding.GetBytes(span, utf8Bytes);
+                Debug.Assert(expectedByteCount == actualByteCount);
+                bool result = _bufferReader.Equals2(_offset, _length, utf8Bytes.AsSpan(0, actualByteCount));
+                utf8Bytes.AsSpan(0, expectedByteCount).Clear();
+                ArrayPool<byte>.Shared.Return(utf8Bytes);
+                return result;
+            }
             DiagnosticUtility.DebugAssert(type == StringHandleType.EscapedUTF8 || type == StringHandleType.ConstString, "");
             return GetString() == xmlString2.Value;
         }
