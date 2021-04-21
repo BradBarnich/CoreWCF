@@ -3,8 +3,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Xml;
 using CoreWCF.Security.Tokens;
+using CoreWCF.Xml;
 using static CoreWCF.IdentityModel.Selectors.SecurityTokenSerializer;
 
 namespace CoreWCF.IdentityModel.Tokens

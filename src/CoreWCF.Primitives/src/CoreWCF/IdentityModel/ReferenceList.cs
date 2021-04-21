@@ -4,8 +4,11 @@
 using System;
 using System.Collections.Generic;
 using System.Xml;
+using CoreWCF.Xml;
 using DictionaryManager = CoreWCF.IdentityModel.DictionaryManager;
 using ISecurityElement = CoreWCF.IdentityModel.ISecurityElement;
+using XmlDictionaryReader = CoreWCF.Xml.XmlDictionaryReader;
+using XmlDictionaryWriter = CoreWCF.Xml.XmlDictionaryWriter;
 
 namespace CoreWCF.Security
 {

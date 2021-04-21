@@ -9,6 +9,9 @@ using System.Xml;
 using CoreWCF.Description;
 using CoreWCF.Dispatcher;
 using CoreWCF.Runtime;
+using CoreWCF.Xml;
+using XmlDictionaryReader = CoreWCF.Xml.XmlDictionaryReader;
+using XmlDictionaryWriter = CoreWCF.Xml.XmlDictionaryWriter;
 
 namespace CoreWCF.Channels
 {

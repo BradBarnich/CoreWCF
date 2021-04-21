@@ -6,6 +6,8 @@ using System.Security.Principal;
 using System.Xml;
 using CoreWCF.IdentityModel.Claims;
 using CoreWCF.Runtime;
+using CoreWCF.Xml;
+using XmlDictionaryWriter = CoreWCF.Xml.XmlDictionaryWriter;
 
 namespace CoreWCF
 {

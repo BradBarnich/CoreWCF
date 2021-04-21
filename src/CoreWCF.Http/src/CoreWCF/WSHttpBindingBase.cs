@@ -5,6 +5,8 @@ using System;
 using System.ComponentModel;
 using System.Xml;
 using CoreWCF.Channels;
+using CoreWCF.Xml;
+using XmlDictionaryReaderQuotas = CoreWCF.Xml.XmlDictionaryReaderQuotas;
 
 namespace CoreWCF
 {

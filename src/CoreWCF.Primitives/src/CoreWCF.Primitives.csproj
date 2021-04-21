@@ -1,10 +1,12 @@
-﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
+<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="15.0">
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <AssemblyName>CoreWCF.Primitives</AssemblyName>
     <PackageId>CoreWCF.Primitives</PackageId>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <RootNamespace />
+    <AnalysisMode>AllEnabledByDefault</AnalysisMode>
+    <CodeAnalysisTreatWarningsAsErrors>false</CodeAnalysisTreatWarningsAsErrors>
   </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />

@@ -12,6 +12,9 @@ using System.Xml;
 using System.Xml.XmlDiff;
 using CoreWCF;
 using CoreWCF.Channels;
+using CoreWCF.Xml;
+using XmlDictionaryReader = CoreWCF.Xml.XmlDictionaryReader;
+using XmlDictionaryWriter = CoreWCF.Xml.XmlDictionaryWriter;
 
 namespace Helpers
 {

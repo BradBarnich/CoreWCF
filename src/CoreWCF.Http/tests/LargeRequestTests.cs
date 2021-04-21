@@ -8,12 +8,14 @@ using System.Threading.Tasks;
 using System.Xml;
 using CoreWCF.Channels;
 using CoreWCF.Configuration;
+using CoreWCF.Xml;
 using Helpers;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using Xunit.Abstractions;
+using XmlDictionaryReaderQuotas = CoreWCF.Xml.XmlDictionaryReaderQuotas;
 
 namespace CoreWCF.Http.Tests
 {
@@ -88,7 +90,7 @@ namespace CoreWCF.Http.Tests
             public static System.ServiceModel.Channels.Binding GetClientBinding(System.ServiceModel.TransferMode transferMode)
             {
                 var binding = new System.ServiceModel.Channels.CustomBinding();
-                binding.Elements.Add(new System.ServiceModel.Channels.TextMessageEncodingBindingElement { ReaderQuotas = XmlDictionaryReaderQuotas.Max });
+                binding.Elements.Add(new System.ServiceModel.Channels.TextMessageEncodingBindingElement { ReaderQuotas = System.Xml.XmlDictionaryReaderQuotas.Max });
                 binding.Elements.Add(new System.ServiceModel.Channels.HttpTransportBindingElement { MaxReceivedMessageSize = int.MaxValue, TransferMode = transferMode });
                 return binding;
             }

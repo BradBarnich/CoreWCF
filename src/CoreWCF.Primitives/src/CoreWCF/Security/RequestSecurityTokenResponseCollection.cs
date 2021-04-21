@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Xml;
 using CoreWCF.Channels;
+using CoreWCF.Xml;
+using XmlDictionaryWriter = CoreWCF.Xml.XmlDictionaryWriter;
 
 namespace CoreWCF.Security
 {

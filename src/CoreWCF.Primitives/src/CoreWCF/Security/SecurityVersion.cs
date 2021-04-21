@@ -6,6 +6,8 @@ using System.Xml;
 using CoreWCF.Channels;
 using CoreWCF.Description;
 using ISignatureValueSecurityElement = CoreWCF.IdentityModel.ISignatureValueSecurityElement;
+using XmlDictionaryReader = CoreWCF.Xml.XmlDictionaryReader;
+using XmlDictionaryWriter = CoreWCF.Xml.XmlDictionaryWriter;
 
 namespace CoreWCF.Security
 {

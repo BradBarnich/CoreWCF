@@ -6,6 +6,9 @@ using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 using System.Xml;
 using CoreWCF.IdentityModel.Claims;
+using CoreWCF.Xml;
+using XmlDictionaryReader = CoreWCF.Xml.XmlDictionaryReader;
+using XmlDictionaryWriter = CoreWCF.Xml.XmlDictionaryWriter;
 
 namespace CoreWCF
 {

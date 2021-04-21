@@ -8,6 +8,8 @@ using System.Xml;
 using CoreWCF.Channels;
 using CoreWCF.Collections.Generic;
 using CoreWCF.Description;
+using CoreWCF.Xml;
+using XmlDictionaryReader = CoreWCF.Xml.XmlDictionaryReader;
 
 namespace CoreWCF.Dispatcher
 {

@@ -14,6 +14,7 @@ using CoreWCF.IdentityModel.Policy;
 using CoreWCF.IdentityModel.Selectors;
 using CoreWCF.IdentityModel.Tokens;
 using CoreWCF.Security.Tokens;
+using XmlDictionaryReader = CoreWCF.Xml.XmlDictionaryReader;
 
 namespace CoreWCF.Security
 {

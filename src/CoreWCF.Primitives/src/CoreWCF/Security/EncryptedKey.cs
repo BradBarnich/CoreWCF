@@ -7,8 +7,11 @@ using CoreWCF.IdentityModel;
 using CoreWCF.IdentityModel.Selectors;
 using CoreWCF.IdentityModel.Tokens;
 using CoreWCF.Runtime;
+using CoreWCF.Xml;
 using DictionaryManager = CoreWCF.IdentityModel.DictionaryManager;
 using ISecurityElement = CoreWCF.IdentityModel.ISecurityElement;
+using XmlDictionaryReader = CoreWCF.Xml.XmlDictionaryReader;
+using XmlDictionaryWriter = CoreWCF.Xml.XmlDictionaryWriter;
 
 namespace CoreWCF.Security
 {

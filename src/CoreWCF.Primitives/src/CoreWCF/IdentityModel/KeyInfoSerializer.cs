@@ -6,6 +6,9 @@ using System.Collections.Generic;
 using System.Xml;
 using CoreWCF.IdentityModel.Selectors;
 using CoreWCF.Runtime;
+using CoreWCF.Xml;
+using XmlDictionaryReader = CoreWCF.Xml.XmlDictionaryReader;
+using XmlDictionaryWriter = CoreWCF.Xml.XmlDictionaryWriter;
 
 namespace CoreWCF.IdentityModel.Tokens
 {

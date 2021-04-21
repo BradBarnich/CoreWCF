@@ -3,6 +3,8 @@
 
 using System.Xml;
 using CoreWCF.Diagnostics;
+using CoreWCF.Xml;
+using XmlDictionaryWriter = CoreWCF.Xml.XmlDictionaryWriter;
 
 namespace CoreWCF.Channels
 {

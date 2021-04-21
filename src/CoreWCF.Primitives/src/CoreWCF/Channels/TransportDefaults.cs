@@ -7,6 +7,8 @@ using System.Security.Authentication;
 using System.Text;
 using System.Xml;
 using CoreWCF.Security;
+using CoreWCF.Xml;
+using XmlDictionaryReaderQuotas = CoreWCF.Xml.XmlDictionaryReaderQuotas;
 
 namespace CoreWCF.Channels
 {

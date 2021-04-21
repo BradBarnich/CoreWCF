@@ -10,6 +10,9 @@ using CoreWCF.IdentityModel.Selectors;
 using CoreWCF.IdentityModel.Tokens;
 using CoreWCF.Runtime;
 using CoreWCF.Security.Tokens;
+using CoreWCF.Xml;
+using XmlDictionaryReader = CoreWCF.Xml.XmlDictionaryReader;
+using XmlDictionaryWriter = CoreWCF.Xml.XmlDictionaryWriter;
 
 namespace CoreWCF.Security
 {

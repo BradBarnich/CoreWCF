@@ -11,6 +11,7 @@ using CoreWCF.IdentityModel.Policy;
 using CoreWCF.IdentityModel.Selectors;
 using CoreWCF.IdentityModel.Tokens;
 using CoreWCF.Runtime;
+using CoreWCF.Xml;
 
 namespace CoreWCF.Security
 {

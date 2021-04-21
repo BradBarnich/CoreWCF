@@ -6,7 +6,10 @@ using System.Security.Cryptography.X509Certificates;
 using System.Xml;
 using CoreWCF.IdentityModel.Selectors;
 using CoreWCF.Security;
+using CoreWCF.Xml;
 using KeyIdentifierEntry = CoreWCF.IdentityModel.Selectors.SecurityTokenSerializer.KeyIdentifierEntry;
+using XmlDictionaryReader = CoreWCF.Xml.XmlDictionaryReader;
+using XmlDictionaryWriter = CoreWCF.Xml.XmlDictionaryWriter;
 
 namespace CoreWCF.IdentityModel.Tokens
 {

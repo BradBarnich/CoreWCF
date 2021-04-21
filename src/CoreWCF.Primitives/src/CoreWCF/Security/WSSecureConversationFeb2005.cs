@@ -5,7 +5,10 @@ using System;
 using System.Collections.Generic;
 using System.Xml;
 using CoreWCF.Security.Tokens;
+using CoreWCF.Xml;
 using TokenEntry = CoreWCF.Security.WSSecurityTokenSerializer.TokenEntry;
+using XmlDictionaryReader = CoreWCF.Xml.XmlDictionaryReader;
+using XmlDictionaryWriter = CoreWCF.Xml.XmlDictionaryWriter;
 
 namespace CoreWCF.Security
 {

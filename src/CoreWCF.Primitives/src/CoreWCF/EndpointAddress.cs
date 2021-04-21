@@ -6,6 +6,9 @@ using System.Collections.ObjectModel;
 using System.Xml;
 using CoreWCF.Channels;
 using CoreWCF.Runtime;
+using CoreWCF.Xml;
+using XmlDictionaryReader = CoreWCF.Xml.XmlDictionaryReader;
+using XmlDictionaryWriter = CoreWCF.Xml.XmlDictionaryWriter;
 
 namespace CoreWCF
 {

@@ -3,6 +3,8 @@
 
 using System;
 using System.Xml;
+using CoreWCF.Xml;
+using XmlDictionaryReader = CoreWCF.Xml.XmlDictionaryReader;
 
 namespace CoreWCF.Security
 {

@@ -9,6 +9,8 @@ using CoreWCF.IdentityModel;
 using CoreWCF.IdentityModel.Tokens;
 using CoreWCF.Runtime;
 using ISignatureValueSecurityElement = CoreWCF.IdentityModel.ISignatureValueSecurityElement;
+using XmlDictionaryReader = CoreWCF.Xml.XmlDictionaryReader;
+using XmlDictionaryReaderQuotas = CoreWCF.Xml.XmlDictionaryReaderQuotas;
 
 namespace CoreWCF.Security
 {

@@ -14,6 +14,7 @@ using DictionaryManager = CoreWCF.IdentityModel.DictionaryManager;
 using IPrefixGenerator = CoreWCF.IdentityModel.IPrefixGenerator;
 using ISecurityElement = CoreWCF.IdentityModel.ISecurityElement;
 using ISignatureValueSecurityElement = CoreWCF.IdentityModel.ISignatureValueSecurityElement;
+using XmlDictionaryWriter = CoreWCF.Xml.XmlDictionaryWriter;
 
 namespace CoreWCF.Security
 {

@@ -8,6 +8,9 @@ using System.Threading.Tasks;
 using System.Xml;
 using CoreWCF;
 using CoreWCF.Channels;
+using CoreWCF.Xml;
+using XmlDictionaryReader = CoreWCF.Xml.XmlDictionaryReader;
+using XmlDictionaryReaderQuotas = CoreWCF.Xml.XmlDictionaryReaderQuotas;
 
 namespace Helpers
 {
@@ -131,7 +134,7 @@ namespace Helpers
             var bmebe = new System.ServiceModel.Channels.BinaryMessageEncodingBindingElement
             {
                 MessageVersion = requestMessage.Version,
-                ReaderQuotas = XmlDictionaryReaderQuotas.Max
+                ReaderQuotas = System.Xml.XmlDictionaryReaderQuotas.Max
             };
             System.ServiceModel.Channels.MessageEncoderFactory bmef = bmebe.CreateMessageEncoderFactory();
             var ms = new MemoryStream(64 * 1024); // 64K to keep out of LOH
@@ -145,7 +148,7 @@ namespace Helpers
             var bmebe = new System.ServiceModel.Channels.BinaryMessageEncodingBindingElement
             {
                 MessageVersion = messageVersion,
-                ReaderQuotas = XmlDictionaryReaderQuotas.Max
+                ReaderQuotas = System.Xml.XmlDictionaryReaderQuotas.Max
             };
             System.ServiceModel.Channels.MessageEncoderFactory bmef = bmebe.CreateMessageEncoderFactory();
             return bmef.Encoder.ReadMessage(ms, int.MaxValue);

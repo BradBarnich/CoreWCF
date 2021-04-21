@@ -4,6 +4,7 @@
 using System.Globalization;
 using System.Xml;
 using CoreWCF.Channels;
+using XmlDictionaryWriter = CoreWCF.Xml.XmlDictionaryWriter;
 
 namespace CoreWCF
 {

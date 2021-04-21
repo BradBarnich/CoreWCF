@@ -4,6 +4,8 @@
 using System;
 using System.Xml;
 using CoreWCF.Diagnostics;
+using CoreWCF.Xml;
+using XmlDictionaryWriter = CoreWCF.Xml.XmlDictionaryWriter;
 
 // TODO: This is duplicated from Primitives. Either move to common code and include in both places or add to contract. I would prefer the latter.
 

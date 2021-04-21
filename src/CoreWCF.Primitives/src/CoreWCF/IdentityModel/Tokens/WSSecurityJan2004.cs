@@ -9,10 +9,13 @@ using System.Xml;
 using CoreWCF.IdentityModel.Selectors;
 using CoreWCF.Security;
 using CoreWCF.Security.Tokens;
+using CoreWCF.Xml;
 using HexBinary = CoreWCF.Security.SoapHexBinary;
 using KeyIdentifierClauseEntry = CoreWCF.IdentityModel.Selectors.SecurityTokenSerializer.KeyIdentifierClauseEntry;
 using StrEntry = CoreWCF.IdentityModel.Selectors.SecurityTokenSerializer.StrEntry;
 using TokenEntry = CoreWCF.IdentityModel.Selectors.SecurityTokenSerializer.TokenEntry;
+using XmlDictionaryReader = CoreWCF.Xml.XmlDictionaryReader;
+using XmlDictionaryWriter = CoreWCF.Xml.XmlDictionaryWriter;
 
 namespace CoreWCF.IdentityModel.Tokens
 {

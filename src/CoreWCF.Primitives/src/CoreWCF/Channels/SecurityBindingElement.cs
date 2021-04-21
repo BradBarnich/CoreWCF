@@ -9,6 +9,8 @@ using CoreWCF.Configuration;
 using CoreWCF.IdentityModel.Selectors;
 using CoreWCF.Security;
 using CoreWCF.Security.Tokens;
+using CoreWCF.Xml;
+using XmlDictionaryReaderQuotas = CoreWCF.Xml.XmlDictionaryReaderQuotas;
 
 namespace CoreWCF.Channels
 {

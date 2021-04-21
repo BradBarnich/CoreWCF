@@ -5,6 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Xml;
 using CoreWCF.IdentityModel.Tokens;
+using CoreWCF.Xml;
+using XmlDictionaryReader = CoreWCF.Xml.XmlDictionaryReader;
+using XmlDictionaryWriter = CoreWCF.Xml.XmlDictionaryWriter;
 
 namespace CoreWCF.IdentityModel.Selectors
 {

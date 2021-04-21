@@ -2,8 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
-using System.Xml;
 using CoreWCF.Channels;
+using CoreWCF.Xml;
 
 namespace CoreWCF.Security
 {

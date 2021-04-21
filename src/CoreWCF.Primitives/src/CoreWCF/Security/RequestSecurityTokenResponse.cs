@@ -16,7 +16,11 @@ using CoreWCF.IdentityModel.Selectors;
 using CoreWCF.IdentityModel.Tokens;
 using CoreWCF.Runtime;
 using CoreWCF.Security.Tokens;
+using CoreWCF.Xml;
 using Psha1DerivedKeyGenerator = CoreWCF.IdentityModel.Psha1DerivedKeyGenerator;
+using XmlDictionaryReader = CoreWCF.Xml.XmlDictionaryReader;
+using XmlDictionaryReaderQuotas = CoreWCF.Xml.XmlDictionaryReaderQuotas;
+using XmlDictionaryWriter = CoreWCF.Xml.XmlDictionaryWriter;
 
 namespace CoreWCF.Security
 {

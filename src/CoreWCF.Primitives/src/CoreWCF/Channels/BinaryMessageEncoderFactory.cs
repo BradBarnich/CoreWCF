@@ -9,6 +9,11 @@ using System.Threading.Tasks;
 using System.Xml;
 using CoreWCF.Runtime;
 using CoreWCF.Xml;
+using OnXmlDictionaryReaderClose = CoreWCF.Xml.OnXmlDictionaryReaderClose;
+using XmlBinaryWriterSession = CoreWCF.Xml.XmlBinaryWriterSession;
+using XmlDictionaryReader = CoreWCF.Xml.XmlDictionaryReader;
+using XmlDictionaryReaderQuotas = CoreWCF.Xml.XmlDictionaryReaderQuotas;
+using XmlDictionaryWriter = CoreWCF.Xml.XmlDictionaryWriter;
 
 namespace CoreWCF.Channels
 {

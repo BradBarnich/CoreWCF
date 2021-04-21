@@ -8,9 +8,12 @@ namespace CoreWCF.Security
     using System.Text;
     using System.Xml;
     using CoreWCF;
+    using CoreWCF.Xml;
     using CanonicalFormWriter = CoreWCF.IdentityModel.CanonicalFormWriter;
     using HashStream = IdentityModel.HashStream;
     using SignatureResourcePool = CoreWCF.IdentityModel.SignatureResourcePool;
+    using XmlDictionaryReader = CoreWCF.Xml.XmlDictionaryReader;
+    using XmlDictionaryWriter = Xml.XmlDictionaryWriter;
 
     internal abstract class WSUtilitySpecificationVersion
     {

@@ -14,9 +14,13 @@ using CoreWCF.IdentityModel;
 using CoreWCF.IdentityModel.Tokens;
 using CoreWCF.Runtime;
 using CoreWCF.Security.Tokens;
+using CoreWCF.Xml;
 using IPrefixGenerator = CoreWCF.IdentityModel.IPrefixGenerator;
 using ISecurityElement = CoreWCF.IdentityModel.ISecurityElement;
 using ISignatureValueSecurityElement = CoreWCF.IdentityModel.ISignatureValueSecurityElement;
+using XmlDictionaryReader = CoreWCF.Xml.XmlDictionaryReader;
+using XmlDictionaryReaderQuotas = CoreWCF.Xml.XmlDictionaryReaderQuotas;
+using XmlDictionaryWriter = CoreWCF.Xml.XmlDictionaryWriter;
 
 namespace CoreWCF.Security
 {

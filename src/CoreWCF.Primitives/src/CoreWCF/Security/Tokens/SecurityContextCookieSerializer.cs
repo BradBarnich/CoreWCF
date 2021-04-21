@@ -13,6 +13,10 @@ using CoreWCF.IdentityModel;
 using CoreWCF.IdentityModel.Claims;
 using CoreWCF.IdentityModel.Policy;
 using CoreWCF.Runtime;
+using CoreWCF.Xml;
+using XmlDictionaryReader = CoreWCF.Xml.XmlDictionaryReader;
+using XmlDictionaryReaderQuotas = CoreWCF.Xml.XmlDictionaryReaderQuotas;
+using XmlDictionaryWriter = CoreWCF.Xml.XmlDictionaryWriter;
 
 namespace CoreWCF.Security.Tokens
 {

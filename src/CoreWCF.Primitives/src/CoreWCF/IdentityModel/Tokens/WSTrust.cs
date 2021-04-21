@@ -11,7 +11,10 @@ namespace CoreWCF.IdentityModel.Security
     using CoreWCF.IdentityModel.Tokens;
     using CoreWCF.Security;
     using CoreWCF.Security.Tokens;
+    using CoreWCF.Xml;
     using KeyIdentifierClauseEntry = CoreWCF.IdentityModel.Selectors.SecurityTokenSerializer.KeyIdentifierClauseEntry;
+    using XmlDictionaryReader = Xml.XmlDictionaryReader;
+    using XmlDictionaryWriter = Xml.XmlDictionaryWriter;
 
     internal class WSTrust : SecurityTokenSerializer.SerializerEntries
     {
