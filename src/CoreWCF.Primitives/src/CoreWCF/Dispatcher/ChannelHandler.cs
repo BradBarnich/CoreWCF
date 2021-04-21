@@ -11,6 +11,7 @@ using CoreWCF.Configuration;
 using CoreWCF.Description;
 using CoreWCF.Diagnostics;
 using CoreWCF.Runtime;
+using Microsoft.Extensions.ObjectPool;
 using SessionIdleManager = CoreWCF.Channels.ServiceChannel.SessionIdleManager;
 
 namespace CoreWCF.Dispatcher
@@ -40,6 +41,7 @@ namespace CoreWCF.Dispatcher
         private RequestContext _replied;
         private readonly bool _incrementedActivityCountInConstructor;
         private readonly AsyncManualResetEvent _asyncManualResetEvent;
+        private readonly ObjectPool<MessageRpc> _messageRpcPool;
 
         private bool _openCalled;
 
@@ -85,6 +87,7 @@ namespace CoreWCF.Dispatcher
             _incrementedActivityCountInConstructor = true;
             //}
             _asyncManualResetEvent = new AsyncManualResetEvent();
+            _messageRpcPool = ObjectPool.Create(new MessageRpcPooledObjectPolicy());
         }
 
         internal IServiceChannelDispatcher GetDispatcher()
@@ -305,6 +308,7 @@ namespace CoreWCF.Dispatcher
             ServiceChannel channel = requestInfo.Channel;
             EndpointDispatcher endpoint = requestInfo.Endpoint;
             bool releasedPump = false;
+            MessageRpc rpc = null;
 
             try
             {
@@ -360,7 +364,8 @@ namespace CoreWCF.Dispatcher
                     currentOperationContext.EndpointDispatcher = endpoint;
                 }
 
-                var rpc = new MessageRpc(request, message, operation, channel, _host,
+                rpc = _messageRpcPool.Get();
+                rpc.Initialize(request, message, operation, channel, _host,
                     this, cleanThread, currentOperationContext, requestInfo.ExistingInstanceContext);
 
                 //TraceUtility.MessageFlowAtMessageReceived(message, currentOperationContext, eventTraceActivity, true);
@@ -390,6 +395,11 @@ namespace CoreWCF.Dispatcher
             }
             finally
             {
+                if (rpc != null)
+                {
+                    _messageRpcPool.Return(rpc);
+                }
+
                 if (!releasedPump)
                 {
                     ReleasePump();

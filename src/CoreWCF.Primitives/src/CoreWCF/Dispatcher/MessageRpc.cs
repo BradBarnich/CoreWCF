@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using CoreWCF.Channels;
 using CoreWCF.Runtime;
+using Microsoft.Extensions.ObjectPool;
 
 namespace CoreWCF.Dispatcher
 {
@@ -19,15 +20,13 @@ namespace CoreWCF.Dispatcher
     // when using async/await. This causes an allocation per request so pool them to remove that allocation.
     internal class MessageRpc
     {
-        internal readonly ServiceChannel Channel;
-        internal readonly ChannelHandler channelHandler;
-        internal readonly object[] Correlation;
-        internal readonly ServiceHostBase Host;
-        internal readonly OperationContext OperationContext;
+        internal ServiceChannel Channel;
+        internal ChannelHandler ChannelHandler;
+        internal object[] Correlation;
+        internal ServiceHostBase Host;
+        internal OperationContext OperationContext;
         //internal ServiceModelActivity Activity;
-        internal Guid ResponseActivityId;
-        internal IAsyncResult AsyncResult;
-        internal Task TaskResult;
+        // internal Guid ResponseActivityId;
         internal bool CanSendReply;
         internal bool SuccessfullySendReply;
         internal object[] InputParameters;
@@ -65,56 +64,76 @@ namespace CoreWCF.Dispatcher
         //internal EventTraceActivity EventTraceActivity;
         internal bool _processCallReturned;
         private bool _isInstanceContextSingleton;
-        private SignalGate<IAsyncResult> _invokeContinueGate;
+        // private SignalGate<IAsyncResult> _invokeContinueGate;
+
+        public MessageRpc()
+        {
+            Clear();
+        }
 
         internal MessageRpc(RequestContext requestContext, Message request, DispatchOperationRuntime operation,
             ServiceChannel channel, ServiceHostBase host, ChannelHandler channelHandler, bool cleanThread,
             OperationContext operationContext, InstanceContext instanceContext/*, EventTraceActivity eventTraceActivity*/)
         {
-            Fx.Assert((operationContext != null), "correwcf.Dispatcher.MessageRpc.MessageRpc(), operationContext == null");
-            // TODO: ChannelHandler supplied an ErrorHandler, need to supply this some other way.
-            //Fx.Assert(channelHandler != null, "System.ServiceModel.Dispatcher.MessageRpc.MessageRpc(), channelHandler == null");
+            Clear();
+            Initialize(requestContext, request, operation, channel, host, channelHandler, cleanThread, operationContext, instanceContext);
+        }
 
-            //this.Activity = null;
-            //this.EventTraceActivity = eventTraceActivity;
-            AsyncResult = null;
-            TaskResult = null;
+        internal void Clear()
+        {
             CanSendReply = true;
-            Channel = channel;
-            this.channelHandler = channelHandler;
-            Correlation = EmptyArray.Allocate(operation.Parent.CorrelationCount);
+            Channel = null;
+            ChannelHandler = null;
+            Correlation = Array.Empty<object>();
             DidDeserializeRequestBody = false;
             Error = null;
             ErrorProcessor = null;
-            FaultInfo = new ErrorHandlerFaultInfo(request.Version.Addressing.DefaultFaultAction);
+            FaultInfo = default;
             HasSecurityContext = false;
-            Host = host;
+            Host = null;
             Instance = null;
             AsyncProcessor = null;
             NotUnderstoodHeaders = null;
-            Operation = operation;
-            OperationContext = operationContext;
+            Operation = null;
+            OperationContext = null;
             IsPaused = false;
             ParametersDisposed = false;
-            Request = request;
-            RequestContext = requestContext;
+            Request = null;
+            RequestContext = null;
             RequestContextThrewOnReply = false;
             SuccessfullySendReply = false;
-            RequestVersion = request.Version;
+            RequestVersion = null;
             Reply = null;
             ReplyTimeoutHelper = new TimeoutHelper();
             SecurityContext = null;
-            InstanceContext = instanceContext;
+            InstanceContext = null;
             SuccessfullyBoundInstance = false;
             SuccessfullyIncrementedActivity = false;
             SuccessfullyLockedInstance = false;
-            SwitchedThreads = !cleanThread;
-            //this.transaction = null;
+            SwitchedThreads = false;
             InputParameters = null;
             OutputParameters = null;
             ReturnParameter = null;
+        }
+
+        internal void Initialize(RequestContext requestContext, Message request, DispatchOperationRuntime operation,
+            ServiceChannel channel, ServiceHostBase host, ChannelHandler channelHandler, bool cleanThread,
+            OperationContext operationContext, InstanceContext instanceContext)
+        {
+            Fx.Assert((operationContext != null), "correwcf.Dispatcher.MessageRpc.MessageRpc(), operationContext == null");
+            Channel = channel;
+            ChannelHandler = channelHandler;
+            Correlation = EmptyArray.Allocate(operation.Parent.CorrelationCount);
+            FaultInfo = new ErrorHandlerFaultInfo(request.Version.Addressing.DefaultFaultAction);
+            Host = host;
+            Operation = operation;
+            OperationContext = operationContext;
+            Request = request;
+            RequestContext = requestContext;
+            RequestVersion = request.Version;
+            InstanceContext = instanceContext;
+            SwitchedThreads = !cleanThread;
             _isInstanceContextSingleton = InstanceContextProviderBase.IsProviderSingleton(Channel.DispatchRuntime.InstanceContextProvider);
-            _invokeContinueGate = null;
 
             if (!operation.IsOneWay && !operation.Parent.ManualAddressing)
             {
@@ -138,7 +157,7 @@ namespace CoreWCF.Dispatcher
             //}
             //else
             //{
-            ResponseActivityId = Guid.Empty;
+            //ResponseActivityId = Guid.Empty;
             //}
 
             //if (this.EventTraceActivity == null && FxTrace.Trace.IsEnd2EndActivityTracingEnabled)
@@ -152,15 +171,15 @@ namespace CoreWCF.Dispatcher
 
         internal bool IsPaused { get; private set; }
 
-        internal bool SwitchedThreads { get; }
+        internal bool SwitchedThreads { get; private set; }
 
-        internal bool IsInstanceContextSingleton
-        {
-            set
-            {
-                _isInstanceContextSingleton = value;
-            }
-        }
+        // internal bool IsInstanceContextSingleton
+        // {
+        //     set
+        //     {
+        //         _isInstanceContextSingleton = value;
+        //     }
+        // }
 
         //internal TransactionRpcFacet Transaction
         //{
@@ -194,7 +213,7 @@ namespace CoreWCF.Dispatcher
                     throw;
                 }
 
-                channelHandler.HandleError(e);
+                ChannelHandler.HandleError(e);
             }
         }
 
@@ -254,7 +273,7 @@ namespace CoreWCF.Dispatcher
                 }
 
                 AbortRequestContext(context);
-                channelHandler.HandleError(e);
+                ChannelHandler.HandleError(e);
             }
         }
 
@@ -273,7 +292,7 @@ namespace CoreWCF.Dispatcher
                         throw;
                     }
 
-                    channelHandler.HandleError(e);
+                    ChannelHandler.HandleError(e);
                 }
             }
         }
@@ -295,7 +314,7 @@ namespace CoreWCF.Dispatcher
                         throw;
                     }
 
-                    channelHandler.HandleError(e);
+                    ChannelHandler.HandleError(e);
                 }
             }
         }
@@ -315,7 +334,7 @@ namespace CoreWCF.Dispatcher
                         throw;
                     }
 
-                    channelHandler.HandleError(e);
+                    ChannelHandler.HandleError(e);
                 }
             }
         }
@@ -324,7 +343,7 @@ namespace CoreWCF.Dispatcher
         {
             //using (ServiceModelActivity.BoundOperation(this.Activity))
             //{
-            channelHandler.EnsureReceive();
+            ChannelHandler.EnsureReceive();
             //}
         }
 
@@ -410,7 +429,7 @@ namespace CoreWCF.Dispatcher
                             throw;
                         }
 
-                        channelHandler.HandleError(e);
+                        ChannelHandler.HandleError(e);
                     }
                 }
 
@@ -437,16 +456,15 @@ namespace CoreWCF.Dispatcher
                                 throw;
                             }
 
-                            channelHandler.HandleError(e);
+                            ChannelHandler.HandleError(e);
                         }
                     }
                 }
             }
         }
 
-        internal async Task<MessageRpc> ProcessAsync(bool isOperationContextSet)
+        internal async ValueTask ProcessAsync(bool isOperationContextSet)
         {
-            MessageRpc result = this;
             //using (ServiceModelActivity.BoundOperation(this.Activity))
             //{
             // bool completed = true;
@@ -512,7 +530,6 @@ namespace CoreWCF.Dispatcher
                 }
             }
 
-            return this;
             //}
         }
 
@@ -524,15 +541,15 @@ namespace CoreWCF.Dispatcher
             DecrementBusyCount();
         }
 
-        internal bool UnlockInvokeContinueGate(out IAsyncResult result)
-        {
-            return _invokeContinueGate.Unlock(out result);
-        }
-
-        internal void PrepareInvokeContinueGate()
-        {
-            _invokeContinueGate = new SignalGate<IAsyncResult>();
-        }
+        // internal bool UnlockInvokeContinueGate(out IAsyncResult result)
+        // {
+        //     return _invokeContinueGate.Unlock(out result);
+        // }
+        //
+        // internal void PrepareInvokeContinueGate()
+        // {
+        //     _invokeContinueGate = new SignalGate<IAsyncResult>();
+        // }
 
         private void IncrementBusyCount()
         {
@@ -559,6 +576,17 @@ namespace CoreWCF.Dispatcher
             //    AspNetEnvironment.Current.TraceDecrementBusyCount(SR.Format(SR.ServiceBusyCountTrace, this.Operation.Action));
             //}
             //}
+        }
+    }
+
+    internal class MessageRpcPooledObjectPolicy : IPooledObjectPolicy<MessageRpc>
+    {
+        public MessageRpc Create() => new MessageRpc();
+
+        public bool Return(MessageRpc obj)
+        {
+            obj.Clear();
+            return true;
         }
     }
 }
