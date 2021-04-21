@@ -139,14 +139,14 @@ namespace CoreWCF.Security
             return Task.CompletedTask;
         }
 
-        public virtual Task OpenAsync()
+        public virtual ValueTask OpenAsync()
         {
-            return Task.CompletedTask;
+            return ValueTask.CompletedTask;
         }
 
-        public virtual Task OpenAsync(CancellationToken token)
+        public virtual ValueTask OpenAsync(CancellationToken token)
         {
-            return Task.CompletedTask;
+            return ValueTask.CompletedTask;
         }
 
         public virtual void OnAbort()

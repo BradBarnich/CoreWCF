@@ -27,7 +27,7 @@ namespace CoreWCF.Runtime
             }
         }
 
-        // Helper method when implementing an APM wrapper around a Task based async method which returns a result. 
+        // Helper method when implementing an APM wrapper around a Task based async method which returns a result.
         // In the BeginMethod method, you would call use ToApm to wrap a call to MethodAsync:
         //     return MethodAsync(params).ToApm(callback, state);
         // In the EndMethod, you would use ToApmEnd<TResult> to ensure the correct exception handling
@@ -49,7 +49,7 @@ namespace CoreWCF.Runtime
             else if (callback != null)
             {
                 // We use OnCompleted rather than ContinueWith in order to avoid running synchronously
-                // if the task has already completed by the time we get here. 
+                // if the task has already completed by the time we get here.
                 // This will allocate a delegate and some extra data to add it as a TaskContinuation
                 valueTask.ConfigureAwait(false)
                     .GetAwaiter()
@@ -72,7 +72,7 @@ namespace CoreWCF.Runtime
             else if (callback != null)
             {
                 // We use OnCompleted rather than ContinueWith in order to avoid running synchronously
-                // if the task has already completed by the time we get here. 
+                // if the task has already completed by the time we get here.
                 // This will allocate a delegate and some extra data to add it as a TaskContinuation
                 task.ConfigureAwait(false)
                     .GetAwaiter()
@@ -475,52 +475,6 @@ namespace CoreWCF.Runtime
         internal static void PostCallback(object state)
         {
             ((Action)state)();
-        }
-    }
-
-    internal class ResettableAsyncWaitable
-    {
-        private TaskCompletionSource<object> _tcs = null;
-
-        public bool IsSet => _tcs?.Task.IsCompleted ?? false;
-
-        public void Reset()
-        {
-            if (!(_tcs?.Task.IsCompleted ?? true))
-            {
-                Fx.Exception.AsError(new InvalidOperationException(nameof(Reset)));
-            }
-
-            Interlocked.Exchange(ref _tcs, null);
-        }
-
-        public void Set()
-        {
-            TaskCompletionSource<object> tcs = _tcs;
-            if (tcs == null)
-            {
-                TaskCompletionSource<object> temp = CreateTcs();
-                tcs = Interlocked.CompareExchange(ref _tcs, temp, null) ?? temp;
-            }
-
-            tcs.TrySetResult(null);
-        }
-
-        public TaskAwaiter<object> GetAwaiter()
-        {
-            TaskCompletionSource<object> tcs = _tcs;
-            if (tcs == null)
-            {
-                TaskCompletionSource<object> temp = CreateTcs();
-                tcs = Interlocked.CompareExchange(ref _tcs, temp, null) ?? temp;
-            }
-
-            return tcs.Task.GetAwaiter();
-        }
-
-        private TaskCompletionSource<object> CreateTcs()
-        {
-            return new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
         }
     }
 

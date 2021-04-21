@@ -198,13 +198,13 @@ namespace CoreWCF.Channels
 
         }
 
-        public System.Threading.Tasks.Task OpenAsync()
+        public ValueTask OpenAsync()
         {
             CancellationToken token = new TimeoutHelper(DefaultOpenTimeout).GetCancellationToken();
             return OpenAsync(token);
         }
 
-        public async Task OpenAsync(CancellationToken token)
+        public async ValueTask OpenAsync(CancellationToken token)
         {
             token.ThrowIfCancellationRequested();
 

@@ -160,9 +160,9 @@ namespace CoreWCF.Dispatcher
             _sessionServerSettings.SettingsLifetimeManager.OpenAsync(ServiceDefaults.OpenTimeout);
         }
 
-        //private 
+        //private
 
-        // This method should only be called at Open time, since it looks up the identity based on the 
+        // This method should only be called at Open time, since it looks up the identity based on the
         // thread token
         //void ComputeEndpointIdentity()
         //{
@@ -232,7 +232,7 @@ namespace CoreWCF.Dispatcher
 
         /// <summary>
         /// Return same instance of real service channel dispatcher.
-        /// This method is called by SecurityReplySessionServiceChannelDispatcher(SecuritySessionServerSettings) to dispatch real service 
+        /// This method is called by SecurityReplySessionServiceChannelDispatcher(SecuritySessionServerSettings) to dispatch real service
         /// </summary>
         /// <param name="outerChannel"></param>
         /// <returns></returns>
@@ -481,12 +481,12 @@ namespace CoreWCF.Dispatcher
             throw new NotImplementedException();
         }
 
-        public Task OpenAsync()
+        public ValueTask OpenAsync()
         {
-            return Task.CompletedTask;
+            return ValueTask.CompletedTask;
         }
 
-        public Task OpenAsync(CancellationToken token)
+        public ValueTask OpenAsync(CancellationToken token)
         {
             throw new NotImplementedException();
         }

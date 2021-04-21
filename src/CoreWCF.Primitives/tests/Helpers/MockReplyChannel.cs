@@ -56,14 +56,14 @@ namespace Helpers
             return _serviceScope.ServiceProvider.GetService<T>();
         }
 
-        public Task OpenAsync()
+        public ValueTask OpenAsync()
         {
             return OpenAsync(CancellationToken.None);
         }
 
-        public Task OpenAsync(CancellationToken token)
+        public ValueTask OpenAsync(CancellationToken token)
         {
-            return Task.CompletedTask;
+            return ValueTask.CompletedTask;
         }
     }
 }

@@ -549,12 +549,12 @@ namespace CoreWCF.Channels
             return _serviceChannel.CloseAsync(token);
         }
 
-        Task ICommunicationObject.OpenAsync()
+        ValueTask ICommunicationObject.OpenAsync()
         {
             return _serviceChannel.OpenAsync();
         }
 
-        Task ICommunicationObject.OpenAsync(CancellationToken token)
+        ValueTask ICommunicationObject.OpenAsync(CancellationToken token)
         {
             return _serviceChannel.OpenAsync(token);
         }

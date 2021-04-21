@@ -59,14 +59,14 @@ namespace CoreWCF.Channels
             return _serviceProvider.GetService<T>();
         }
 
-        public Task OpenAsync()
+        public ValueTask OpenAsync()
         {
-            return Task.CompletedTask;
+            return ValueTask.CompletedTask;
         }
 
-        public Task OpenAsync(CancellationToken token)
+        public ValueTask OpenAsync(CancellationToken token)
         {
-            return Task.CompletedTask;
+            return ValueTask.CompletedTask;
         }
 
         public Task<RequestContext> ReceiveRequestAsync()

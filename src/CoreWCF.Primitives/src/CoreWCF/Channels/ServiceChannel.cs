@@ -367,8 +367,8 @@ namespace CoreWCF.Channels
 
         private void SetupInnerChannelFaultHandler()
         {
-            // need to call this method after this.binder and this.clientRuntime are set to prevent a potential 
-            // NullReferenceException in this method or in the OnInnerChannelFaulted method; 
+            // need to call this method after this.binder and this.clientRuntime are set to prevent a potential
+            // NullReferenceException in this method or in the OnInnerChannelFaulted method;
             // because this method accesses this.binder and OnInnerChannelFaulted accesses this.clientRuntime.
             Binder.Channel.Faulted += OnInnerChannelFaulted;
         }
@@ -1439,7 +1439,7 @@ namespace CoreWCF.Channels
 
             Task ICallOnce.CallAsync(ServiceChannel channel, CancellationToken token)
             {
-                return channel.OpenAsync(token);
+                return channel.OpenAsync(token).AsTask();
             }
         }
 

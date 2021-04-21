@@ -479,7 +479,7 @@ namespace CoreWCF.Security
             return base.CloseAsync(token);
         }
 
-        public override Task OpenAsync(CancellationToken token)
+        public override ValueTask OpenAsync(CancellationToken token)
         {
             if (BootstrapSecurityBindingElement == null)
             {
@@ -506,7 +506,7 @@ namespace CoreWCF.Security
             ChannelDispatcher channelDispatcher = RequestSecurityTokenListener.InitializeRuntime(SecurityServiceDispatcher);
             SecurityServiceDispatcher.SecurityAuthServiceDispatcher = new ServiceDispatcher(channelDispatcher);
             _sctUri = StandardsManager.SecureConversationDriver.TokenTypeUri;
-            return base.OpenAsync();
+            return base.OpenAsync(token);
             // base.OnOpen(timeoutHelper.RemainingTime());
         }
 
@@ -1118,7 +1118,7 @@ namespace CoreWCF.Security
                 //  BindingParameterCollection parameters = new BindingParameterCollection(this.channelBuilder.BindingParameters);
                 //  Binding binding = this.channelBuilder.Binding;
                 //  binding.ReceiveTimeout = this.authenticator.NegotiationTimeout;
-                // parameters.Add(new ChannelDemuxerFilter(contractFilter, filterPriority)); 
+                // parameters.Add(new ChannelDemuxerFilter(contractFilter, filterPriority));
                 // DispatcherBuilder.MaybeCreateListener(true, endpointChannelTypes, binding, parameters,
                 //                                      this.listenUri, "", ListenUriMode.Explicit, this.ServiceThrottle, out listener);
                 //   if (listener == null)
@@ -1173,7 +1173,7 @@ namespace CoreWCF.Security
                 endpointDispatcher.DispatchRuntime.UnhandledDispatchOperation = operation;
                 channelDispatcher.Endpoints.Add(endpointDispatcher);
                 channelDispatcher.Init();
-                Task openTask = channelDispatcher.OpenAsync();
+                ValueTask openTask = channelDispatcher.OpenAsync();
                 Fx.Assert(openTask.IsCompleted, "ChannelDispatcher should open synchronously");
                 openTask.GetAwaiter().GetResult();
                 return channelDispatcher;

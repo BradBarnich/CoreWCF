@@ -205,7 +205,7 @@ namespace CoreWCF.Security
             }
         }
 
-    
+
 
         internal static ReadOnlyCollection<SecurityKey> CreateSymmetricSecurityKeys(byte[] key)
         {
@@ -463,7 +463,7 @@ namespace CoreWCF.Security
             SecurityKey unwrappingSecurityKey = unwrappingToken.SecurityKeys[0];
             string wrappingAlgorithm = keyClause.EncryptionMethod;
             byte[] unwrappedKey = unwrappingSecurityKey.DecryptKey(wrappingAlgorithm, wrappedKey);
-            //TODO, check value for XmlDictionaryString Symmetric or else 
+            //TODO, check value for XmlDictionaryString Symmetric or else
             return new WrappedKeySecurityToken(SecurityUtils.GenerateId(), unwrappedKey, wrappingAlgorithm,
                XmlDictionaryString.Empty, unwrappingToken, wrappingTokenReference, wrappedKey, unwrappingSecurityKey
                     );
@@ -484,7 +484,7 @@ namespace CoreWCF.Security
             // No KeyUsage extension means most usages are permitted including key exchange.
             // See RFC 5280 section 4.2.1.3 (Key Usage) for details. If the extension is non-critical
             // then it's non-enforcing and meant as an aid in choosing the best certificate when
-            // there are multiple certificates to choose from. 
+            // there are multiple certificates to choose from.
             if (keyUsageExtension == null || !keyUsageExtension.Critical)
             {
                 return true;
@@ -1001,12 +1001,12 @@ namespace CoreWCF.Security
             }
         }
 
-        internal static Task OpenTokenAuthenticatorIfRequiredAsync(SecurityTokenAuthenticator tokenAuthenticator, CancellationToken token)
+        internal static ValueTask OpenTokenAuthenticatorIfRequiredAsync(SecurityTokenAuthenticator tokenAuthenticator, CancellationToken token)
         {
             return OpenCommunicationObjectAsync(tokenAuthenticator as ICommunicationObject, token);
         }
 
-        internal static Task OpenTokenProviderIfRequiredAsync(SecurityTokenProvider tokenProvider, CancellationToken token)
+        internal static ValueTask OpenTokenProviderIfRequiredAsync(SecurityTokenProvider tokenProvider, CancellationToken token)
         {
             return OpenCommunicationObjectAsync(tokenProvider as ICommunicationObject, token);
         }
@@ -1037,14 +1037,14 @@ namespace CoreWCF.Security
             return CloseCommunicationObjectAsync(tokenAuthenticator, aborted, token);
         }
 
-        private static Task OpenCommunicationObjectAsync(ICommunicationObject obj, CancellationToken token)
+        private static ValueTask OpenCommunicationObjectAsync(ICommunicationObject obj, CancellationToken token)
         {
             if (obj != null)
             {
                 return obj.OpenAsync(token);
             }
 
-            return Task.CompletedTask;
+            return ValueTask.CompletedTask;
         }
 
         private static Task CloseCommunicationObjectAsync(object obj, bool aborted, CancellationToken token)

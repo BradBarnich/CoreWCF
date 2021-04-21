@@ -30,7 +30,7 @@ namespace CoreWCF.Security
             // empty
         }
 
-        // settings        
+        // settings
         public bool ExtractGroupsForWindowsAccounts
         {
             get => _extractGroupsForWindowsAccounts;
@@ -64,7 +64,7 @@ namespace CoreWCF.Security
         // overrides
         public override XmlDictionaryString NegotiationValueType => XD.TrustApr2004Dictionary.SpnegoValueTypeUri;
 
-        public override Task OpenAsync(CancellationToken token)
+        public override ValueTask OpenAsync(CancellationToken token)
         {
             base.OpenAsync(token);
             if (_negotiateHandler == null)
@@ -72,7 +72,7 @@ namespace CoreWCF.Security
                 _negotiateHandler = (NegotiateInternal.NegotiateInternalState)new NegotiateInternal.NegotiateInternalStateFactory().CreateInstance();
             }
 
-            return Task.CompletedTask;
+            return ValueTask.CompletedTask;
         }
 
         public override Task CloseAsync(CancellationToken token)

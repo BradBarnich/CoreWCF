@@ -128,7 +128,7 @@ namespace CoreWCF.Dispatcher
             return true;
         }
 
-        internal async Task EnsureInstanceContextAsync(MessageRpc rpc)
+        internal async ValueTask EnsureInstanceContextAsync(MessageRpc rpc)
         {
             if (rpc.InstanceContext == null)
             {
@@ -144,7 +144,7 @@ namespace CoreWCF.Dispatcher
 
             if (rpc.InstanceContext.State == CommunicationState.Created)
             {
-                Task openTask = null;
+                ValueTask openTask = ValueTask.CompletedTask;
                 lock (rpc.InstanceContext.ThisLock)
                 {
                     if (rpc.InstanceContext.State == CommunicationState.Created)

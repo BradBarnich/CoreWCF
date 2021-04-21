@@ -39,7 +39,8 @@ namespace CoreWCF.Dispatcher
         private bool _shouldRejectMessageWithOnOpenActionHeader;
         private RequestContext _replied;
         private readonly bool _incrementedActivityCountInConstructor;
-        private readonly ResettableAsyncWaitable _resettableAsyncWaitable;
+        private readonly AsyncManualResetEvent _asyncManualResetEvent;
+
         private bool _openCalled;
 
         internal ChannelHandler(MessageVersion messageVersion, IChannelBinder binder, ServiceThrottle throttle,
@@ -83,7 +84,7 @@ namespace CoreWCF.Dispatcher
             _serviceDispatcher.ChannelDispatcher.Channels.IncrementActivityCount();
             _incrementedActivityCountInConstructor = true;
             //}
-            _resettableAsyncWaitable = new ResettableAsyncWaitable();
+            _asyncManualResetEvent = new AsyncManualResetEvent();
         }
 
         internal IServiceChannelDispatcher GetDispatcher()
@@ -209,7 +210,7 @@ namespace CoreWCF.Dispatcher
 
         public void EnsureReceive()
         {
-            _resettableAsyncWaitable.Set();
+            _asyncManualResetEvent.Set();
         }
 
         public Task DispatchAsync(Message message)
@@ -571,7 +572,7 @@ namespace CoreWCF.Dispatcher
             return _channel;
         }
 
-        private Task InitializeServiceChannel(ServiceChannel channel)
+        private ValueTask InitializeServiceChannel(ServiceChannel channel)
         {
             if (_wasChannelThrottled)
             {
@@ -579,7 +580,7 @@ namespace CoreWCF.Dispatcher
                 // When the idle timeout was hit, the constructor of ServiceChannel will abort itself directly. So
                 // the session throttle will not be released and thus lead to a service unavailablity.
                 // Note that if the channel is already aborted, the next line "channel.ServiceThrottle = this.throttle;" will throw an exception,
-                // so we are not going to do any more work inside this method. 
+                // so we are not going to do any more work inside this method.
                 // Ideally we should do a thorough refactoring work for this throttling issue. However, it's too risky. We should consider
                 // this in a whole release.
                 // Note that the "wasChannelThrottled" boolean will only be true if we aquired the session throttle. So we don't have to check HasSession
@@ -677,7 +678,7 @@ namespace CoreWCF.Dispatcher
 
         private Task ReplyContractFilterDidNotMatchAsync(RequestContext request, RequestInfo requestInfo)
         {
-            // By default, the contract filter is just a filter over the set of initiating actions in 
+            // By default, the contract filter is just a filter over the set of initiating actions in
             // the contract, so we do error messages accordingly
             AddressingVersion addressingVersion = _messageVersion.Addressing;
             if (addressingVersion != AddressingVersion.None && request.RequestMessage.Headers.Action == null)
@@ -1007,7 +1008,7 @@ namespace CoreWCF.Dispatcher
         {
             if (_isConcurrent)
             {
-                _resettableAsyncWaitable.Set();
+                _asyncManualResetEvent.Set();
             }
         }
 
@@ -1015,8 +1016,8 @@ namespace CoreWCF.Dispatcher
         {
             if (_isConcurrent)
             {
-                await _resettableAsyncWaitable;
-                _resettableAsyncWaitable.Reset();
+                await _asyncManualResetEvent.WaitAsync();
+                _asyncManualResetEvent.Reset();
             }
         }
 

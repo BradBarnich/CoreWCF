@@ -348,7 +348,7 @@ namespace CoreWCF.Security
             _standardsManager = s_defaultStandardsManager;
             _securityStateEncoder = s_defaultSecurityStateEncoder;
             _maximumConcurrentNegotiations = DefaultServerMaxActiveNegotiations;
-            // we rely on the transport encoders to enforce the message size except in the 
+            // we rely on the transport encoders to enforce the message size except in the
             // mixed mode nego case, where the client is unauthenticated and the maxMessageSize is too
             // large to be a mitigation
             _maxMessageSize = int.MaxValue;
@@ -391,7 +391,7 @@ namespace CoreWCF.Security
             base.OnAbort();
         }
 
-        public override Task OpenAsync(CancellationToken token)
+        public override ValueTask OpenAsync(CancellationToken token)
         {
             if (IssuerBindingContext == null)
             {
@@ -432,7 +432,7 @@ namespace CoreWCF.Security
                     _idlingNegotiationSessionTimer.Set(_negotiationTimeout);
                 }
             }
-            return base.OpenAsync();
+            return base.OpenAsync(token);
         }
 
         protected override bool CanValidateTokenCore(SecurityToken token) => (token is SecurityContextSecurityToken);
@@ -904,7 +904,7 @@ namespace CoreWCF.Security
                 };
                 channelDispatcher.Endpoints.Add(endpointDispatcher);
                 channelDispatcher.Init();
-                Task openTask = channelDispatcher.OpenAsync();
+                ValueTask openTask = channelDispatcher.OpenAsync();
                 Fx.Assert(openTask.IsCompleted, "ChannelDispatcher should open synchronously");
                 openTask.GetAwaiter().GetResult();
                 ServiceDispatcher service = new ServiceDispatcher(channelDispatcher);

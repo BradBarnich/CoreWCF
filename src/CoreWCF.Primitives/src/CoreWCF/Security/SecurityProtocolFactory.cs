@@ -809,7 +809,7 @@ namespace CoreWCF.Security
             }
         }
 
-        public Task OpenAsync(TimeSpan timeout)
+        public ValueTask OpenAsync(TimeSpan timeout)
         {
             return CommunicationObject.OpenAsync();
         }
@@ -908,7 +908,7 @@ namespace CoreWCF.Security
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.NoncesCachedInfinitely));
                 }
 
-                // If DetectReplays is true and nonceCache is null then use the default InMemoryNonceCache. 
+                // If DetectReplays is true and nonceCache is null then use the default InMemoryNonceCache.
                 if (_nonceCache == null)
                 {
                     //TODO below (InMemoryNonceCache) is coming along with WindowsAuth, so uncomment

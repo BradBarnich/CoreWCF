@@ -16,15 +16,15 @@ namespace CoreWCF.Runtime
     //   of time to wait for additional timers to be set.
     // - Timers are stored in an array-based priority queue to reduce the amount of time spent in updates, and
     //   to always provide O(1) access to the minimum timer (the first one that will expire).
-    // - The standard textbook priority queue data structure is extended to allow efficient Delete in addition to 
+    // - The standard textbook priority queue data structure is extended to allow efficient Delete in addition to
     //   DeleteMin for efficient handling of canceled timers.
-    // - Timers that are typically set, then immediately canceled (such as a retry timer, 
-    //   or a flush timer), are tracked separately from more stable timers, to avoid having 
-    //   to update the waitable timer in the typical case when a timer is canceled.  Whether 
+    // - Timers that are typically set, then immediately canceled (such as a retry timer,
+    //   or a flush timer), are tracked separately from more stable timers, to avoid having
+    //   to update the waitable timer in the typical case when a timer is canceled.  Whether
     //   a timer instance follows this pattern is specified when the timer is constructed.
     // - Extending a timer by a configurable time delta (maxSkew) does not involve updating the
     //   waitable timer, or taking a lock.
-    // - Timer instances are relatively cheap.  They share "heavy" resources like the waiter thread and 
+    // - Timer instances are relatively cheap.  They share "heavy" resources like the waiter thread and
     //   waitable timer handle.
     // - Setting or canceling a timer does not typically involve any allocations.
 

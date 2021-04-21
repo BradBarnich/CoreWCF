@@ -484,7 +484,7 @@ namespace CoreWCF.Security
         }
 
         /// <summary>
-        /// This method creates SessionInitiationMessageServiceDispatcher which would act as 
+        /// This method creates SessionInitiationMessageServiceDispatcher which would act as
         /// holder for SecurityReplySessionServiceChannelDispatcher (for Duplex we can implement simillar to ServerSecurityDuplexSessionChannel).
         /// Even though the Dispatcher is being added to demuxer, the ServiceChannelDispatcher is lazily initialized(based on first call) and that instance being hold to serve subsequent calls from the same client.
         /// When close received, the ServiceChannelDispatcher is cleared as well as the Dispatcher from Demuxer.
@@ -705,7 +705,7 @@ namespace CoreWCF.Security
             return Task.CompletedTask;
         }
 
-        public Task OpenAsync(TimeSpan timeout)
+        public ValueTask OpenAsync(TimeSpan timeout)
         {
             return WrapperCommunicationObj.OpenAsync();
         }
@@ -800,7 +800,7 @@ namespace CoreWCF.Security
             public IList<Type> SupportedChannelTypes => throw new NotImplementedException();
 
             /// <summary>
-            /// ProcessMessage equivalent in WCF 
+            /// ProcessMessage equivalent in WCF
             /// </summary>
             /// <returns></returns>
             public async Task<IServiceChannelDispatcher> CreateServiceChannelDispatcherAsync(IChannel channel)
@@ -902,7 +902,7 @@ namespace CoreWCF.Security
 
             public CommunicationState State => Settings.WrapperCommunicationObj.State;
 
-            public virtual Task OpenAsync(TimeSpan timeout)
+            public virtual ValueTask OpenAsync(TimeSpan timeout)
             {
                 _securityProtocol.OpenAsync(timeout);
                 if (CanDoSecurityCorrelation)
@@ -911,11 +911,11 @@ namespace CoreWCF.Security
                 } // if an abort happened concurrently with the open, then return
                 if (State == CommunicationState.Closed || State == CommunicationState.Closing)
                 {
-                    return Task.CompletedTask;
+                    return ValueTask.CompletedTask;
                 }
                 _settingsLifetimeManager.AddReference();
                 _hasSecurityStateReference = true;
-                return Task.CompletedTask;
+                return ValueTask.CompletedTask;
             }
 
             protected virtual void AbortCore()
@@ -1050,7 +1050,7 @@ namespace CoreWCF.Security
                     throw TraceUtility.ThrowHelperWarning(new MessageSecurityException(SR.NoSessionTokenPresentInMessage), message);
                 }
                 // the incoming token's key should have been issued within keyRenewalPeriod time in the past
-                // if not, send back a renewal fault. However if this is a session close message then its ok to not require the client 
+                // if not, send back a renewal fault. However if this is a session close message then its ok to not require the client
                 // to renew the key in order to send the close.
                 if (incomingToken.KeyExpirationTime < DateTime.UtcNow &&
                     message.Headers.Action != Settings.SecurityStandardsManager.SecureConversationDriver.CloseAction.Value)
@@ -1937,21 +1937,21 @@ namespace CoreWCF.Security
                     }
                 }
 
-                public Task OpenAsync()
+                public ValueTask OpenAsync()
                 {
-                    return Task.CompletedTask;
+                    return ValueTask.CompletedTask;
                 }
 
-                public override async Task OpenAsync(TimeSpan timeout)
+                public override async ValueTask OpenAsync(TimeSpan timeout)
                 {
                     await base.OpenAsync(timeout);
                     _channelDispatcher = await Settings.SecurityServiceDispatcher.
                         GetInnerServiceChannelDispatcher(this);
                 }
 
-                public Task OpenAsync(CancellationToken token)
+                public ValueTask OpenAsync(CancellationToken token)
                 {
-                    return Task.CompletedTask;
+                    return ValueTask.CompletedTask;
                 }
             }
         }
@@ -2023,7 +2023,7 @@ namespace CoreWCF.Security
                 }
                 return faultMessage;
             }
-           
+
             public Task HandleDemuxFailureAsync(Message message)
             {
                 throw new NotImplementedException();

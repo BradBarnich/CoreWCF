@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using CoreWCF.Channels;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace CoreWCF.Configuration
 {
@@ -16,7 +17,7 @@ namespace CoreWCF.Configuration
         private readonly IDictionary<Type, IServiceConfiguration> _services = new Dictionary<Type, IServiceConfiguration>();
         private readonly TaskCompletionSource<object> _openingCompletedTcs = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        public ServiceBuilder(IServiceProvider serviceProvider, IApplicationLifetime appLifetime)
+        public ServiceBuilder(IServiceProvider serviceProvider, IHostApplicationLifetime appLifetime)
         {
             ServiceProvider = serviceProvider;
             appLifetime.ApplicationStarted.Register(() =>
