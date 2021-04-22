@@ -13,6 +13,7 @@ using System.Runtime.Serialization;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using CoreWCF.Text;
+using System.Buffers;
 
 namespace CoreWCF.Xml
 {
@@ -601,6 +602,14 @@ namespace CoreWCF.Xml
             char[] chars = GetCharBuffer(length);
             int charCount = GetChars(offset, length, chars);
             return new string(chars, 0, charCount);
+        }
+
+        public ReadOnlySpan<char> GetSpan(int offset, int length, out IMemoryOwner<char> memoryOwner)
+        {
+            Span<byte> bytes = _buffer.AsSpan(offset, length);
+            memoryOwner = MemoryPool<char>.Shared.Rent(length);
+            int charCount = XmlConverter.ToChars(bytes, memoryOwner.Memory.Span);
+            return memoryOwner.Memory.Slice(0, charCount).Span;
         }
 
         public string GetUnicodeString(int offset, int length)

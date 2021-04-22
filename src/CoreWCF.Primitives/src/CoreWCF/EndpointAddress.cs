@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
+using System.Buffers;
 using System.Collections.ObjectModel;
 using System.Xml;
 using CoreWCF.Channels;
@@ -752,7 +753,7 @@ namespace CoreWCF
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(CreateXmlException(reader, SR.Format(SR.UnexpectedElementExpectingElement, reader.LocalName, reader.NamespaceURI, XD.AddressingDictionary.Address.Value, XD.Addressing10Dictionary.Namespace.Value)));
             }
 
-            string address = reader.ReadElementContentAsString();
+            ReadOnlySpan<char> address = reader.ReadElementContentAsSpan(out IMemoryOwner<char> memoryOwner);
 
             // Headers
             if (reader.IsStartElement(XD.AddressingDictionary.ReferenceParameters, XD.Addressing10Dictionary.Namespace))
@@ -789,26 +790,29 @@ namespace CoreWCF
             }
 
             // Process Address
-            if (address == Addressing10Strings.Anonymous)
+            if (address.Equals(Addressing10Strings.Anonymous, StringComparison.Ordinal))
             {
                 uri = AddressingVersion.WSAddressing10.AnonymousUri;
                 if (headers == null && identity == null)
                 {
+                    memoryOwner.Dispose();
                     return true;
                 }
             }
-            else if (address == Addressing10Strings.NoneAddress)
+            else if (address.Equals(Addressing10Strings.NoneAddress, StringComparison.Ordinal))
             {
                 uri = AddressingVersion.WSAddressing10.NoneUri;
+                memoryOwner.Dispose();
                 return false;
             }
             else
             {
-                if (!Uri.TryCreate(address, UriKind.Absolute, out uri))
+                if (!Uri.TryCreate(address.ToString(), UriKind.Absolute, out uri))
                 {
-                    throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new XmlException(SR.Format(SR.InvalidUriValue, address, XD.AddressingDictionary.Address.Value, XD.Addressing10Dictionary.Namespace.Value)));
+                    throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new XmlException(SR.Format(SR.InvalidUriValue, address.ToString(), XD.AddressingDictionary.Address.Value, XD.Addressing10Dictionary.Namespace.Value)));
                 }
             }
+            memoryOwner.Dispose();
             return false;
         }
 

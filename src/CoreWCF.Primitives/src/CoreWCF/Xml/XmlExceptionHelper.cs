@@ -311,6 +311,11 @@ namespace CoreWCF.Xml
             return CreateEncodingException(new System.Text.UTF8Encoding(false, false).GetString(buffer, offset, count), exception);
         }
 
+        public static XmlException CreateEncodingException(ReadOnlySpan<byte> bytes, Exception exception)
+        {
+            return CreateEncodingException(new System.Text.UTF8Encoding(false, false).GetString(bytes), exception);
+        }
+
         public static XmlException CreateEncodingException(string value, Exception exception)
         {
             return new XmlException(SR.Format(SR.XmlInvalidUTF8Bytes, value), exception);

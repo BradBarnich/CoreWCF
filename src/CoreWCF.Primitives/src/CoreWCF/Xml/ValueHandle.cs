@@ -10,6 +10,7 @@ using CoreWCF;
 using System;
 using CoreWCF.Text;
 using System.Xml;
+using System.Buffers;
 
 namespace CoreWCF.Xml
 {
@@ -531,6 +532,16 @@ namespace CoreWCF.Xml
                 default:
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException());
             }
+        }
+
+        public ReadOnlySpan<char> GetSpan(out IMemoryOwner<char> memoryOwner)
+        {
+            ValueHandleType type = _type;
+            if (type == ValueHandleType.UTF8)
+                return _bufferReader.GetSpan(_offset, _length, out memoryOwner);
+
+            memoryOwner = null;
+            return GetString().AsSpan();
         }
 
         // ASSUMPTION (Microsoft): all chars in str will be ASCII

@@ -10,6 +10,7 @@ using System.Text;
 using System.Runtime.Serialization;
 using System.Globalization;
 using System.Diagnostics.CodeAnalysis;
+using System.Buffers;
 
 namespace CoreWCF.Xml
 {
@@ -191,6 +192,12 @@ namespace CoreWCF.Xml
             {
                 return XmlDictionaryReaderQuotas.Max;
             }
+        }
+
+        public virtual ReadOnlySpan<char> ValueAsSpan(out IMemoryOwner<char> memoryOwner)
+        {
+            memoryOwner = null;
+            return Value.AsSpan();
         }
 
         public virtual void StartCanonicalization(Stream stream, bool includeComments, string[]? inclusivePrefixes)
@@ -426,6 +433,74 @@ namespace CoreWCF.Xml
                             if (sb.Length > maxStringContentLength - value.Length)
                                 XmlExceptionHelper.ThrowMaxStringContentLengthExceeded(this, maxStringContentLength);
                             sb.Append(value);
+                        }
+                        break;
+                    case XmlNodeType.ProcessingInstruction:
+                    case XmlNodeType.Comment:
+                    case XmlNodeType.EndEntity:
+                        // skip comments, pis and end entity nodes
+                        break;
+                    case XmlNodeType.EntityReference:
+                        if (this.CanResolveEntity)
+                        {
+                            this.ResolveEntity();
+                            break;
+                        }
+                        goto default;
+                    case XmlNodeType.Element:
+                    case XmlNodeType.EndElement:
+                    default:
+                        done = true;
+                        break;
+                }
+                if (done)
+                    break;
+                if (this.AttributeCount != 0)
+                    ReadAttributeValue();
+                else
+                    Read();
+            }
+            if (sb != null)
+                result = sb.ToString();
+            if (result.Length > maxStringContentLength)
+                XmlExceptionHelper.ThrowMaxStringContentLengthExceeded(this, maxStringContentLength);
+            return result;
+        }
+
+        protected ReadOnlySpan<char> ReadContentAsSpan(int maxStringContentLength, out IMemoryOwner<char> memoryOwner)
+        {
+            StringBuilder? sb = null;
+            ReadOnlySpan<char> result = ReadOnlySpan<char>.Empty;
+            memoryOwner = null;
+            bool done = false;
+            while (true)
+            {
+                switch (this.NodeType)
+                {
+                    case XmlNodeType.Attribute:
+                        result = ValueAsSpan(out memoryOwner);
+                        break;
+                    case XmlNodeType.Text:
+                    case XmlNodeType.Whitespace:
+                    case XmlNodeType.SignificantWhitespace:
+                    case XmlNodeType.CDATA:
+                        // merge text content
+                        if (result.Length == 0)
+                        {
+                            result = ValueAsSpan(out memoryOwner);
+                        }
+                        else
+                        {
+                            if (sb == null)
+                                sb = new StringBuilder(result.ToString());
+                            if(memoryOwner != null)
+                            {
+                                memoryOwner.Dispose();
+                                memoryOwner = null;
+                            }
+                            if (sb.Length > maxStringContentLength - Value.Length)
+                                XmlExceptionHelper.ThrowMaxStringContentLengthExceeded(this, maxStringContentLength);
+                            sb.Append(Value);
                         }
                         break;
                     case XmlNodeType.ProcessingInstruction:
@@ -709,6 +784,27 @@ namespace CoreWCF.Xml
             {
                 ReadStartElement();
                 value = ReadContentAsString();
+                ReadEndElement();
+            }
+
+            return value;
+        }
+
+        public ReadOnlySpan<char> ReadElementContentAsSpan(out IMemoryOwner<char> memoryOwner)
+        {
+            bool isEmptyElement = IsStartElement() && IsEmptyElement;
+            ReadOnlySpan<char> value;
+
+            if (isEmptyElement)
+            {
+                Read();
+                memoryOwner = null;
+                value = ReadOnlySpan<char>.Empty;
+            }
+            else
+            {
+                ReadStartElement();
+                value = ReadContentAsSpan(Quotas.MaxStringContentLength, out memoryOwner);
                 ReadEndElement();
             }
 

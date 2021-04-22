@@ -16,6 +16,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using CoreWCF.Runtime;
 using CoreWCF.Text;
+using System.Buffers;
 
 namespace CoreWCF.Xml
 {
@@ -1771,6 +1772,11 @@ namespace CoreWCF.Xml
             }
         }
 
+        public override ReadOnlySpan<char> ValueAsSpan(out IMemoryOwner<char> memoryOwner)
+        {
+            return _node.ValueAsSpan(out memoryOwner);
+        }
+
         public override Type ValueType
         {
             get
@@ -2371,6 +2377,21 @@ namespace CoreWCF.Xml
                         return Namespace.Uri.GetString();
                     }
                 }
+            }
+
+            public ReadOnlySpan<char> ValueAsSpan(out IMemoryOwner<char> memoryOwner)
+            {
+                if (_qnameType == QNameType.Normal)
+                {
+                    return Value.GetSpan(out memoryOwner);
+                }
+                else
+                {
+                    memoryOwner = null;
+                    DiagnosticUtility.DebugAssert(_qnameType == QNameType.Xmlns, "");
+                    return Namespace.Uri.GetString();
+                }
+
             }
         }
 

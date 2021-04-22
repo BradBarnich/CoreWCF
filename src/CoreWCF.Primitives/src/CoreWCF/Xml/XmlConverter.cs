@@ -404,6 +404,18 @@ namespace CoreWCF.Xml
             }
         }
 
+        public static int ToChars(ReadOnlySpan<byte> bytes, Span<char> chars)
+        {
+            try
+            {
+                return UTF8Encoding.GetChars(bytes, chars);
+            }
+            catch (DecoderFallbackException exception)
+            {
+                throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(XmlExceptionHelper.CreateEncodingException(bytes, exception));
+            }
+        }
+
         public static string ToString(bool value) { return value ? "true" : "false"; }
         public static string ToString(int value) { return XmlConvert.ToString(value); }
         public static string ToString(long value) { return XmlConvert.ToString(value); }
