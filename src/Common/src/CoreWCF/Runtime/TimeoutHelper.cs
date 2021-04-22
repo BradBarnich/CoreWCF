@@ -260,14 +260,14 @@ namespace CoreWCF.Runtime
         private const int GranularityFactor = 2000;
         private const int SegmentationFactor = CoalescingFactor * GranularityFactor;
 
-        private static readonly ConcurrentDictionary<long, CancellationTokenSourceIOThreadTimer> s_timerCache =
-            new ConcurrentDictionary<long, CancellationTokenSourceIOThreadTimer>();
+        //private static readonly ConcurrentDictionary<long, CancellationTokenSourceIOThreadTimer> s_timerCache =
+        //    new ConcurrentDictionary<long, CancellationTokenSourceIOThreadTimer>();
 
-        private static readonly Action<object> s_deregisterTimer = (object state) =>
-        {
-            long targetTime = (long)state;
-            s_timerCache.TryRemove(targetTime, out CancellationTokenSourceIOThreadTimer ignored);
-        };
+        //private static readonly Action<object> s_deregisterTimer = (object state) =>
+        //{
+        //    long targetTime = (long)state;
+        //    s_timerCache.TryRemove(targetTime, out CancellationTokenSourceIOThreadTimer ignored);
+        //};
 
         public static CancellationToken FromTimeout(int millisecondsTimeout)
         {
@@ -284,47 +284,47 @@ namespace CoreWCF.Runtime
             // If the method is given a wildly different millisecondsTimeout values all the time, the dictionary would still
             // only grow logarithmically with respect to the range of the input values
 
-            uint currentTime = (uint)Environment.TickCount;
-            long targetTime = millisecondsTimeout + currentTime;
+            //uint currentTime = (uint)Environment.TickCount;
+            //long targetTime = millisecondsTimeout + currentTime;
 
-            // Formula for our coalescing span:
-            // Divide millisecondsTimeout by SegmentationFactor and take the highest bit and then multiply CoalescingFactor back
-            int segmentValue = millisecondsTimeout / SegmentationFactor;
-            int coalescingSpanMs = CoalescingFactor;
-            while (segmentValue > 0)
-            {
-                segmentValue >>= 1;
-                coalescingSpanMs <<= 1;
-            }
-            targetTime = ((targetTime + (coalescingSpanMs - 1)) / coalescingSpanMs) * coalescingSpanMs;
+            //// Formula for our coalescing span:
+            //// Divide millisecondsTimeout by SegmentationFactor and take the highest bit and then multiply CoalescingFactor back
+            //int segmentValue = millisecondsTimeout / SegmentationFactor;
+            //int coalescingSpanMs = CoalescingFactor;
+            //while (segmentValue > 0)
+            //{
+            //    segmentValue >>= 1;
+            //    coalescingSpanMs <<= 1;
+            //}
+            //targetTime = ((targetTime + (coalescingSpanMs - 1)) / coalescingSpanMs) * coalescingSpanMs;
 
-            if (!s_timerCache.TryGetValue(targetTime, out CancellationTokenSourceIOThreadTimer ctsTimer))
-            {
-                ctsTimer = new CancellationTokenSourceIOThreadTimer();
+            //if (!s_timerCache.TryGetValue(targetTime, out CancellationTokenSourceIOThreadTimer ctsTimer))
+            //{
+            //    ctsTimer = new CancellationTokenSourceIOThreadTimer();
 
-                // only a single thread may succeed adding its timer into the cache
-                if (s_timerCache.TryAdd(targetTime, ctsTimer))
-                {
-                    // Clean up cache when timer fires
-                    ctsTimer.SetCompletionCallback(s_deregisterTimer, targetTime);
-                    ctsTimer.Set((int)(targetTime - currentTime));
-                }
-                else
-                {
-                    // for threads that failed when calling TryAdd, there should be one already in the cache
-                    if (!s_timerCache.TryGetValue(targetTime, out ctsTimer))
-                    {
-                        // In unlikely scenario the timer has already fired, we would not find it in cache.
-                        // In this case we would simply create a CTS which doesn't use the coalesced timer.
-                        var cts = new RecoverableTimeoutCancellationTokenSource(millisecondsTimeout);
-                        cts.CancelAfter(millisecondsTimeout);
-                        return cts.Token;
-                    }
-                }
-            }
+            //    // only a single thread may succeed adding its timer into the cache
+            //    if (s_timerCache.TryAdd(targetTime, ctsTimer))
+            //    {
+            //        // Clean up cache when timer fires
+            //        ctsTimer.SetCompletionCallback(s_deregisterTimer, targetTime);
+            //        ctsTimer.Set((int)(targetTime - currentTime));
+            //    }
+            //    else
+            //    {
+            //        // for threads that failed when calling TryAdd, there should be one already in the cache
+            //        if (!s_timerCache.TryGetValue(targetTime, out ctsTimer))
+            //        {
+            //            // In unlikely scenario the timer has already fired, we would not find it in cache.
+            //            // In this case we would simply create a CTS which doesn't use the coalesced timer.
+            //            var cts = new RecoverableTimeoutCancellationTokenSource(millisecondsTimeout);
+            //            cts.CancelAfter(millisecondsTimeout);
+            //            return cts.Token;
+            //        }
+            //    }
+            //}
 
             var tokenSource = new RecoverableTimeoutCancellationTokenSource(millisecondsTimeout);
-            ctsTimer.RegisterTokenSourceForCancellation(tokenSource);
+            //ctsTimer.RegisterTokenSourceForCancellation(tokenSource);
             return tokenSource.Token;
         }
     }
