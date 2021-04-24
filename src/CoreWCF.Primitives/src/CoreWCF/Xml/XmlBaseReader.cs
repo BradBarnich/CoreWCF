@@ -1772,9 +1772,9 @@ namespace CoreWCF.Xml
             }
         }
 
-        public override ReadOnlySpan<char> ValueAsSpan(out IMemoryOwner<char> memoryOwner)
+        public override ReadOnlyMemory<byte> ValueAsMemory()
         {
-            return _node.ValueAsSpan(out memoryOwner);
+            return _node.ValueAsMemory();
         }
 
         public override Type ValueType
@@ -2379,17 +2379,16 @@ namespace CoreWCF.Xml
                 }
             }
 
-            public ReadOnlySpan<char> ValueAsSpan(out IMemoryOwner<char> memoryOwner)
+            public ReadOnlyMemory<byte> ValueAsMemory()
             {
                 if (_qnameType == QNameType.Normal)
                 {
-                    return Value.GetSpan(out memoryOwner);
+                    return Value.GetMemory();
                 }
                 else
                 {
-                    memoryOwner = null;
                     DiagnosticUtility.DebugAssert(_qnameType == QNameType.Xmlns, "");
-                    return Namespace.Uri.GetString();
+                    return Encoding.UTF8.GetBytes(Namespace.Uri.GetString());
                 }
 
             }

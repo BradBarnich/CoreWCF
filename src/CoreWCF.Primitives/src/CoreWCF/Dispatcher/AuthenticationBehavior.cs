@@ -19,7 +19,7 @@ namespace CoreWCF.Dispatcher
             _serviceAuthenticationManager = authenticationManager;
         }
 
-        public void Authenticate(ref MessageRpc rpc)
+        public void Authenticate(MessageRpc rpc)
         {
             SecurityMessageProperty security = SecurityMessageProperty.GetOrCreate(rpc.Request);
             ReadOnlyCollection<IAuthorizationPolicy> authPolicy = security.ServiceSecurityContext.AuthorizationPolicies;

@@ -213,7 +213,7 @@ namespace CoreWCF.Dispatcher
 
         public void EnsureReceive()
         {
-            _asyncManualResetEvent.Set();
+            //_asyncManualResetEvent.Set();
         }
 
         public Task DispatchAsync(Message message)
@@ -1018,17 +1018,19 @@ namespace CoreWCF.Dispatcher
         {
             if (_isConcurrent)
             {
-                _asyncManualResetEvent.Set();
+                //_asyncManualResetEvent.Set();
             }
         }
 
-        private async Task TryAcquirePumpAsync()
+        private Task TryAcquirePumpAsync()
         {
             if (_isConcurrent)
             {
-                await _asyncManualResetEvent.WaitAsync();
-                _asyncManualResetEvent.Reset();
+               
+               // await _asyncManualResetEvent.WaitAsync();
+                //_asyncManualResetEvent.Reset();
             }
+            return Task.CompletedTask;
         }
 
         // TODO: Revert back to struct or pool objects.

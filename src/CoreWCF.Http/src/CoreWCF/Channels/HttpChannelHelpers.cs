@@ -129,7 +129,7 @@ namespace CoreWCF.Channels
                 if (ContentLength == -1 && buffer.Count == _settings.MaxReceivedMessageSize)
                 {
                     byte[] extraBuffer = new byte[1];
-                    int extraReceived = await inputStream.ReadAsync(extraBuffer, 0, 1);
+                    int extraReceived = await inputStream.ReadAsync(extraBuffer.AsMemory(0, 1));
                     if (extraReceived > 0)
                     {
                         ThrowMaxReceivedMessageSizeExceeded();
@@ -161,7 +161,7 @@ namespace CoreWCF.Channels
 
             while (count > 0)
             {
-                int bytesRead = await inputStream.ReadAsync(buffer, offset, count);
+                int bytesRead = await inputStream.ReadAsync(buffer.AsMemory(offset, count));
                 if (bytesRead == 0) // EOF
                 {
                     if (ContentLength != -1)

@@ -1,6 +1,7 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using System.Text;
 using System.Xml;
 
 namespace CoreWCF
@@ -1877,6 +1878,9 @@ namespace CoreWCF
         public const string ProblemHeaderQName = "ProblemHeaderQName";
         public const string FaultDetail = "FaultDetail";
         public const string DefaultFaultAction = "http://www.w3.org/2005/08/addressing/soap/fault";
+
+        public static byte[] Utf8Anonymous = Encoding.UTF8.GetBytes(Anonymous);
+        public static byte[] Utf8NoneAddress = Encoding.UTF8.GetBytes(NoneAddress);
     }
 
     internal static class Addressing200408Strings

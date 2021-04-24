@@ -194,10 +194,9 @@ namespace CoreWCF.Xml
             }
         }
 
-        public virtual ReadOnlySpan<char> ValueAsSpan(out IMemoryOwner<char> memoryOwner)
+        public virtual ReadOnlyMemory<byte> ValueAsMemory()
         {
-            memoryOwner = null;
-            return Value.AsSpan();
+            return Encoding.UTF8.GetBytes(Value);
         }
 
         public virtual void StartCanonicalization(Stream stream, bool includeComments, string[]? inclusivePrefixes)
@@ -467,18 +466,17 @@ namespace CoreWCF.Xml
             return result;
         }
 
-        protected ReadOnlySpan<char> ReadContentAsSpan(int maxStringContentLength, out IMemoryOwner<char> memoryOwner)
+        protected ReadOnlySequence<byte> ReadContentAsSequence(int maxStringContentLength)
         {
             StringBuilder? sb = null;
-            ReadOnlySpan<char> result = ReadOnlySpan<char>.Empty;
-            memoryOwner = null;
+            ReadOnlyMemory<byte> result = ReadOnlyMemory<byte>.Empty;
             bool done = false;
             while (true)
             {
                 switch (this.NodeType)
                 {
                     case XmlNodeType.Attribute:
-                        result = ValueAsSpan(out memoryOwner);
+                        result = ValueAsMemory();
                         break;
                     case XmlNodeType.Text:
                     case XmlNodeType.Whitespace:
@@ -487,17 +485,13 @@ namespace CoreWCF.Xml
                         // merge text content
                         if (result.Length == 0)
                         {
-                            result = ValueAsSpan(out memoryOwner);
+                            result = ValueAsMemory();
                         }
                         else
                         {
+                            Debugger.Launch();
                             if (sb == null)
                                 sb = new StringBuilder(result.ToString());
-                            if(memoryOwner != null)
-                            {
-                                memoryOwner.Dispose();
-                                memoryOwner = null;
-                            }
                             if (sb.Length > maxStringContentLength - Value.Length)
                                 XmlExceptionHelper.ThrowMaxStringContentLengthExceeded(this, maxStringContentLength);
                             sb.Append(Value);
@@ -529,10 +523,10 @@ namespace CoreWCF.Xml
                     Read();
             }
             if (sb != null)
-                result = sb.ToString();
+                result = ReadOnlyMemory<byte>.Empty;  // sb.ToString();
             if (result.Length > maxStringContentLength)
                 XmlExceptionHelper.ThrowMaxStringContentLengthExceeded(this, maxStringContentLength);
-            return result;
+            return new ReadOnlySequence<byte>(result);
         }
 
         public override string ReadString()
@@ -790,21 +784,20 @@ namespace CoreWCF.Xml
             return value;
         }
 
-        public ReadOnlySpan<char> ReadElementContentAsSpan(out IMemoryOwner<char> memoryOwner)
+        public ReadOnlySequence<byte> ReadElementContentAsSequence()
         {
             bool isEmptyElement = IsStartElement() && IsEmptyElement;
-            ReadOnlySpan<char> value;
+            ReadOnlySequence<byte> value;
 
             if (isEmptyElement)
             {
                 Read();
-                memoryOwner = null;
-                value = ReadOnlySpan<char>.Empty;
+                value = ReadOnlySequence<byte>.Empty;
             }
             else
             {
                 ReadStartElement();
-                value = ReadContentAsSpan(Quotas.MaxStringContentLength, out memoryOwner);
+                value = ReadContentAsSequence(Quotas.MaxStringContentLength);
                 ReadEndElement();
             }
 

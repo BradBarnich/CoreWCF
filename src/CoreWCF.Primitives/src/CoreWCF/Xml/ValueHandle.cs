@@ -534,14 +534,14 @@ namespace CoreWCF.Xml
             }
         }
 
-        public ReadOnlySpan<char> GetSpan(out IMemoryOwner<char> memoryOwner)
+        public ReadOnlyMemory<byte> GetMemory()
         {
             ValueHandleType type = _type;
             if (type == ValueHandleType.UTF8)
-                return _bufferReader.GetSpan(_offset, _length, out memoryOwner);
+                return _bufferReader.GetMemory(_offset, _length);
 
-            memoryOwner = null;
-            return GetString().AsSpan();
+            Debugger.Break();
+            return Encoding.UTF8.GetBytes(GetString());
         }
 
         // ASSUMPTION (Microsoft): all chars in str will be ASCII

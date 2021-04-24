@@ -546,7 +546,7 @@ namespace CoreWCF.Dispatcher
             // TODO: Make authenticationBehavior Async
             if (_authenticationBehavior != null)
             {
-                _authenticationBehavior.Authenticate(ref rpc);
+                _authenticationBehavior.Authenticate(rpc);
             }
 
             // TODO: Make authorizationBehavior Async
@@ -586,19 +586,19 @@ namespace CoreWCF.Dispatcher
             // This also needs to happen after BindThread based on the assumption
             // that running on UI thread should guarantee in-order delivery if
             // the SynchronizationContext is single threaded.
-            if (_concurrency.IsConcurrent(rpc))
-            {
-                rpc.EnsureReceive();
-                if (!rpc._processCallReturned)
-                {
-                    // To allow transport receive loop to get next request, the call to dispatch the current message needs to return.
-                    // If all previous await's have completed synchronously, execution needs to be forced to continue on another thread.
-                    // This code causes this method to continue on another thread and any calling receive pump (such as NetTcp) will
-                    // use this thread to request the next message. It might be better to switch that so this thread continues on this
-                    // thread and the caller has to run on a new thread.
-                    await Task.Yield();
-                }
-            }
+            //if (_concurrency.IsConcurrent(rpc))
+            //{
+            //    rpc.EnsureReceive();
+            //    if (!rpc._processCallReturned)
+            //    {
+            //        // To allow transport receive loop to get next request, the call to dispatch the current message needs to return.
+            //        // If all previous await's have completed synchronously, execution needs to be forced to continue on another thread.
+            //        // This code causes this method to continue on another thread and any calling receive pump (such as NetTcp) will
+            //        // use this thread to request the next message. It might be better to switch that so this thread continues on this
+            //        // thread and the caller has to run on a new thread.
+            //        await Task.Yield();
+            //    }
+            //}
 
             InstanceBehavior.EnsureServiceInstance(rpc);
 

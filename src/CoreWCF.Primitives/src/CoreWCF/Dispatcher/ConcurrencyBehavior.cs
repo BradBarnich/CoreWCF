@@ -86,7 +86,7 @@ namespace CoreWCF.Dispatcher
             return false;
         }
 
-        internal async Task LockInstanceAsync(MessageRpc rpc)
+        internal async ValueTask LockInstanceAsync(MessageRpc rpc)
         {
             if (_concurrencyMode != ConcurrencyMode.Multiple)
             {

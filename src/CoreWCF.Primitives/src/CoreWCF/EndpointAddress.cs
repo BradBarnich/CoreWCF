@@ -4,6 +4,8 @@
 using System;
 using System.Buffers;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Text;
 using System.Xml;
 using CoreWCF.Channels;
 using CoreWCF.Runtime;
@@ -753,7 +755,7 @@ namespace CoreWCF
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(CreateXmlException(reader, SR.Format(SR.UnexpectedElementExpectingElement, reader.LocalName, reader.NamespaceURI, XD.AddressingDictionary.Address.Value, XD.Addressing10Dictionary.Namespace.Value)));
             }
 
-            ReadOnlySpan<char> address = reader.ReadElementContentAsSpan(out IMemoryOwner<char> memoryOwner);
+            ReadOnlySequence<byte> address = reader.ReadElementContentAsSequence();
 
             // Headers
             if (reader.IsStartElement(XD.AddressingDictionary.ReferenceParameters, XD.Addressing10Dictionary.Namespace))
@@ -790,29 +792,26 @@ namespace CoreWCF
             }
 
             // Process Address
-            if (address.Equals(Addressing10Strings.Anonymous, StringComparison.Ordinal))
+            if (address.SequenceEqual(Addressing10Strings.Utf8Anonymous))
             {
                 uri = AddressingVersion.WSAddressing10.AnonymousUri;
                 if (headers == null && identity == null)
                 {
-                    memoryOwner.Dispose();
                     return true;
                 }
             }
-            else if (address.Equals(Addressing10Strings.NoneAddress, StringComparison.Ordinal))
+            else if (address.SequenceEqual(Addressing10Strings.Utf8NoneAddress))
             {
                 uri = AddressingVersion.WSAddressing10.NoneUri;
-                memoryOwner.Dispose();
                 return false;
             }
             else
             {
-                if (!Uri.TryCreate(address.ToString(), UriKind.Absolute, out uri))
+                if (!Uri.TryCreate(Encoding.UTF8.GetString(address), UriKind.Absolute, out uri))
                 {
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new XmlException(SR.Format(SR.InvalidUriValue, address.ToString(), XD.AddressingDictionary.Address.Value, XD.Addressing10Dictionary.Namespace.Value)));
                 }
             }
-            memoryOwner.Dispose();
             return false;
         }
 
@@ -1064,6 +1063,36 @@ namespace CoreWCF
                 GetReaderAtMetadata(),
                 GetReaderAtExtensions(),
                 _epr?.GetReaderAtPsp());
+        }
+    }
+
+    public static class ReadOnlySequenceExtensions
+    {
+        public static bool SequenceEqual(this ReadOnlySequence<byte> sequence, ReadOnlySpan<byte> other)
+        {
+            // If the spans differ in length, they're not equal.
+            if (sequence.Length != other.Length)
+            {
+                return false;
+            }
+
+            var reader = new SequenceReader<byte>(sequence);
+
+            // Otherwise, compare each element using EqualityComparer<T>.Default.Equals in a way that will enable it to devirtualize.
+            for (int i = 0; i < sequence.Length; i++)
+            {
+                if (!reader.TryRead(out byte current))
+                {
+                    return false;
+                }
+
+                if (!current.Equals(other[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
     }
 }
