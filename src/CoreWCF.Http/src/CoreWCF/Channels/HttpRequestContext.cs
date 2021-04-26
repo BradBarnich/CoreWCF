@@ -6,11 +6,13 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Security.Authentication.ExtendedProtection;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using CoreWCF.Runtime;
 using CoreWCF.Security;
+using CoreWCF.Text;
 using Microsoft.AspNetCore.Http;
 
 namespace CoreWCF.Channels
@@ -183,7 +185,7 @@ namespace CoreWCF.Channels
             if (message == null)
             {
                 // A null message means either a one-way request or that the service operation returned null and
-                // hence we can close the HttpOutput. By default we keep the HttpOutput open to allow the writing to the output 
+                // hence we can close the HttpOutput. By default we keep the HttpOutput open to allow the writing to the output
                 // even after the HttpInput EOF is received and the HttpOutput will be closed only on close of the HttpRequestContext.
                 closeOnReceivedEof = true;
                 message = CreateAckMessage(HttpStatusCode.Accepted, string.Empty);
@@ -468,13 +470,28 @@ namespace CoreWCF.Channels
                     HttpRequest request = _aspNetCoreHttpContext._aspNetContext.Request;
                     var requestProperty = new HttpRequestMessageProperty(_aspNetCoreHttpContext._aspNetContext);
                     message.Properties.Add(HttpRequestMessageProperty.Name, requestProperty);
-                    String hostAddress = String.Concat(request.IsHttps ? "https://" : "http://", request.Host.HasValue ? request.Host.Value : "localhost");
+                    string scheme = request.IsHttps ? "https://" : "http://";
+                    string host = request.Host.HasValue ? request.Host.Value : "localhost";
+                    string pathBase = request.PathBase.ToUriComponent();
+                    string path = request.Path.ToUriComponent();
+                    string queryString = request.QueryString.ToUriComponent();
+
+                    var stringBuilder = new ValueStringBuilder((scheme.Length + host.Length + pathBase.Length + path.Length + queryString.Length) * 2);
+                    stringBuilder.Append(scheme.AsSpan());
+                    stringBuilder.Append(host.AsSpan());
+                    stringBuilder.Append(pathBase.AsSpan());
+                    stringBuilder.Append(path.AsSpan());
+                    stringBuilder.Append(queryString.AsSpan());
                     // TODO: Test the Via code
-                    message.Properties.Via = new Uri(string.Concat(
-                        hostAddress,
-                        request.PathBase.ToUriComponent(),
-                        request.Path.ToUriComponent(),
-                        request.QueryString.ToUriComponent()));
+                    message.Properties.Via = new Uri(stringBuilder.ToString());
+
+                    // String hostAddress = String.Concat(request.IsHttps ? "https://" : "http://", request.Host.HasValue ? request.Host.Value : "localhost");
+                    // // TODO: Test the Via code
+                    // message.Properties.Via = new Uri(string.Concat(
+                    //     hostAddress,
+                    //     request.PathBase.ToUriComponent(),
+                    //     request.Path.ToUriComponent(),
+                    //     request.QueryString.ToUriComponent()));
 
                     IPAddress remoteIPAddress = request.HttpContext.Connection.RemoteIpAddress;
                     int remotePort = request.HttpContext.Connection.RemotePort;

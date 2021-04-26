@@ -146,7 +146,7 @@ namespace CoreWCF.Dispatcher
                     _needToCreateSessionOpenNotificationMessage = false;
                     RequestContext requestContext = GetSessionOpenNotificationRequestContext();
                     await HandleReceiveCompleteAsync(requestContext);
-                    HandleRequestAsync(requestContext);
+                    await HandleRequestAsync(requestContext);
                 }
                 ReleasePump();
             }
@@ -229,7 +229,7 @@ namespace CoreWCF.Dispatcher
                 throw TraceUtility.ThrowHelperError(new InvalidOperationException(SR.Format(SR.CommunicationObjectCannotBeUsed, GetType().ToString(), CommunicationState.Created)), Guid.Empty, this);
             }
 
-            await TryAcquirePumpAsync();
+            //await TryAcquirePumpAsync();
             await HandleReceiveCompleteAsync(requestContext);
             if (requestContext == null)
             {
@@ -237,7 +237,7 @@ namespace CoreWCF.Dispatcher
             }
 
             // Don't await handling the request to allow caller to start receving the next incoming message
-            HandleRequestAsync(requestContext);
+            await HandleRequestAsync(requestContext);
         }
 
         private RequestContext GetSessionOpenNotificationRequestContext()
@@ -250,7 +250,7 @@ namespace CoreWCF.Dispatcher
             return _binder.CreateRequestContext(message);
         }
 
-        private async void HandleRequestAsync(RequestContext request)
+        private async ValueTask HandleRequestAsync(RequestContext request)
         {
             if (request == null)
             {
@@ -302,7 +302,7 @@ namespace CoreWCF.Dispatcher
             //}
         }
 
-        private async Task DispatchAndReleasePumpAsync(RequestContext request, bool cleanThread, RequestInfo requestInfo)
+        private async ValueTask DispatchAndReleasePumpAsync(RequestContext request, bool cleanThread, RequestInfo requestInfo)
         {
             OperationContext currentOperationContext = null;
             ServiceChannel channel = requestInfo.Channel;
@@ -1026,7 +1026,7 @@ namespace CoreWCF.Dispatcher
         {
             if (_isConcurrent)
             {
-               
+
                // await _asyncManualResetEvent.WaitAsync();
                 //_asyncManualResetEvent.Reset();
             }

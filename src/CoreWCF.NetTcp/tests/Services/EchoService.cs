@@ -25,7 +25,7 @@ namespace Services
         public bool WaitForSecondRequest()
         {
             _mre.Reset();
-            return _mre.WaitOne(TimeSpan.FromSeconds(10));
+            return _mre.WaitOne(TimeSpan.FromSeconds(30));
         }
 
         public void SecondRequest()
