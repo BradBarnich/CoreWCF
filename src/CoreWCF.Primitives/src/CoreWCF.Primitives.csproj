@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <AssemblyName>CoreWCF.Primitives</AssemblyName>
-    <PackageId>CoreWCF.Primitives</PackageId>
+    <PackageId>CareEvolution.CoreWCF.Primitives</PackageId>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <RootNamespace />
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>

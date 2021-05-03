@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <AssemblyName>CoreWCF.Http</AssemblyName>
-    <PackageId>CoreWCF.Http</PackageId>
+    <PackageId>CareEvolution.CoreWCF.Http</PackageId>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <RootNamespace />
     <IncludeSharedDuplexChannelSource>True</IncludeSharedDuplexChannelSource>

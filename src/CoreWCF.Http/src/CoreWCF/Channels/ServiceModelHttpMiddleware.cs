@@ -34,11 +34,16 @@ namespace CoreWCF.Channels
 
         public async Task InvokeAsync(HttpContext context)
         {
-            // Update the path
-            var path = context.Request.Path;
+
             var pathBase = context.Request.PathBase;
-            context.Request.Path = pathBase.Add(path);
-            context.Request.PathBase = "";
+            PathString path;
+            if (pathBase != PathString.Empty)
+            {
+                // Update the path
+                path = context.Request.Path;
+                context.Request.Path = pathBase.Add(path);
+                context.Request.PathBase = PathString.Empty;
+            }
 
             try
             {
@@ -46,8 +51,11 @@ namespace CoreWCF.Channels
             }
             finally
             {
-                context.Request.PathBase = pathBase;
-                context.Request.Path = path;
+                if (pathBase != PathString.Empty)
+                {
+                    context.Request.PathBase = pathBase;
+                    context.Request.Path = path;
+                }
             }
         }
 
