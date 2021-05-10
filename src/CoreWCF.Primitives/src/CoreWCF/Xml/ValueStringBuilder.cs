@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
+#nullable enable
 namespace CoreWCF.Text
 {
     public ref partial struct ValueStringBuilder

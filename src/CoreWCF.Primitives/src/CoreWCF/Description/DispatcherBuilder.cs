@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Xml;
@@ -703,7 +704,7 @@ namespace CoreWCF.Description
                 var cd = cdb as ChannelDispatcher;
                 cd.Init();
                 ValueTask openTask = cd.OpenAsync();
-                Fx.Assert(openTask.IsCompleted, "ChannelDispatcher should open synchronously");
+                Debug.Assert(openTask.IsCompleted, "ChannelDispatcher should open synchronously");
                 openTask.GetAwaiter().GetResult();
                 dispatchers.Add(new ServiceDispatcher(cd));
             }

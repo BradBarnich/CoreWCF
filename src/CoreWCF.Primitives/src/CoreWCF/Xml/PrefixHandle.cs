@@ -7,6 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.Serialization;
 using System.Xml;
 
+#nullable enable
 namespace CoreWCF.Xml
 {
     internal enum PrefixHandleType

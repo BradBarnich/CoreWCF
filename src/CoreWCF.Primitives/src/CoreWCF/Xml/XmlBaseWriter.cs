@@ -15,6 +15,7 @@ using System;
 using System.Xml;
 using CoreWCF.Runtime;
 
+#nullable enable
 namespace CoreWCF.Xml
 {
     internal abstract class XmlBaseWriter : XmlDictionaryWriter
@@ -114,7 +115,7 @@ namespace CoreWCF.Xml
         }
 
         [DoesNotReturn]
-        protected void ThrowClosed()
+        protected static void ThrowClosed()
         {
             throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.XmlWriterClosed));
         }
@@ -731,7 +732,7 @@ namespace CoreWCF.Xml
             FlushElement();
         }
 
-        protected void EndComment()
+        protected static void EndComment()
         {
         }
 
@@ -770,32 +771,32 @@ namespace CoreWCF.Xml
                 VerifyWhitespace(chars, offset, count);
         }
 
-        private void VerifyWhitespace(char ch)
+        private static void VerifyWhitespace(char ch)
         {
             if (!IsWhitespace(ch))
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.XmlIllegalOutsideRoot));
         }
 
-        private void VerifyWhitespace(string s)
+        private static void VerifyWhitespace(string s)
         {
             for (int i = 0; i < s.Length; i++)
                 if (!IsWhitespace(s[i]))
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.XmlIllegalOutsideRoot));
         }
 
-        private void VerifyWhitespace(char[] chars, int offset, int count)
+        private static void VerifyWhitespace(char[] chars, int offset, int count)
         {
             for (int i = 0; i < count; i++)
                 if (!IsWhitespace(chars[offset + i]))
                     throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new InvalidOperationException(SR.XmlIllegalOutsideRoot));
         }
 
-        private bool IsWhitespace(char ch)
+        private static bool IsWhitespace(char ch)
         {
             return (ch == ' ' || ch == '\n' || ch == '\r' || ch == 't');
         }
 
-        protected void EndContent()
+        protected static void EndContent()
         {
         }
 
@@ -1756,7 +1757,7 @@ namespace CoreWCF.Xml
             AutoComplete(WriteState.Content);
         }
 
-        protected void EndArray()
+        protected static void EndArray()
         {
         }
 
@@ -2290,7 +2291,7 @@ namespace CoreWCF.Xml
                 Fx.Assert(nsCount >= 1 && _namespaces![0].Prefix!.Length == 0 && _namespaces[0].Uri!.Length == 0, "");
                 for (int i = 1; i < nsCount; i++)
                 {
-                    Namespace nameSpace = _namespaces[i];
+                    Namespace nameSpace = _namespaces![i];
 
                     bool found = false;
                     for (int j = i + 1; j < nsCount && !found; j++)

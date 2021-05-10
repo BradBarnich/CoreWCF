@@ -678,7 +678,7 @@ namespace CoreWCF.Dispatcher
             }
         }
 
-        private bool IsPartElements(XmlDictionaryReader reader, PartInfo[] parts)
+        private static bool IsPartElements(XmlDictionaryReader reader, PartInfo[] parts)
         {
             foreach (PartInfo part in parts)
             {
@@ -691,7 +691,7 @@ namespace CoreWCF.Dispatcher
             return false;
         }
 
-        private bool IsPartElement(XmlDictionaryReader reader, PartInfo part)
+        private static bool IsPartElement(XmlDictionaryReader reader, PartInfo part)
         {
             return reader.IsStartElement(part.DictionaryName, part.DictionaryNamespace);
         }

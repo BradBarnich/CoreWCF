@@ -246,7 +246,6 @@ namespace CoreWCF.Runtime
 
             private void UnhandledExceptionFrame(T1 param1)
             {
-                RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {
                     Callback(param1);
@@ -277,7 +276,6 @@ namespace CoreWCF.Runtime
 
             private void UnhandledExceptionFrame(T1 param1, T2 param2)
             {
-                RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {
                     Callback(param1, param2);
@@ -308,7 +306,6 @@ namespace CoreWCF.Runtime
 
             private void UnhandledExceptionFrame(T1 param1, T2 param2, T3 param3)
             {
-                RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {
                     Callback(param1, param2, param3);
@@ -420,7 +417,6 @@ namespace CoreWCF.Runtime
 
             private void UnhandledExceptionFrame(uint error, uint bytesRead, NativeOverlapped* nativeOverlapped)
             {
-                RuntimeHelpers.PrepareConstrainedRegions();
                 try
                 {
                     _callback(error, bytesRead, nativeOverlapped);

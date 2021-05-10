@@ -6,6 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Xml;
 
+#nullable enable
 namespace CoreWCF.Xml
 {
     internal static class XmlExceptionHelper
@@ -108,7 +109,7 @@ namespace CoreWCF.Xml
         [DoesNotReturn]
         public static void ThrowStartElementExpected(XmlDictionaryReader reader, XmlDictionaryString localName, XmlDictionaryString ns)
         {
-            ThrowStartElementExpected(reader, localName?.Value, ns?.Value);
+            ThrowStartElementExpected(reader, localName.Value, ns.Value);
         }
 
         [DoesNotReturn]
@@ -132,7 +133,7 @@ namespace CoreWCF.Xml
         [DoesNotReturn]
         public static void ThrowFullStartElementExpected(XmlDictionaryReader reader, XmlDictionaryString localName, XmlDictionaryString ns)
         {
-            ThrowFullStartElementExpected(reader, localName?.Value, ns?.Value);
+            ThrowFullStartElementExpected(reader, localName.Value, ns.Value);
         }
 
         [DoesNotReturn]

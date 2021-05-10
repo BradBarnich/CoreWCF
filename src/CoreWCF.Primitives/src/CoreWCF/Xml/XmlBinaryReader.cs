@@ -7,6 +7,7 @@ using System.IO;
 using System.Runtime.Serialization;
 using System.Xml;
 
+#nullable enable
 namespace CoreWCF.Xml
 {
     public interface IXmlBinaryReaderInitializer
@@ -1089,7 +1090,7 @@ namespace CoreWCF.Xml
             return BufferReader.ReadUInt31();
         }
 
-        private bool IsValidArrayType(XmlBinaryNodeType nodeType)
+        private static bool IsValidArrayType(XmlBinaryNodeType nodeType)
         {
             switch (nodeType)
             {
@@ -1216,7 +1217,7 @@ namespace CoreWCF.Xml
             return IsStartElement(localName, namespaceUri) && _arrayState == ArrayState.Element && _arrayNodeType == nodeType && !Signing;
         }
 
-        private void CheckArray(Array array, int offset, int count)
+        private static void CheckArray(Array array, int offset, int count)
         {
             if (array == null)
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(array)));

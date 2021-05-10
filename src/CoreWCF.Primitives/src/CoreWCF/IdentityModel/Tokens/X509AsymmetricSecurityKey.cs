@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using System;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography.Xml;
@@ -38,7 +39,7 @@ namespace CoreWCF.IdentityModel.Tokens
                         if (_privateKey != null)
                         {
                             // ProviderType == 1 is PROV_RSA_FULL provider type that only supports SHA1. Change it to PROV_RSA_AES=24 that supports SHA2 also.
-                            if (_privateKey is RSACryptoServiceProvider rsaCsp && rsaCsp.CspKeyContainerInfo.ProviderType == 1)
+                            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows) && _privateKey is RSACryptoServiceProvider rsaCsp && rsaCsp.CspKeyContainerInfo.ProviderType == 1)
                             {
                                 CspParameters csp = new CspParameters
                                 {
@@ -338,7 +339,9 @@ namespace CoreWCF.IdentityModel.Tokens
                     {
                         throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new NotSupportedException(SR.PrivateKeyNotDSA));
                     }
+#pragma warning disable CA5351 // Do Not Use Broken Cryptographic Algorithms - this is for compatibility.
                     return new DSASignatureFormatter(dsa);
+#pragma warning restore CA5351 // Do Not Use Broken Cryptographic Algorithms
                 case SignedXml.XmlDsigRSASHA1Url:
                     // Ensure that we have an RSA algorithm object.
                     RSA rsa = (PrivateKey as RSA);

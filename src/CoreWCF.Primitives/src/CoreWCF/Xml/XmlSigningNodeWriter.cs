@@ -8,6 +8,7 @@ using System.Text;
 using System.Xml;
 using CoreWCF.Text;
 
+#nullable enable
 namespace CoreWCF.Xml
 {
     internal sealed class XmlSigningNodeWriter : XmlNodeWriter

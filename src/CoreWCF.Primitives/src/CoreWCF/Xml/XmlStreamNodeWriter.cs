@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using CoreWCF.Text;
 using System;
 
+#nullable enable
 namespace CoreWCF.Xml
 {
     internal abstract class XmlStreamNodeWriter : XmlNodeWriter

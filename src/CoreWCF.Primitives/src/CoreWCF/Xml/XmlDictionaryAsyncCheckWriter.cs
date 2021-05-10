@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 
+#nullable enable
 namespace CoreWCF.Xml
 {
     // This is changed from dotnet/runtime, by exposing IXmlTextWriterInitializer to allow pooling

@@ -12,6 +12,7 @@ using System.Globalization;
 using System.Diagnostics.CodeAnalysis;
 using System.Buffers;
 
+#nullable enable
 namespace CoreWCF.Xml
 {
     public delegate void OnXmlDictionaryReaderClose(XmlDictionaryReader reader);
@@ -300,7 +301,7 @@ namespace CoreWCF.Xml
 
         public virtual bool IsStartElement(XmlDictionaryString localName, XmlDictionaryString namespaceUri)
         {
-            return IsStartElement(localName?.Value, namespaceUri?.Value);
+            return IsStartElement(localName.Value, namespaceUri.Value);
         }
 
         public virtual int IndexOfLocalName(string[] localNames, string namespaceUri)
@@ -357,7 +358,7 @@ namespace CoreWCF.Xml
 
         public virtual string? GetAttribute(XmlDictionaryString localName, XmlDictionaryString namespaceUri)
         {
-            return GetAttribute(localName?.Value, namespaceUri?.Value);
+            return GetAttribute(localName.Value, namespaceUri?.Value);
         }
 
         public virtual bool TryGetBase64ContentLength(out int length)
@@ -1156,7 +1157,7 @@ namespace CoreWCF.Xml
 
         public virtual int ReadArray(XmlDictionaryString localName, XmlDictionaryString namespaceUri, bool[] array, int offset, int count)
         {
-            return ReadArray(localName?.Value, namespaceUri?.Value, array, offset, count);
+            return ReadArray(localName.Value, namespaceUri.Value, array, offset, count);
         }
 
         // Int16
@@ -1187,7 +1188,7 @@ namespace CoreWCF.Xml
 
         public virtual int ReadArray(XmlDictionaryString localName, XmlDictionaryString namespaceUri, short[] array, int offset, int count)
         {
-            return ReadArray(localName?.Value, namespaceUri?.Value, array, offset, count);
+            return ReadArray(localName.Value, namespaceUri.Value, array, offset, count);
         }
 
         // Int32
@@ -1215,7 +1216,7 @@ namespace CoreWCF.Xml
 
         public virtual int ReadArray(XmlDictionaryString localName, XmlDictionaryString namespaceUri, int[] array, int offset, int count)
         {
-            return ReadArray(localName?.Value, namespaceUri?.Value, array, offset, count);
+            return ReadArray(localName.Value, namespaceUri.Value, array, offset, count);
         }
 
         // Int64
@@ -1243,7 +1244,7 @@ namespace CoreWCF.Xml
 
         public virtual int ReadArray(XmlDictionaryString localName, XmlDictionaryString namespaceUri, long[] array, int offset, int count)
         {
-            return ReadArray(localName?.Value, namespaceUri?.Value, array, offset, count);
+            return ReadArray(localName.Value, namespaceUri.Value, array, offset, count);
         }
 
         // Single
@@ -1271,7 +1272,7 @@ namespace CoreWCF.Xml
 
         public virtual int ReadArray(XmlDictionaryString localName, XmlDictionaryString namespaceUri, float[] array, int offset, int count)
         {
-            return ReadArray(localName?.Value, namespaceUri?.Value, array, offset, count);
+            return ReadArray(localName.Value, namespaceUri.Value, array, offset, count);
         }
 
         // Double
@@ -1299,7 +1300,7 @@ namespace CoreWCF.Xml
 
         public virtual int ReadArray(XmlDictionaryString localName, XmlDictionaryString namespaceUri, double[] array, int offset, int count)
         {
-            return ReadArray(localName?.Value, namespaceUri?.Value, array, offset, count);
+            return ReadArray(localName.Value, namespaceUri.Value, array, offset, count);
         }
 
         // Decimal
@@ -1327,7 +1328,7 @@ namespace CoreWCF.Xml
 
         public virtual int ReadArray(XmlDictionaryString localName, XmlDictionaryString namespaceUri, decimal[] array, int offset, int count)
         {
-            return ReadArray(localName?.Value, namespaceUri?.Value, array, offset, count);
+            return ReadArray(localName.Value, namespaceUri.Value, array, offset, count);
         }
 
         // DateTime
@@ -1355,7 +1356,7 @@ namespace CoreWCF.Xml
 
         public virtual int ReadArray(XmlDictionaryString localName, XmlDictionaryString namespaceUri, DateTime[] array, int offset, int count)
         {
-            return ReadArray(localName?.Value, namespaceUri?.Value, array, offset, count);
+            return ReadArray(localName.Value, namespaceUri.Value, array, offset, count);
         }
 
         // Guid
@@ -1383,7 +1384,7 @@ namespace CoreWCF.Xml
 
         public virtual int ReadArray(XmlDictionaryString localName, XmlDictionaryString namespaceUri, Guid[] array, int offset, int count)
         {
-            return ReadArray(localName?.Value, namespaceUri?.Value, array, offset, count);
+            return ReadArray(localName.Value, namespaceUri.Value, array, offset, count);
         }
 
         // TimeSpan
@@ -1411,7 +1412,7 @@ namespace CoreWCF.Xml
 
         public virtual int ReadArray(XmlDictionaryString localName, XmlDictionaryString namespaceUri, TimeSpan[] array, int offset, int count)
         {
-            return ReadArray(localName?.Value, namespaceUri?.Value, array, offset, count);
+            return ReadArray(localName.Value, namespaceUri.Value, array, offset, count);
         }
 
         private sealed class XmlWrappedReader : XmlDictionaryReader, IXmlLineInfo
@@ -1433,7 +1434,7 @@ namespace CoreWCF.Xml
                 }
             }
 
-            public override string BaseURI
+            public override string? BaseURI
             {
                 get
                 {

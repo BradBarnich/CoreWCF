@@ -27,7 +27,7 @@ namespace CoreWCF.Configuration
                     // Using discard as any exceptions are swallowed from the ApplicationStarted
                     // callback and no place to await the OpenAsync call. Should only hit this code
                     // when hosting in IIS.
-                    _ = OpenAsync();
+                    _ = OpenAsync().AsTask();
                 }
             });
         }

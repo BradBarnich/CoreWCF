@@ -5,7 +5,7 @@
 // Uncomment to turn on logging of non-dictionary strings written to binary writers.
 // This can help identify element/attribute name/ns that could be written as XmlDictionaryStrings to get better compactness and performance.
 // #define LOG_NON_DICTIONARY_WRITES
-
+#nullable enable
 using System.IO;
 using System.Text;
 using System.Diagnostics;
@@ -969,7 +969,9 @@ namespace CoreWCF.Xml
             _attributeValue.Clear();
         }
 
+#pragma warning disable CA1001 // Clear is used as a dispose method
         private struct AttributeValue
+#pragma warning restore CA1001
         {
             private string? _captureText;
             private XmlDictionaryString? _captureXText;
@@ -1191,7 +1193,7 @@ namespace CoreWCF.Xml
             WriteEndElement();
         }
 
-        private void WriteEndArray()
+        private static void WriteEndArray()
         {
             EndArray();
         }
@@ -1212,7 +1214,7 @@ namespace CoreWCF.Xml
             WriteEndArray();
         }
 
-        private void CheckArray(Array array, int offset, int count)
+        private static void CheckArray(Array array, int offset, int count)
         {
             if (array == null)
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(array)));

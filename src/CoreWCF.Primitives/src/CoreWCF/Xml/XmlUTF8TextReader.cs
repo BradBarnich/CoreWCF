@@ -13,6 +13,7 @@ using System.Text;
 using System.Globalization;
 using CoreWCF.Runtime;
 
+#nullable enable
 namespace CoreWCF.Xml
 {
     public interface IXmlTextReaderInitializer

@@ -18,6 +18,7 @@ using CoreWCF.Runtime;
 using CoreWCF.Text;
 using System.Buffers;
 
+#nullable enable
 namespace CoreWCF.Xml
 {
     // Large numbers of attributes
@@ -551,7 +552,7 @@ namespace CoreWCF.Xml
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(name)));
             if (!_node.CanGetAttribute)
                 return null;
-            int index = name.IndexOf(':');
+            int index = name.IndexOf(':', StringComparison.Ordinal);
             string prefix;
             string localName;
             if (index == -1)
@@ -1038,7 +1039,7 @@ namespace CoreWCF.Xml
         {
             if (name == null)
                 return false;
-            int index = name.IndexOf(':');
+            int index = name.IndexOf(':', StringComparison.Ordinal);
             string prefix;
             string localName;
             if (index == -1)
@@ -1947,7 +1948,7 @@ namespace CoreWCF.Xml
             writer.WriteStartElement(prefixBuffer, prefixOffset, prefixLength, localNameBuffer, localNameOffset, localNameLength);
         }
 
-        private void SignAttribute(XmlSigningNodeWriter writer, XmlAttributeNode attributeNode)
+        private static void SignAttribute(XmlSigningNodeWriter writer, XmlAttributeNode attributeNode)
         {
             QNameType qnameType = attributeNode.QNameType;
             if (qnameType == QNameType.Normal)
@@ -2735,7 +2736,7 @@ namespace CoreWCF.Xml
                 return i;
             }
 
-            public int CompareQNameType(QNameType type1, QNameType type2)
+            public static int CompareQNameType(QNameType type1, QNameType type2)
             {
                 return (int)type1 - (int)type2;
             }
@@ -3009,7 +3010,7 @@ namespace CoreWCF.Xml
                 return null;
             }
 
-            private bool TryGetShortPrefix(string s, out PrefixHandleType shortPrefix)
+            private static bool TryGetShortPrefix(string s, out PrefixHandleType shortPrefix)
             {
                 int length = s.Length;
                 if (length == 0)
@@ -3120,7 +3121,7 @@ namespace CoreWCF.Xml
 
             public bool IsUri(string s)
             {
-                DiagnosticUtility.DebugAssert(s != null, "");
+                Debug.Assert(s != null, "");
                 if (object.ReferenceEquals(s, _uriString))
                     return true;
                 if (_uri == s)

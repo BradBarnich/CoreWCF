@@ -9,6 +9,7 @@ using System.Xml;
 using System.Text;
 using System.Buffers;
 
+#nullable enable
 namespace CoreWCF.Xml
 {
     internal enum StringHandleConstStringType

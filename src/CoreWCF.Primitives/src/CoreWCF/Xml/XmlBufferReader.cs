@@ -15,6 +15,7 @@ using System.Collections.ObjectModel;
 using CoreWCF.Text;
 using System.Buffers;
 
+#nullable enable
 namespace CoreWCF.Xml
 {
     internal sealed class XmlBufferReader

@@ -8,6 +8,7 @@ using System.Globalization;
 using CoreWCF.Runtime;
 using CoreWCF.Text;
 
+#nullable enable
 namespace CoreWCF.Xml
 {
     internal static class XmlConverter

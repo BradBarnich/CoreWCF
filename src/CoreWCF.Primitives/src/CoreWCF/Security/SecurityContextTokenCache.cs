@@ -98,7 +98,7 @@ namespace CoreWCF.Security
             return wasTokenAdded;
         }
 
-        private object GetHashKey(UniqueId contextId, UniqueId generation)
+        private static object GetHashKey(UniqueId contextId, UniqueId generation)
         {
             if (generation == null)
             {
@@ -325,12 +325,7 @@ namespace CoreWCF.Security
 
             public static bool operator ==(ContextAndGenerationKey a, ContextAndGenerationKey b)
             {
-                if (ReferenceEquals(a, null))
-                {
-                    return ReferenceEquals(b, null);
-                }
-
-                return (a.Equals(b));
+                return a.Equals(b);
             }
 
             public static bool operator !=(ContextAndGenerationKey a, ContextAndGenerationKey b)

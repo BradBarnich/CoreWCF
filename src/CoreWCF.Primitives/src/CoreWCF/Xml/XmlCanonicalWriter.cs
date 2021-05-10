@@ -11,6 +11,7 @@ using System.Runtime.Serialization;
 using System.Text;
 using CoreWCF.Runtime;
 
+#nullable enable
 namespace CoreWCF.Xml
 {
     internal sealed class XmlCanonicalWriter

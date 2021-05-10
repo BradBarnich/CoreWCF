@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
@@ -886,7 +887,7 @@ namespace CoreWCF.Security
                 // channelDispatcher.ServiceThrottle = new ServiceThrottle(this);
                 // channelDispatcher.ServiceThrottle.MaxConcurrentCalls = this.authenticator.MaximumConcurrentNegotiations;
                 // channelDispatcher.ServiceThrottle.MaxConcurrentSessions = this.authenticator.MaximumConcurrentNegotiations;
-                EndpointDispatcher endpointDispatcher = new EndpointDispatcher(new EndpointAddress(_listenUri, new AddressHeader[0]), "SecurityNegotiationContract", "http://tempuri.org/", true)
+                EndpointDispatcher endpointDispatcher = new EndpointDispatcher(new EndpointAddress(_listenUri, Array.Empty<AddressHeader>()), "SecurityNegotiationContract", "http://tempuri.org/", true)
                 {
                     DispatchRuntime = {
                     SingletonInstanceContext = new InstanceContext( null,  _authenticator, false),
@@ -907,7 +908,7 @@ namespace CoreWCF.Security
                 channelDispatcher.Endpoints.Add(endpointDispatcher);
                 channelDispatcher.Init();
                 ValueTask openTask = channelDispatcher.OpenAsync();
-                Fx.Assert(openTask.IsCompleted, "ChannelDispatcher should open synchronously");
+                Debug.Assert(openTask.IsCompleted, "ChannelDispatcher should open synchronously");
                 openTask.GetAwaiter().GetResult();
                 ServiceDispatcher service = new ServiceDispatcher(channelDispatcher);
                 _channelBuilder.AddServiceDispatcher<IReplyChannel>(service, new ChannelDemuxerFilter(contractFilter, filterPriority));

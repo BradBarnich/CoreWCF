@@ -51,8 +51,8 @@ namespace CoreWCF.Security
         {
             StringBuilder result = new StringBuilder();
             result.Append(GetType().ToString());
-            result.AppendFormat("{0}  UseCurrentUserProtectionScope={1}", Environment.NewLine, UseCurrentUserProtectionScope);
-            result.AppendFormat("{0}  Entropy Length={1}", Environment.NewLine, (_entropy == null) ? 0 : _entropy.Length);
+            result.Append($"{Environment.NewLine}  UseCurrentUserProtectionScope={UseCurrentUserProtectionScope}");
+            result.Append($"{Environment.NewLine}  Entropy Length={((_entropy == null) ? 0 : _entropy.Length)}");
             return result.ToString();
         }
 

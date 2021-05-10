@@ -9,6 +9,7 @@ using System.Runtime.Serialization; // For SR
 using System.Text;
 using System.Xml;
 
+#nullable enable
 namespace CoreWCF.Xml
 {
     // This wrapper does not support seek.

@@ -1,6 +1,7 @@
 // Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+#nullable enable
 using System;
 using System.IO;
 using System.Xml;
@@ -96,7 +97,7 @@ namespace CoreWCF.Xml
 
         public virtual void WriteStartElement(string? prefix, XmlDictionaryString localName, XmlDictionaryString? namespaceUri)
         {
-            WriteStartElement(prefix, localName?.Value, namespaceUri?.Value);
+            WriteStartElement(prefix, localName.Value, namespaceUri?.Value);
         }
 
         public void WriteStartAttribute(XmlDictionaryString localName, XmlDictionaryString? namespaceUri)
@@ -106,7 +107,7 @@ namespace CoreWCF.Xml
 
         public virtual void WriteStartAttribute(string? prefix, XmlDictionaryString localName, XmlDictionaryString? namespaceUri)
         {
-            WriteStartAttribute(prefix, localName?.Value, namespaceUri?.Value);
+            WriteStartAttribute(prefix, localName.Value, namespaceUri?.Value);
         }
 
         public void WriteAttributeString(XmlDictionaryString localName, XmlDictionaryString? namespaceUri, string? value)
@@ -122,7 +123,6 @@ namespace CoreWCF.Xml
             {
                 if (LookupPrefix(namespaceUri) != null)
                     return;
-#pragma warning suppress 56506 // Microsoft, namespaceUri is already checked
                 prefix = namespaceUri.Length == 0 ? string.Empty : string.Concat("d", namespaceUri.Length.ToString(System.Globalization.NumberFormatInfo.InvariantInfo));
             }
             WriteAttributeString("xmlns", prefix, null, namespaceUri);
@@ -130,7 +130,7 @@ namespace CoreWCF.Xml
 
         public virtual void WriteXmlnsAttribute(string? prefix, XmlDictionaryString namespaceUri)
         {
-            WriteXmlnsAttribute(prefix, namespaceUri?.Value);
+            WriteXmlnsAttribute(prefix, namespaceUri.Value);
         }
 
         public virtual void WriteXmlAttribute(string localName, string? value)
@@ -140,7 +140,7 @@ namespace CoreWCF.Xml
 
         public virtual void WriteXmlAttribute(XmlDictionaryString localName, XmlDictionaryString? value)
         {
-            WriteXmlAttribute(localName?.Value, value?.Value);
+            WriteXmlAttribute(localName.Value, value?.Value);
         }
 
         public void WriteAttributeString(string? prefix, XmlDictionaryString localName, XmlDictionaryString? namespaceUri, string? value)
@@ -173,7 +173,6 @@ namespace CoreWCF.Xml
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(localName)));
             if (namespaceUri == null)
                 namespaceUri = XmlDictionaryString.Empty;
-#pragma warning suppress 56506 // Microsoft, XmlDictionaryString.Empty is never null
             WriteQualifiedName(localName.Value, namespaceUri.Value);
         }
 
@@ -448,7 +447,7 @@ namespace CoreWCF.Xml
             while (d < reader.Depth || (d == reader.Depth && reader.NodeType == XmlNodeType.EndElement));
         }
 
-        private void CheckArray(Array array, int offset, int count)
+        private static void CheckArray(Array array, int offset, int count)
         {
             if (array == null)
                 throw DiagnosticUtility.ExceptionUtility.ThrowHelperError(new ArgumentNullException(nameof(array)));
@@ -476,7 +475,7 @@ namespace CoreWCF.Xml
 
         public virtual void WriteArray(string? prefix, XmlDictionaryString localName, XmlDictionaryString? namespaceUri, bool[] array, int offset, int count)
         {
-            WriteArray(prefix, localName?.Value, namespaceUri?.Value, array, offset, count);
+            WriteArray(prefix, localName.Value, namespaceUri?.Value, array, offset, count);
         }
 
         // Int16
@@ -493,7 +492,7 @@ namespace CoreWCF.Xml
 
         public virtual void WriteArray(string? prefix, XmlDictionaryString localName, XmlDictionaryString? namespaceUri, short[] array, int offset, int count)
         {
-            WriteArray(prefix, localName?.Value, namespaceUri?.Value, array, offset, count);
+            WriteArray(prefix, localName.Value, namespaceUri?.Value, array, offset, count);
         }
 
         // Int32
@@ -510,7 +509,7 @@ namespace CoreWCF.Xml
 
         public virtual void WriteArray(string? prefix, XmlDictionaryString localName, XmlDictionaryString? namespaceUri, int[] array, int offset, int count)
         {
-            WriteArray(prefix, localName?.Value, namespaceUri?.Value, array, offset, count);
+            WriteArray(prefix, localName.Value, namespaceUri?.Value, array, offset, count);
         }
 
         // Int64
@@ -527,7 +526,7 @@ namespace CoreWCF.Xml
 
         public virtual void WriteArray(string? prefix, XmlDictionaryString localName, XmlDictionaryString? namespaceUri, long[] array, int offset, int count)
         {
-            WriteArray(prefix, localName?.Value, namespaceUri?.Value, array, offset, count);
+            WriteArray(prefix, localName.Value, namespaceUri?.Value, array, offset, count);
         }
 
         // float
@@ -544,7 +543,7 @@ namespace CoreWCF.Xml
 
         public virtual void WriteArray(string? prefix, XmlDictionaryString localName, XmlDictionaryString? namespaceUri, float[] array, int offset, int count)
         {
-            WriteArray(prefix, localName?.Value, namespaceUri?.Value, array, offset, count);
+            WriteArray(prefix, localName.Value, namespaceUri?.Value, array, offset, count);
         }
 
         // double
@@ -561,7 +560,7 @@ namespace CoreWCF.Xml
 
         public virtual void WriteArray(string? prefix, XmlDictionaryString localName, XmlDictionaryString? namespaceUri, double[] array, int offset, int count)
         {
-            WriteArray(prefix, localName?.Value, namespaceUri?.Value, array, offset, count);
+            WriteArray(prefix, localName.Value, namespaceUri?.Value, array, offset, count);
         }
 
         // decimal
@@ -578,7 +577,7 @@ namespace CoreWCF.Xml
 
         public virtual void WriteArray(string? prefix, XmlDictionaryString localName, XmlDictionaryString? namespaceUri, decimal[] array, int offset, int count)
         {
-            WriteArray(prefix, localName?.Value, namespaceUri?.Value, array, offset, count);
+            WriteArray(prefix, localName.Value, namespaceUri?.Value, array, offset, count);
         }
 
         // DateTime
@@ -595,7 +594,7 @@ namespace CoreWCF.Xml
 
         public virtual void WriteArray(string? prefix, XmlDictionaryString localName, XmlDictionaryString? namespaceUri, DateTime[] array, int offset, int count)
         {
-            WriteArray(prefix, localName?.Value, namespaceUri?.Value, array, offset, count);
+            WriteArray(prefix, localName.Value, namespaceUri?.Value, array, offset, count);
         }
 
         // Guid
@@ -612,7 +611,7 @@ namespace CoreWCF.Xml
 
         public virtual void WriteArray(string? prefix, XmlDictionaryString localName, XmlDictionaryString? namespaceUri, Guid[] array, int offset, int count)
         {
-            WriteArray(prefix, localName?.Value, namespaceUri?.Value, array, offset, count);
+            WriteArray(prefix, localName.Value, namespaceUri?.Value, array, offset, count);
         }
 
         // TimeSpan
@@ -629,15 +628,7 @@ namespace CoreWCF.Xml
 
         public virtual void WriteArray(string? prefix, XmlDictionaryString localName, XmlDictionaryString? namespaceUri, TimeSpan[] array, int offset, int count)
         {
-            WriteArray(prefix, localName?.Value, namespaceUri?.Value, array, offset, count);
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing && WriteState != WriteState.Closed)
-            {
-                Close();
-            }
+            WriteArray(prefix, localName.Value, namespaceUri?.Value, array, offset, count);
         }
 
         public override void Close() { }
